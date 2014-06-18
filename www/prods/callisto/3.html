@@ -1,0 +1,1034 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>CALLISTO___Eng_2012_05_08 Page3</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load3();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_3{left:110px;top:69px;}
+#t2_3{left:110px;top:83px;}
+#t3_3{left:110px;top:98px;}
+#t4_3{left:110px;top:127px;}
+#t5_3{left:110px;top:142px;}
+#t6_3{left:110px;top:171px;}
+#t7_3{left:422px;top:171px;}
+#t8_3{left:110px;top:186px;}
+#t9_3{left:179px;top:186px;}
+#ta_3{left:110px;top:215px;}
+#tb_3{left:127px;top:215px;}
+#tc_3{left:127px;top:230px;}
+#td_3{left:110px;top:245px;}
+#te_3{left:127px;top:245px;}
+#tf_3{left:127px;top:259px;}
+#tg_3{left:110px;top:274px;}
+#th_3{left:127px;top:274px;}
+#ti_3{left:127px;top:289px;}
+#tj_3{left:127px;top:303px;}
+#tk_3{left:110px;top:318px;}
+#tl_3{left:127px;top:318px;}
+#tm_3{left:127px;top:333px;}
+#tn_3{left:110px;top:347px;}
+#to_3{left:127px;top:347px;}
+#tp_3{left:246px;top:347px;}
+#tq_3{left:332px;top:347px;}
+#tr_3{left:398px;top:347px;}
+#ts_3{left:127px;top:362px;}
+#tt_3{left:110px;top:391px;}
+#tu_3{left:110px;top:406px;}
+#tv_3{left:110px;top:421px;}
+#tw_3{left:110px;top:450px;}
+#tx_3{left:110px;top:465px;}
+#ty_3{left:110px;top:479px;}
+#tz_3{left:110px;top:494px;}
+#t10_3{left:110px;top:523px;}
+#t11_3{left:136px;top:523px;}
+#t12_3{left:250px;top:523px;}
+#t13_3{left:110px;top:538px;}
+#t14_3{left:110px;top:567px;}
+#t15_3{left:110px;top:597px;}
+#t16_3{left:215px;top:597px;}
+#t17_3{left:279px;top:597px;}
+#t18_3{left:110px;top:611px;}
+#t19_3{left:110px;top:626px;}
+#t1a_3{left:110px;top:641px;}
+#t1b_3{left:110px;top:670px;}
+#t1c_3{left:110px;top:685px;}
+#t1d_3{left:110px;top:699px;}
+#t1e_3{left:110px;top:714px;}
+#t1f_3{left:110px;top:743px;}
+#t1g_3{left:110px;top:773px;}
+#t1h_3{left:127px;top:773px;}
+#t1i_3{left:171px;top:773px;}
+#t1j_3{left:304px;top:773px;}
+#t1k_3{left:310px;top:773px;}
+#t1l_3{left:127px;top:787px;}
+#t1m_3{left:191px;top:787px;}
+#t1n_3{left:127px;top:802px;}
+#t1o_3{left:127px;top:817px;}
+#t1p_3{left:127px;top:831px;}
+#t1q_3{left:110px;top:846px;}
+#t1r_3{left:127px;top:846px;}
+#t1s_3{left:228px;top:846px;}
+#t1t_3{left:127px;top:861px;}
+#t1u_3{left:144px;top:863px;}
+#t1v_3{left:151px;top:861px;}
+#t1w_3{left:110px;top:875px;}
+#t1x_3{left:127px;top:875px;}
+#t1y_3{left:198px;top:875px;}
+#t1z_3{left:127px;top:890px;}
+#t20_3{left:127px;top:905px;}
+#t21_3{left:110px;top:919px;}
+#t22_3{left:127px;top:919px;}
+#t23_3{left:201px;top:919px;}
+#t24_3{left:127px;top:934px;}
+#t25_3{left:127px;top:949px;}
+#t26_3{left:110px;top:978px;}
+#t27_3{left:110px;top:1007px;}
+#t28_3{left:127px;top:1007px;}
+#t29_3{left:127px;top:1022px;}
+#t2a_3{left:127px;top:1037px;}
+#t2b_3{left:127px;top:1051px;}
+#t2c_3{left:127px;top:1066px;}
+#t2d_3{left:110px;top:1081px;}
+#t2e_3{left:127px;top:1081px;}
+#t2f_3{left:127px;top:1095px;}
+#t2g_3{left:110px;top:1110px;}
+#t2h_3{left:127px;top:1110px;}
+#t2i_3{left:127px;top:1125px;}
+#t2j_3{left:127px;top:1139px;}
+#t2k_3{left:110px;top:1169px;}
+#t2l_3{left:110px;top:1198px;}
+#t2m_3{left:127px;top:1198px;}
+#t2n_3{left:127px;top:1213px;}
+#t2o_3{left:127px;top:1227px;}
+#t2p_3{left:500px;top:69px;}
+#t2q_3{left:517px;top:69px;}
+#t2r_3{left:517px;top:84px;}
+#t2s_3{left:500px;top:98px;}
+#t2t_3{left:517px;top:98px;}
+#t2u_3{left:625px;top:98px;}
+#t2v_3{left:690px;top:98px;}
+#t2w_3{left:517px;top:113px;}
+#t2x_3{left:517px;top:128px;}
+#t2y_3{left:500px;top:142px;}
+#t2z_3{left:517px;top:142px;}
+#t30_3{left:695px;top:142px;}
+#t31_3{left:760px;top:142px;}
+#t32_3{left:517px;top:157px;}
+#t33_3{left:517px;top:172px;}
+#t34_3{left:517px;top:186px;letter-spacing:-1px;}
+#t35_3{left:539px;top:186px;}
+#t36_3{left:539px;top:201px;}
+#t37_3{left:517px;top:216px;}
+#t38_3{left:539px;top:216px;}
+#t39_3{left:539px;top:230px;}
+#t3a_3{left:539px;top:245px;}
+#t3b_3{left:500px;top:260px;}
+#t3c_3{left:517px;top:260px;}
+#t3d_3{left:517px;top:274px;}
+#t3e_3{left:517px;top:289px;}
+#t3f_3{left:517px;top:304px;letter-spacing:-1px;}
+#t3g_3{left:539px;top:304px;}
+#t3h_3{left:539px;top:318px;}
+#t3i_3{left:539px;top:333px;}
+#t3j_3{left:773px;top:333px;}
+#t3k_3{left:804px;top:333px;}
+#t3l_3{left:539px;top:348px;}
+#t3m_3{left:539px;top:362px;}
+#t3n_3{left:539px;top:377px;}
+#t3o_3{left:539px;top:392px;}
+#t3p_3{left:500px;top:421px;}
+#t3q_3{left:500px;top:436px;}
+#t3r_3{left:500px;top:450px;}
+#t3s_3{left:500px;top:465px;}
+#t3t_3{left:500px;top:480px;}
+#t3u_3{left:500px;top:494px;}
+#t3v_3{left:500px;top:524px;}
+#t3w_3{left:500px;top:538px;}
+#t3x_3{left:500px;top:553px;}
+#t3y_3{left:500px;top:597px;}
+#t3z_3{left:526px;top:597px;}
+#t40_3{left:500px;top:626px;}
+#t41_3{left:566px;top:626px;}
+#t42_3{left:500px;top:641px;}
+#t43_3{left:500px;top:670px;}
+#t44_3{left:500px;top:685px;}
+#t45_3{left:650px;top:685px;}
+#t46_3{left:660px;top:685px;}
+#t47_3{left:721px;top:685px;}
+#t48_3{left:802px;top:685px;}
+#t49_3{left:812px;top:685px;}
+#t4a_3{left:500px;top:700px;}
+#t4b_3{left:500px;top:714px;}
+#t4c_3{left:500px;top:744px;}
+#t4d_3{left:500px;top:758px;}
+#t4e_3{left:700px;top:758px;}
+#t4f_3{left:705px;top:758px;}
+#t4g_3{left:500px;top:788px;}
+#t4h_3{left:517px;top:788px;}
+#t4i_3{left:500px;top:807px;}
+#t4j_3{left:500px;top:826px;}
+#t4k_3{left:517px;top:826px;}
+#t4l_3{left:517px;top:840px;}
+#t4m_3{left:500px;top:859px;}
+#t4n_3{left:517px;top:859px;}
+#t4o_3{left:517px;top:874px;}
+#t4p_3{left:500px;top:893px;}
+#t4q_3{left:517px;top:893px;}
+#t4r_3{left:549px;top:893px;}
+#t4s_3{left:615px;top:893px;}
+#t4t_3{left:517px;top:908px;}
+#t4u_3{left:517px;top:922px;}
+#t4v_3{left:517px;top:941px;letter-spacing:-1px;}
+#t4w_3{left:539px;top:941px;}
+#t4x_3{left:517px;top:960px;letter-spacing:-1px;}
+#t4y_3{left:539px;top:960px;}
+#t4z_3{left:517px;top:979px;letter-spacing:-1px;}
+#t50_3{left:539px;top:979px;}
+#t51_3{left:500px;top:998px;}
+#t52_3{left:500px;top:1017px;}
+#t53_3{left:517px;top:1017px;}
+#t54_3{left:688px;top:1017px;}
+#t55_3{left:752px;top:1017px;}
+#t56_3{left:517px;top:1032px;}
+#t57_3{left:500px;top:1051px;}
+#t58_3{left:517px;top:1051px;}
+#t59_3{left:517px;top:1066px;}
+#t5a_3{left:652px;top:1068px;}
+#t5b_3{left:658px;top:1066px;}
+#t5c_3{left:500px;top:1085px;}
+#t5d_3{left:517px;top:1085px;}
+#t5e_3{left:517px;top:1099px;}
+#t5f_3{left:517px;top:1114px;}
+#t5g_3{left:500px;top:1133px;}
+#t5h_3{left:517px;top:1133px;}
+#t5i_3{left:517px;top:1148px;}
+#t5j_3{left:517px;top:1162px;}
+#t5k_3{left:500px;top:1181px;}
+#t5l_3{left:517px;top:1181px;}
+#t5m_3{left:517px;top:1196px;}
+#t5n_3{left:517px;top:1211px;}
+#t5o_3{left:517px;top:1225px;}
+#t5p_3{left:437px;top:41px;}
+#t5q_3{left:501px;top:41px;}
+
+.s1_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: OTRPIF-HelveticaNeueLTStd-Lt3;
+	color: rgb(0,0,0);
+}
+
+.s3_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: OTRPIF-MT-Extra3;
+	color: rgb(0,0,0);
+}
+
+.s2_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: QJLBKB-HelveticaNeueLTStd-Bd3;
+	color: rgb(0,0,0);
+}
+
+.s4_3{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: OTRPIF-HelveticaNeueLTStd-Lt3;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: OTRPIF-MT-Extra3;
+	src: url("3/fonts/OTRPIF-MT-Extra.eot");
+	src: url("3/fonts/OTRPIF-MT-Extra.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/OTRPIF-MT-Extra.otf") format("opentype");
+}
+
+@font-face {
+	font-family: QJLBKB-HelveticaNeueLTStd-Bd3;
+	src: url("3/fonts/QJLBKB-HelveticaNeueLTStd-Bd.eot");
+	src: url("3/fonts/QJLBKB-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/QJLBKB-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: OTRPIF-HelveticaNeueLTStd-Lt3;
+	src: url("3/fonts/OTRPIF-HelveticaNeueLTStd-Lt.eot");
+	src: url("3/fonts/OTRPIF-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/OTRPIF-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_3" class="t s1_3">rates,	 correct	 nozzles	 and	 nozzle	 spacing,	 adequate	 coverage	</div>
+<div id="t2_3" class="t s1_3">and	nozzle	sizes	are	then	very	important	.	The	disregard	of	these	</div>
+<div id="t3_3" class="t s1_3">factors	will	lead	to	poor	control	of	certain	weeds.		</div>
+<div id="t4_3" class="t s1_3">Flat	fan	hydraulic	nozzles	(110º)	are	recommended	for	optimum	</div>
+<div id="t5_3" class="t s1_3">coverage.</div>
+<div id="t6_3" class="t s1_3">In	 certain	 cases,	 sleeve	 boom	 sprayers	 may	 be	 used	 for	</div>
+<div id="t7_3" class="t s2_3">post-</div>
+<div id="t8_3" class="t s2_3">emergence</div>
+<div id="t9_3" class="t s1_3">applications.</div>
+<div id="ta_3" class="t s1_3">•	</div>
+<div id="tb_3" class="t s1_3">Sleeve	boom	sprayers	must	be	correctly	calibrated,	well	main-</div>
+<div id="tc_3" class="t s1_3">tained	and	fitted	with	the	correct	nozzles.</div>
+<div id="td_3" class="t s1_3">•	</div>
+<div id="te_3" class="t s1_3">The	 air	 flow	 system	 on	 a	 sleeve	 boom	 sprayer	 should	 work	</div>
+<div id="tf_3" class="t s1_3">properly	and	sprays	should	always	cover	the	target	plant	fully.	</div>
+<div id="tg_3" class="t s1_3">•	</div>
+<div id="th_3" class="t s1_3">The	use	recommendations	as	on	this	label	should	be	followed	</div>
+<div id="ti_3" class="t s1_3">and	no	changes	in	rates	or	product	combinations	or	adjuvants	</div>
+<div id="tj_3" class="t s1_3">should	be	done	other	than	indicated	in	this	label.	</div>
+<div id="tk_3" class="t s1_3">•	</div>
+<div id="tl_3" class="t s1_3">Droplet	sizes	that	are	prone	to	drift	should	be	eliminated	by	the	</div>
+<div id="tm_3" class="t s1_3">correct	choice	of	nozzles.		</div>
+<div id="tn_3" class="t s1_3">•	</div>
+<div id="to_3" class="t s2_3">No pre-emergence</div>
+<div id="tp_3" class="t s1_3">applications	 of	</div>
+<div id="tq_3" class="t s2_3">CALLISTO</div>
+<div id="tr_3" class="t s1_3">should	 be	</div>
+<div id="ts_3" class="t s1_3">done	with	sleeve	boom	sprayers.	</div>
+<div id="tt_3" class="t s1_3">If	 these	 precautions	 are	 not	 adhered	 to	 the	 registration	 holder	</div>
+<div id="tu_3" class="t s1_3">cannot	be	held	responsible	for	any	non	performance	or	damages	</div>
+<div id="tv_3" class="t s1_3">suffered.	</div>
+<div id="tw_3" class="t s1_3">Rain	 or	 irrigation	 of	 10	 -	 20	 mm	 is	 needed	 after	 application	 to	</div>
+<div id="tx_3" class="t s1_3">leach	the	chemical	into	the	germinating	zone.	If	this	precipitation	</div>
+<div id="ty_3" class="t s1_3">does	not	happen	within	14	days	of	application,	reduced	efficacy	</div>
+<div id="tz_3" class="t s1_3">can	be	expected.</div>
+<div id="t10_3" class="t s2_3">5.5 </div>
+<div id="t11_3" class="t s2_3">Aerial application </div>
+<div id="t12_3" class="t s2_3">(CALLISTO is only registered pre-</div>
+<div id="t13_3" class="t s2_3">emergence for aerial application in maize)</div>
+<div id="t14_3" class="t s2_3">Avoid chemical drift at all times</div>
+<div id="t15_3" class="t s1_3">Aerial	application	of	</div>
+<div id="t16_3" class="t s2_3">CALLISTO</div>
+<div id="t17_3" class="t s1_3">may	only	be	done	by	a	registered	</div>
+<div id="t18_3" class="t s1_3">aerial	application	operator	using	a	correctly	calibrated,	registered	</div>
+<div id="t19_3" class="t s1_3">aircraft	 according	 to	 the	 instructions	 of	 SANS	 10118	 (Aerial	</div>
+<div id="t1a_3" class="t s1_3">Application	of	Agricultural	Remedies).	</div>
+<div id="t1b_3" class="t s1_3">It	is	important	to	ensure	that	the	spray	mixture	is	distributed	evenly	</div>
+<div id="t1c_3" class="t s1_3">over	 the	 target	 area	 and	 that	 the	 loss	 of	 spray	 material	 during	</div>
+<div id="t1d_3" class="t s1_3">application	is	restricted	to	a	minimum.	Drift	should	be	avoided	at	</div>
+<div id="t1e_3" class="t s1_3">all	times.	It	is	therefore	essential	that	the	following	criteria	are	met:</div>
+<div id="t1f_3" class="t s2_3">5.5.1 Application parameters:</div>
+<div id="t1g_3" class="t s1_3">•	</div>
+<div id="t1h_3" class="t s2_3">Volume</div>
+<div id="t1i_3" class="t s1_3">:	 A	 volume	 of	 25	 -	 30	</div>
+<div id="t1j_3" class="t s3_3">l</div>
+<div id="t1k_3" class="t s1_3">/ha	 is	 recommended.	 	 As	</div>
+<div id="t1l_3" class="t s2_3">CALLISTO </div>
+<div id="t1m_3" class="t s1_3">has	not	been	evaluated	at	a	reduced	volume	rate,	</div>
+<div id="t1n_3" class="t s1_3">the	 registration	 holder	 cannot	 guarantee	 efficacy	 or	 be	 held	</div>
+<div id="t1o_3" class="t s1_3">responsible	 for	 any	 adverse	 effects	 if	 the	 product	 is	 applied	</div>
+<div id="t1p_3" class="t s1_3">aerially	at	a	lower	volume	rate	than	recommended	above.	</div>
+<div id="t1q_3" class="t s1_3">•	</div>
+<div id="t1r_3" class="t s2_3">Droplet coverage</div>
+<div id="t1s_3" class="t s1_3">:	A	droplet	coverage	of	20	-	30	droplets	per	</div>
+<div id="t1t_3" class="t s1_3">cm</div>
+<div id="t1u_3" class="t s4_3">2</div>
+<div id="t1v_3" class="t s1_3">must	be	recovered	at	the	target.</div>
+<div id="t1w_3" class="t s1_3">•	</div>
+<div id="t1x_3" class="t s2_3">Droplet size</div>
+<div id="t1y_3" class="t s1_3">:	A	droplet	spectrum	with	a	VMD	of	350	-	400	</div>
+<div id="t1z_3" class="t s1_3">microns	is	recommended.	Ensure	that	the	production	of	fine	</div>
+<div id="t20_3" class="t s1_3">droplets	(less	than	150	microns)	is	restricted	to	a	minimum.</div>
+<div id="t21_3" class="t s1_3">•	</div>
+<div id="t22_3" class="t s2_3">Flying height</div>
+<div id="t23_3" class="t s1_3">:	The	height	of	the	spray	boom	should	be	main-</div>
+<div id="t24_3" class="t s1_3">tained	 at	 3	 -	 4	 metres	 above	 the	 target.	 Do	 not	 spray	 when	</div>
+<div id="t25_3" class="t s1_3">aircraft	is	in	a	climb,	at	the	top	or	during	a	dive,	or	when	banking.</div>
+<div id="t26_3" class="t s2_3">5.5.2 Equipment:</div>
+<div id="t27_3" class="t s1_3">•	</div>
+<div id="t28_3" class="t s1_3">Use	suitable	atomising	equipment	(hydraulic	nozzles	or	rotary	</div>
+<div id="t29_3" class="t s1_3">atomisers)	 that	 will	 produce	 the	 desired	 droplet	 size	 and	</div>
+<div id="t2a_3" class="t s1_3">coverage	but	which	will	ensure	the	minimum	loss	of	product	</div>
+<div id="t2b_3" class="t s1_3">either	through	endodrift	(within	target	field)	or	exodrift	(outside	</div>
+<div id="t2c_3" class="t s1_3">target	field).		</div>
+<div id="t2d_3" class="t s1_3">•	</div>
+<div id="t2e_3" class="t s1_3">The	 operator	 must	 use	 a	 set	 up	 that	 will	 produce	 a	 droplet	</div>
+<div id="t2f_3" class="t s1_3">spectrum	with	the	lowest	possible	Relative	Span.</div>
+<div id="t2g_3" class="t s1_3">•	</div>
+<div id="t2h_3" class="t s1_3">All	 nozzles	 /	 atomisers	 should	 be	 positioned	 within	 the	 inner	</div>
+<div id="t2i_3" class="t s1_3">60%	to	75%	of	the	wingspan	to	prevent	droplets	from	entering	</div>
+<div id="t2j_3" class="t s1_3">the	wingtip	vortices.</div>
+<div id="t2k_3" class="t s2_3">5.5.3 Meteorological conditions:</div>
+<div id="t2l_3" class="t s1_3">•	</div>
+<div id="t2m_3" class="t s1_3">The	difference	in	temperature	between	the	wet	and	dry	bulb	</div>
+<div id="t2n_3" class="t s1_3">thermometers,	 of	 a	 whirling	 hygrometer,	 should	 not	 exceed	</div>
+<div id="t2o_3" class="t s1_3">8°C.		</div>
+<div id="t2p_3" class="t s1_3">•	</div>
+<div id="t2q_3" class="t s1_3">Stop	spraying	if	the	wind	speed	exceeds	15	km/h	or	reduces	</div>
+<div id="t2r_3" class="t s1_3">to	less	than	5	km/h.</div>
+<div id="t2s_3" class="t s1_3">•	</div>
+<div id="t2t_3" class="t s1_3">Aerial	application	of	</div>
+<div id="t2u_3" class="t s2_3">CALLISTO</div>
+<div id="t2v_3" class="t s1_3">must	not	be	done	under	tur-</div>
+<div id="t2w_3" class="t s1_3">bulent,	 unstable	 conditions	 during	 the	 heat	 of	 the	 day	 when	</div>
+<div id="t2x_3" class="t s1_3">rising	thermals	and	downdraughts	occur.	</div>
+<div id="t2y_3" class="t s1_3">•	</div>
+<div id="t2z_3" class="t s1_3">Also	note	that	the	application	of	</div>
+<div id="t30_3" class="t s2_3">CALLISTO</div>
+<div id="t31_3" class="t s1_3">under	tempera-</div>
+<div id="t32_3" class="t s1_3">ture	 inversion	 conditions	 (spraying	 in	 or	 above	 the	 inversion	</div>
+<div id="t33_3" class="t s1_3">layer)	may	lead	to	the	following:</div>
+<div id="t34_3" class="t s1_3">•		</div>
+<div id="t35_3" class="t s1_3">reduced	 efficacy	 due	 to	 suspension	 and	 evaporation	 of	</div>
+<div id="t36_3" class="t s1_3">small	droplets	in	the	air	(inadequate	coverage)</div>
+<div id="t37_3" class="t s1_3">•		</div>
+<div id="t38_3" class="t s1_3">damage	to	other	sensitive	crops	and	or	non-target	areas	</div>
+<div id="t39_3" class="t s1_3">through	 the	 movement	 of	 the	 suspended	 spray	 cloud	</div>
+<div id="t3a_3" class="t s1_3">away	from	the	target	field.</div>
+<div id="t3b_3" class="t s1_3">•	</div>
+<div id="t3c_3" class="t s1_3">Under	 the	 following	 climatic	 conditions	 it	 can	 cause	 serious	</div>
+<div id="t3d_3" class="t s1_3">damage	as	far	as	3	to	5	km	from	the	nearest	spray	path	of	the	</div>
+<div id="t3e_3" class="t s1_3">aircraft:	</div>
+<div id="t3f_3" class="t s1_3">•		</div>
+<div id="t3g_3" class="t s1_3">cloudy	 weather	 with	 relative	 humidity	 above	 80	 %	 and	</div>
+<div id="t3h_3" class="t s1_3">low	air	movement	of	less	than	5	km	per	hour.	When	such	</div>
+<div id="t3i_3" class="t s1_3">conditions	prevail,	aerial	application	should	</div>
+<div id="t3j_3" class="t s2_3">NOT </div>
+<div id="t3k_3" class="t s1_3">be	car-</div>
+<div id="t3l_3" class="t s1_3">ried	out	where	sensitive	crops,	crop	seedlings,	deciduous	</div>
+<div id="t3m_3" class="t s1_3">fruit	trees	and	grape	vines	in	budding	or	early	development	</div>
+<div id="t3n_3" class="t s1_3">stages	are	present	within	5	km	of	the	nearest	spray	path	</div>
+<div id="t3o_3" class="t s1_3">of	the	aircraft.</div>
+<div id="t3p_3" class="t s1_3">Ensure	that	the	aerial	spray	operator	knows	which	fields	to	spray.	</div>
+<div id="t3q_3" class="t s1_3">Supply	 the	 precise	 identification	 to	 the	 operator	 of	 the	 fields	 to	</div>
+<div id="t3r_3" class="t s1_3">be	sprayed	preferably	by	means	of	a	map	or	GPS	coordinates.	</div>
+<div id="t3s_3" class="t s1_3">Indicate	 to	 the	 operator	 adjacent	 environmental	 sensitive	 areas	</div>
+<div id="t3t_3" class="t s1_3">or	sensitive	neighbouring	crops,	beehives	or	water	sources	that	</div>
+<div id="t3u_3" class="t s1_3">could	be	affected	by	the	pesticide.</div>
+<div id="t3v_3" class="t s1_3">Obtain	an	assurance	from	the	aerial	spray	operator	that	the	above	</div>
+<div id="t3w_3" class="t s1_3">requirements	will	be	met	and	that	relevant	data	will	be	compiled	in	</div>
+<div id="t3x_3" class="t s1_3">a	logbook	and	kept	for	future	reference.</div>
+<div id="t3y_3" class="t s2_3">5.6 </div>
+<div id="t3z_3" class="t s2_3">Centre pivot application (Only pre-emergence in maize)</div>
+<div id="t40_3" class="t s2_3">CALLISTO</div>
+<div id="t41_3" class="t s1_3">and	 DUAL	 GOLD	 can	 be	 applied	 through	 a	 well-</div>
+<div id="t42_3" class="t s1_3">operated	and	well-maintained	centre	pivot	irrigation	system.	</div>
+<div id="t43_3" class="t s1_3">The	centre	pivot	should	apply	between	4,5	mm	and	7,5	mm	of	</div>
+<div id="t44_3" class="t s1_3">water	when	applying	265	m</div>
+<div id="t45_3" class="t s3_3">l</div>
+<div id="t46_3" class="t s2_3">CALLISTO</div>
+<div id="t47_3" class="t s1_3">/ha	and	710	m</div>
+<div id="t48_3" class="t s3_3">l</div>
+<div id="t49_3" class="t s1_3">DUAL	</div>
+<div id="t4a_3" class="t s1_3">GOLD/ha.	Control	should	be	for	about	56	days	where	after	the	</div>
+<div id="t4b_3" class="t s1_3">follow-on	application	should	be	applied	by	tractor	sprayer.	</div>
+<div id="t4c_3" class="t s1_3">KARATE	can	be	added	to	this	pre-emergence	mixture	to	control	</div>
+<div id="t4d_3" class="t s1_3">cutworms	at	the	registered	rate	(70	m</div>
+<div id="t4e_3" class="t s3_3">l</div>
+<div id="t4f_3" class="t s1_3">/ha).</div>
+<div id="t4g_3" class="t s1_3">•	</div>
+<div id="t4h_3" class="t s1_3">Calculate	the	injection	rate	carefully	and	make	sure	it	is	correct</div>
+<div id="t4i_3" class="t s1_3">•	 Apply	within	2	days	of	planting</div>
+<div id="t4j_3" class="t s1_3">•	</div>
+<div id="t4k_3" class="t s1_3">Application	should	be	done	to	fields	which	are	well	prepared	</div>
+<div id="t4l_3" class="t s1_3">and	with	no	germinating	or	established	weeds	</div>
+<div id="t4m_3" class="t s1_3">•	</div>
+<div id="t4n_3" class="t s1_3">Applications	 should	 only	 be	 done	 through	 centre	 pivots	</div>
+<div id="t4o_3" class="t s1_3">equipped	with	an	injector	system.</div>
+<div id="t4p_3" class="t s1_3">•	</div>
+<div id="t4q_3" class="t s1_3">Once	</div>
+<div id="t4r_3" class="t s2_3">CALLISTO</div>
+<div id="t4s_3" class="t s1_3">has	been	applied	on	the	whole	of	the	cen-</div>
+<div id="t4t_3" class="t s1_3">tre	 pivot	 area,	 it	 should	 be	 set	 to	 apply	 the	 following	 water	</div>
+<div id="t4u_3" class="t s1_3">volumes</div>
+<div id="t4v_3" class="t s1_3">•		</div>
+<div id="t4w_3" class="t s1_3">10	mm	water	per	ha	when	clay	content	&lt;	20%</div>
+<div id="t4x_3" class="t s1_3">•		</div>
+<div id="t4y_3" class="t s1_3">15	mm	water	per	ha	when	clay	content	is	20	-	35%</div>
+<div id="t4z_3" class="t s1_3">•		</div>
+<div id="t50_3" class="t s1_3">20	mm	water	per	ha	when	clay	content	&gt;	35%</div>
+<div id="t51_3" class="t s1_3">•	 Keep	soil	wet	for	a	period	of	7-14	days	after	application.</div>
+<div id="t52_3" class="t s1_3">•	</div>
+<div id="t53_3" class="t s1_3">Be	aware	that	the	distribution	of	</div>
+<div id="t54_3" class="t s2_3">CALLISTO</div>
+<div id="t55_3" class="t s1_3">and	DUAL	GOLD	</div>
+<div id="t56_3" class="t s1_3">will	only	be	as	even	as	the	application	of	the	irrigation	water.</div>
+<div id="t57_3" class="t s1_3">•	</div>
+<div id="t58_3" class="t s1_3">Do	not	apply	chemicals	through	the	irrigation	water	in	exces-</div>
+<div id="t59_3" class="t s1_3">sive	wind	speeds	(&lt;	6	ms</div>
+<div id="t5a_3" class="t s4_3">-1</div>
+<div id="t5b_3" class="t s1_3">)		</div>
+<div id="t5c_3" class="t s1_3">•	</div>
+<div id="t5d_3" class="t s1_3">Be	careful	when	the	irrigation	system	overlap	at	the	end	of	the	</div>
+<div id="t5e_3" class="t s1_3">cycle	area	as	serious	over	dosage	and	possible	damage	could	</div>
+<div id="t5f_3" class="t s1_3">occur.</div>
+<div id="t5g_3" class="t s1_3">•	</div>
+<div id="t5h_3" class="t s1_3">Care	 should	 be	 taken	 when	 applying	 chemicals	 through	 the	</div>
+<div id="t5i_3" class="t s1_3">centre	pivot	as	breakages	or	stoppages	could	lead	to	major	</div>
+<div id="t5j_3" class="t s1_3">over	application	of	the	chemicals.</div>
+<div id="t5k_3" class="t s1_3">•	</div>
+<div id="t5l_3" class="t s1_3">Care	should	be	taken	not	to	contaminate	boreholes	or	dams	</div>
+<div id="t5m_3" class="t s1_3">with	accidental	spillages	of	chemicals	in	the	irrigation	system.	</div>
+<div id="t5n_3" class="t s1_3">Injection	of	the	chemicals	close	or	at	the	centre	is	preferable.	</div>
+<div id="t5o_3" class="t s1_3">Both	the	injector	pump	and	the	water	pump	should	be	fitted	</div>
+<div id="t5p_3" class="t s2_3">CALLISTO</div>
+<div id="t5q_3" class="t s1_3">/	3</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg3Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg3"><img src="3/3.png" id="pdf3" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f3 = [['t1_3',1387],['t6_3',1243],['te_3',1317],['to_3',450],['tp_3',329],['tr_3',232],['tt_3',1387],['tw_3',1387],['t11_3',413],['t12_3',813],['t13_3',983],['t14_3',738],['t19_3',1387],['t1c_3',1386],['t1f_3',715],['t1i_3',523],['t1k_3',588],['t1n_3',1317],['t1o_3',1317],['t1r_3',401],['t1x_3',284],['t22_3',295],['t24_3',1317],['t26_3',421],['t29_3',1317],['t2e_3',1317],['t2h_3',1318],['t2k_3',778],['t2n_3',1317],['t2w_3',1318],['t32_3',1317],['t35_3',1231],['t39_3',1231],['t3c_3',1318],['t3g_3',1231],['t3q_3',1387],['t3s_3',1387],['t3z_3',1269],['t41_3',1106],['t4i_3',716],['t4n_3',1318],['t4t_3',1317],['t51_3',1261],['t5h_3',1317]];
+var c3 = 0;
+function fontAdjustments3(){;
+	if (c3<f3.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f3[c3][0],f3[c3][1]);
+		c3++;
+		if (c3%10 == 0) {
+			setTimeout(function(){fontAdjustments3()},0);
+		} else {
+			fontAdjustments3();
+		}
+	}
+};
+function load3(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments3,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 207;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_3");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(8,3,909,1286,0);
+</script>
+</body>
+</html>

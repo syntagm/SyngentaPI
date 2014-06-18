@@ -1,0 +1,1051 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>AVICTA___Eng_2010_02_01 Page2</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load2();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_2{left:402px;top:41px;}
+#t2_2{left:450px;top:41px;}
+#t3_2{left:88px;top:69px;}
+#t4_2{left:101px;top:83px;}
+#t5_2{left:88px;top:98px;}
+#t6_2{left:66px;top:127px;}
+#t7_2{left:66px;top:156px;}
+#t8_2{left:66px;top:185px;}
+#t9_2{left:119px;top:185px;}
+#ta_2{left:66px;top:199px;}
+#tb_2{left:66px;top:214px;}
+#tc_2{left:66px;top:228px;}
+#td_2{left:66px;top:257px;}
+#te_2{left:141px;top:257px;}
+#tf_2{left:66px;top:272px;}
+#tg_2{left:66px;top:286px;}
+#th_2{left:66px;top:301px;}
+#ti_2{left:66px;top:315px;}
+#tj_2{left:66px;top:344px;}
+#tk_2{left:119px;top:344px;}
+#tl_2{left:66px;top:359px;}
+#tm_2{left:66px;top:373px;}
+#tn_2{left:66px;top:388px;}
+#to_2{left:66px;top:417px;}
+#tp_2{left:184px;top:417px;}
+#tq_2{left:66px;top:431px;}
+#tr_2{left:66px;top:446px;}
+#ts_2{left:66px;top:475px;}
+#tt_2{left:66px;top:504px;}
+#tu_2{left:66px;top:519px;}
+#tv_2{left:66px;top:533px;}
+#tw_2{left:66px;top:548px;}
+#tx_2{left:66px;top:577px;}
+#ty_2{left:66px;top:591px;}
+#tz_2{left:66px;top:606px;}
+#t10_2{left:66px;top:620px;}
+#t11_2{left:66px;top:635px;}
+#t12_2{left:66px;top:649px;}
+#t13_2{left:66px;top:664px;}
+#t14_2{left:66px;top:693px;}
+#t15_2{left:66px;top:707px;}
+#t16_2{left:66px;top:722px;}
+#t17_2{left:66px;top:736px;}
+#t18_2{left:66px;top:751px;}
+#t19_2{left:66px;top:765px;}
+#t1a_2{left:66px;top:794px;}
+#t1b_2{left:66px;top:823px;}
+#t1c_2{left:88px;top:823px;}
+#t1d_2{left:136px;top:823px;}
+#t1e_2{left:88px;top:838px;}
+#t1f_2{left:66px;top:852px;}
+#t1g_2{left:88px;top:852px;}
+#t1h_2{left:88px;top:867px;}
+#t1i_2{left:88px;top:881px;}
+#t1j_2{left:88px;top:896px;}
+#t1k_2{left:66px;top:910px;}
+#t1l_2{left:88px;top:910px;}
+#t1m_2{left:88px;top:925px;}
+#t1n_2{left:238px;top:925px;}
+#t1o_2{left:283px;top:925px;}
+#t1p_2{left:88px;top:939px;}
+#t1q_2{left:88px;top:954px;}
+#t1r_2{left:88px;top:968px;}
+#t1s_2{left:66px;top:997px;}
+#t1t_2{left:286px;top:997px;}
+#t1u_2{left:66px;top:1027px;}
+#t1v_2{left:66px;top:1056px;}
+#t1w_2{left:88px;top:1056px;}
+#t1x_2{left:136px;top:1056px;}
+#t1y_2{left:88px;top:1070px;}
+#t1z_2{left:156px;top:1070px;}
+#t20_2{left:204px;top:1070px;}
+#t21_2{left:88px;top:1085px;}
+#t22_2{left:88px;top:1099px;}
+#t23_2{left:88px;top:1114px;}
+#t24_2{left:267px;top:1114px;}
+#t25_2{left:324px;top:1114px;}
+#t26_2{left:373px;top:1114px;}
+#t27_2{left:88px;top:1128px;}
+#t28_2{left:88px;top:1143px;}
+#t29_2{left:88px;top:1157px;}
+#t2a_2{left:88px;top:1172px;letter-spacing:-1px;}
+#t2b_2{left:88px;top:1186px;}
+#t2c_2{left:66px;top:1201px;}
+#t2d_2{left:88px;top:1201px;}
+#t2e_2{left:88px;top:1215px;}
+#t2f_2{left:120px;top:1215px;}
+#t2g_2{left:168px;top:1215px;}
+#t2h_2{left:88px;top:1230px;}
+#t2i_2{left:478px;top:70px;}
+#t2j_2{left:503px;top:70px;}
+#t2k_2{left:456px;top:99px;}
+#t2l_2{left:478px;top:99px;}
+#t2m_2{left:456px;top:113px;}
+#t2n_2{left:478px;top:113px;}
+#t2o_2{left:456px;top:128px;}
+#t2p_2{left:478px;top:128px;}
+#t2q_2{left:730px;top:128px;}
+#t2r_2{left:780px;top:128px;}
+#t2s_2{left:478px;top:142px;}
+#t2t_2{left:478px;top:157px;}
+#t2u_2{left:456px;top:171px;}
+#t2v_2{left:478px;top:171px;}
+#t2w_2{left:478px;top:186px;}
+#t2x_2{left:456px;top:200px;}
+#t2y_2{left:478px;top:200px;}
+#t2z_2{left:456px;top:229px;}
+#t30_2{left:456px;top:258px;}
+#t31_2{left:478px;top:258px;}
+#t32_2{left:478px;top:273px;}
+#t33_2{left:456px;top:288px;}
+#t34_2{left:478px;top:288px;}
+#t35_2{left:478px;top:302px;}
+#t36_2{left:456px;top:317px;}
+#t37_2{left:478px;top:317px;}
+#t38_2{left:527px;top:317px;}
+#t39_2{left:478px;top:331px;}
+#t3a_2{left:478px;top:346px;}
+#t3b_2{left:478px;top:360px;}
+#t3c_2{left:478px;top:375px;}
+#t3d_2{left:636px;top:375px;}
+#t3e_2{left:681px;top:375px;}
+#t3f_2{left:478px;top:389px;}
+#t3g_2{left:456px;top:404px;}
+#t3h_2{left:478px;top:404px;}
+#t3i_2{left:662px;top:404px;}
+#t3j_2{left:709px;top:404px;}
+#t3k_2{left:478px;top:418px;}
+#t3l_2{left:478px;top:433px;}
+#t3m_2{left:456px;top:447px;}
+#t3n_2{left:478px;top:447px;}
+#t3o_2{left:478px;top:462px;}
+#t3p_2{left:478px;top:476px;}
+#t3q_2{left:478px;top:491px;}
+#t3r_2{left:456px;top:520px;}
+#t3s_2{left:533px;top:520px;}
+#t3t_2{left:456px;top:534px;}
+#t3u_2{left:456px;top:563px;}
+#t3v_2{left:456px;top:592px;}
+#t3w_2{left:456px;top:607px;}
+#t3x_2{left:465px;top:1116px;}
+#t3y_2{left:504px;top:1118px;}
+#t3z_2{left:508px;top:1116px;}
+#t40_2{left:514px;top:1116px;}
+#t41_2{left:553px;top:1118px;}
+#t42_2{left:557px;top:1116px;}
+#t43_2{left:604px;top:1118px;}
+#t44_2{left:609px;top:1116px;}
+#t45_2{left:666px;top:1118px;}
+#t46_2{left:671px;top:1116px;}
+#t47_2{left:725px;top:1118px;}
+#t48_2{left:732px;top:1116px;}
+#t49_2{left:465px;top:1131px;}
+#t4a_2{left:465px;top:1189px;}
+#t4b_2{left:591px;top:1189px;}
+#t4c_2{left:465px;top:1203px;}
+#t4d_2{left:703px;top:1232px;}
+#t4e_2{left:468px;top:869px;}
+#t4f_2{left:541px;top:869px;}
+#t4g_2{left:551px;top:869px;}
+#t4h_2{left:533px;top:912px;}
+#t4i_2{left:530px;top:927px;}
+#t4j_2{left:539px;top:941px;}
+#t4k_2{left:530px;top:956px;}
+#t4l_2{left:533px;top:970px;}
+#t4m_2{left:530px;top:985px;}
+#t4n_2{left:642px;top:866px;}
+#t4o_2{left:642px;top:881px;}
+#t4p_2{left:696px;top:910px;}
+#t4q_2{left:699px;top:924px;}
+#t4r_2{left:699px;top:939px;}
+#t4s_2{left:699px;top:954px;}
+#t4t_2{left:699px;top:968px;}
+#t4u_2{left:699px;top:983px;}
+#t4v_2{left:485px;top:642px;}
+#t4w_2{left:461px;top:670px;}
+#t4x_2{left:461px;top:684px;}
+#t4y_2{left:461px;top:699px;}
+#t4z_2{left:461px;top:713px;}
+#t50_2{left:461px;top:728px;}
+#t51_2{left:552px;top:642px;}
+#t52_2{left:553px;top:670px;}
+#t53_2{left:618px;top:670px;}
+#t54_2{left:549px;top:684px;}
+#t55_2{left:569px;top:699px;}
+#t56_2{left:686px;top:642px;}
+#t57_2{left:642px;top:670px;}
+#t58_2{left:750px;top:670px;}
+#t59_2{left:642px;top:684px;}
+#t5a_2{left:642px;top:699px;}
+#t5b_2{left:642px;top:713px;}
+#t5c_2{left:642px;top:742px;}
+#t5d_2{left:673px;top:742px;}
+#t5e_2{left:700px;top:742px;}
+#t5f_2{left:742px;top:742px;}
+#t5g_2{left:784px;top:742px;}
+#t5h_2{left:642px;top:757px;}
+#t5i_2{left:642px;top:771px;}
+#t5j_2{left:642px;top:786px;}
+#t5k_2{left:642px;top:800px;}
+#t5l_2{left:461px;top:828px;}
+#t5m_2{left:461px;top:842px;}
+
+.s4_2{
+	FONT-SIZE: 21px;
+	FONT-FAMILY: WIKYKP-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s1_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: WIKYKP-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s6_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: VAASWR-Mt-ExtraPlain2;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: WIKYKP-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+.s3_2{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: WIKYKP-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s7_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: VAASWR-HelveticaNeueLTStd-It2;
+	color: rgb(0,0,0);
+}
+
+.s5_2{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: WIKYKP-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: WIKYKP-HelveticaNeueLTStd-Lt2;
+	src: url("2/fonts/WIKYKP-HelveticaNeueLTStd-Lt.eot");
+	src: url("2/fonts/WIKYKP-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/WIKYKP-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: WIKYKP-HelveticaNeueLTStd-Bd2;
+	src: url("2/fonts/WIKYKP-HelveticaNeueLTStd-Bd.eot");
+	src: url("2/fonts/WIKYKP-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/WIKYKP-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: VAASWR-Mt-ExtraPlain2;
+	src: url("2/fonts/VAASWR-Mt-ExtraPlain.eot");
+	src: url("2/fonts/VAASWR-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/VAASWR-Mt-ExtraPlain.otf") format("opentype");
+}
+
+@font-face {
+	font-family: VAASWR-HelveticaNeueLTStd-It2;
+	src: url("2/fonts/VAASWR-HelveticaNeueLTStd-It.eot");
+	src: url("2/fonts/VAASWR-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/VAASWR-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_2" class="t s1_2">AVICTA </div>
+<div id="t2_2" class="t s2_2">/	2</div>
+<div id="t3_2" class="t s2_2">•	 	Chemical-resistant	 coveralls	 over	 long	 sleeved	 shirt	 and	</div>
+<div id="t4_2" class="t s2_2">long	pants</div>
+<div id="t5_2" class="t s2_2">•	 	Shoes	and	socks</div>
+<div id="t6_2" class="t s1_2">3. SYMPTOMS OF HUMAN POISONING</div>
+<div id="t7_2" class="t s1_2">FIRST AID</div>
+<div id="t8_2" class="t s1_2">If inhaled</div>
+<div id="t9_2" class="t s2_2">:	Move	person	to	fresh	air.	If	person	is	not	breathing,	call	</div>
+<div id="ta_2" class="t s2_2">a	doctor	or	an	ambulance,	then	give	artificial	respiration	preferably	</div>
+<div id="tb_2" class="t s2_2">by	mouth-to-mouth,	if	possible.	Call	a	poison	control	centre	or	a	</div>
+<div id="tc_2" class="t s2_2">doctor	for	further	treatment	advice.</div>
+<div id="td_2" class="t s1_2">If swallowed</div>
+<div id="te_2" class="t s2_2">:	 Call	 poison	 control	 centre	 or	 doctor	 immediately	</div>
+<div id="tf_2" class="t s2_2">for	 treatment	 advice.	 Have	 person	 sip	 a	 glass	 of	 water	 if	 able	</div>
+<div id="tg_2" class="t s2_2">to	swallow.	Do	not	induce	vomiting	unless	told	to	do	so	by	the	</div>
+<div id="th_2" class="t s2_2">poison	 centre	 or	 doctor.	 Do	 not	 give	 anything	 by	 mouth	 to	 an	</div>
+<div id="ti_2" class="t s2_2">unconscious	person.</div>
+<div id="tj_2" class="t s1_2">If in eyes</div>
+<div id="tk_2" class="t s2_2">:	Hold	eye	open	and	rinse	slowly	and	gently	with	water	</div>
+<div id="tl_2" class="t s2_2">for	15	-	20	minutes.	Remove	contact	lenses,	if	present,	after	the	</div>
+<div id="tm_2" class="t s2_2">first	 5	 minutes,	 then	 continue	 rinsing	 eye.	 Call	 a	 poison	 control	</div>
+<div id="tn_2" class="t s2_2">centre	or	doctor	for	treatment	advice.</div>
+<div id="to_2" class="t s1_2">If on skin or clothing</div>
+<div id="tp_2" class="t s2_2">:	Take	off	contaminated	clothing.	Rinse	skin	</div>
+<div id="tq_2" class="t s2_2">immediately	with	plenty	of	water	for	15	-	20	minutes.	Call	a	poison	</div>
+<div id="tr_2" class="t s2_2">control	centre	or	doctor	for	treatment	advice.</div>
+<div id="ts_2" class="t s1_2">NOTE TO PHYSICIAN</div>
+<div id="tt_2" class="t s2_2">Early	 signs	 of	 intoxication	 include	 dilation	 of	 pupils,	 muscular	</div>
+<div id="tu_2" class="t s2_2">incoordination	and	muscular	tremors.	Toxicity	following	accidental	</div>
+<div id="tv_2" class="t s2_2">ingestion	of	this	product	can	be	minimized	by	early	administration	</div>
+<div id="tw_2" class="t s2_2">of	chemical	adsorbents	(e.g.,	activated	charcoal).</div>
+<div id="tx_2" class="t s2_2">If	toxicity	from	exposure	has	progressed	to	cause	severe	vomit-</div>
+<div id="ty_2" class="t s2_2">ing,	the	extent	of	resultant	fluid	and	electrolyte	imbalance	should	</div>
+<div id="tz_2" class="t s2_2">be	 gauged.	 Appropriate	 supportive	 parental	 fluid	 replacement	</div>
+<div id="t10_2" class="t s2_2">therapy	 should	 be	 given,	 along	 with	 other	 required	 supportive	</div>
+<div id="t11_2" class="t s2_2">measures	 (such	 as	 maintenance	 of	 blood	 pressure	 levels	 and	</div>
+<div id="t12_2" class="t s2_2">proper	 respiratory	 functionality)	 as	 indicated	 by	 clinical	 signs,	</div>
+<div id="t13_2" class="t s2_2">symptoms,	and	measurements).</div>
+<div id="t14_2" class="t s2_2">In	severe	cases,	observations	should	continue	for	at	least	several	</div>
+<div id="t15_2" class="t s2_2">days	 until	 clinical	 conditions	 are	 stable	 and	 normal.	 Since	 aba-</div>
+<div id="t16_2" class="t s2_2">mectin	 is	 believed	 to	 enhance	 GABA	 activity	 in	 animals,	 it	 is	</div>
+<div id="t17_2" class="t s2_2">pro	bably	wise	to	avoid	drugs	that	enhance	GAGA	activity	(barbi-</div>
+<div id="t18_2" class="t s2_2">turates,	benzodiazepines,	valproic	acid)	in	patients	with	potentially	</div>
+<div id="t19_2" class="t s2_2">toxic	abamectin	exposure.</div>
+<div id="t1a_2" class="t s1_2">4. USE RESTRICTIONS</div>
+<div id="t1b_2" class="t s2_2">•	</div>
+<div id="t1c_2" class="t s1_2">AVICTA </div>
+<div id="t1d_2" class="t s2_2">may	only	be	used	on	commercially	available	certified	</div>
+<div id="t1e_2" class="t s2_2">seed.		</div>
+<div id="t1f_2" class="t s2_2">•	</div>
+<div id="t1g_2" class="t s2_2">Do	not	use	on	inbred	parent	plants	of	hybrids	or	experimental	</div>
+<div id="t1h_2" class="t s2_2">cultivars.		In	the	case	of	newly	released	cultivars	or	hybrids,	</div>
+<div id="t1i_2" class="t s2_2">use	only	after	consultation	with	Syngenta	or	your	seed	sup-</div>
+<div id="t1j_2" class="t s2_2">plier.</div>
+<div id="t1k_2" class="t s2_2">•	</div>
+<div id="t1l_2" class="t s2_2">Sufficient	 soil	 moisture	 and	 mild	 weather	 conditions	 are	</div>
+<div id="t1m_2" class="t s2_2">important	for	the	efficacy	of	</div>
+<div id="t1n_2" class="t s1_2">AVICTA</div>
+<div id="t1o_2" class="t s2_2">.	Unfavourable	germina-</div>
+<div id="t1p_2" class="t s2_2">tion	conditions,	such	as	prolonged	cold	spells	after	planting,	</div>
+<div id="t1q_2" class="t s2_2">drought,	 excessive	 moisture,	 or	 a	 combination	 thereof,	 can	</div>
+<div id="t1r_2" class="t s2_2">cause	delayed	germination.</div>
+<div id="t1s_2" class="t s1_2">5. DIRECTIONS FOR USE </div>
+<div id="t1t_2" class="t s2_2">Use	only	as	directed	</div>
+<div id="t1u_2" class="t s2_2">5.1	COMPATIBILITY</div>
+<div id="t1v_2" class="t s2_2">•	</div>
+<div id="t1w_2" class="t s1_2">AVICTA </div>
+<div id="t1x_2" class="t s2_2">may	be	used	on	seed	previously	treated	with	a	fungi-</div>
+<div id="t1y_2" class="t s2_2">cide.	Should	</div>
+<div id="t1z_2" class="t s1_2">AVICTA </div>
+<div id="t20_2" class="t s2_2">be	used	in	combination	with	a	fungicide	</div>
+<div id="t21_2" class="t s2_2">seed	treatment	product,	the	seed	must	first	be	treated	with	</div>
+<div id="t22_2" class="t s2_2">the	 fungicide	 according	 to	 the	 manufacturer’s	 instructions.	</div>
+<div id="t23_2" class="t s2_2">Thereafter	it	may	be	treated	with	</div>
+<div id="t24_2" class="t s1_2">AVICTA. </div>
+<div id="t25_2" class="t s1_2">AVICTA </div>
+<div id="t26_2" class="t s2_2">can	be</div>
+<div id="t27_2" class="t s2_2">use	 in	 combination	 with	 Syngenta	 fungicide	 and	 insecticide	</div>
+<div id="t28_2" class="t s2_2">seed	 treatments	 (APRON	 XL	 350	 ES	 (L6837),	 CELEST	 XL	</div>
+<div id="t29_2" class="t s2_2">035	FS	(L6353),	CELEST	XL	WHITE	(L7480),	DIVIDEND	030	FS	</div>
+<div id="t2a_2" class="t s2_2">(L6390),	CRUISER	(L6288)	and	CRUISER	WHITE	(L7546),	these	</div>
+<div id="t2b_2" class="t s2_2">products	can	be	mixed	and	applied	simultaneously.</div>
+<div id="t2c_2" class="t s2_2">•	</div>
+<div id="t2d_2" class="t s2_2">Syngenta	does	not	accept	responsibility	for	the	malfunction-</div>
+<div id="t2e_2" class="t s2_2">ing	of	</div>
+<div id="t2f_2" class="t s1_2">AVICTA</div>
+<div id="t2g_2" class="t s2_2">in	cases	where	other	seed	treatment	pro	ducts	</div>
+<div id="t2h_2" class="t s2_2">that	are	not	specified	on	the	label,	are	used	in	combination	</div>
+<div id="t2i_2" class="t s2_2">with	</div>
+<div id="t2j_2" class="t s1_2">AVICTA.</div>
+<div id="t2k_2" class="t s2_2">5.2</div>
+<div id="t2l_2" class="t s2_2">MIXING	INSTRUCTIONS</div>
+<div id="t2m_2" class="t s2_2">•	</div>
+<div id="t2n_2" class="t s2_2">Always	treat	seed	in	a	well-ventilated	area.	</div>
+<div id="t2o_2" class="t s2_2">•	</div>
+<div id="t2p_2" class="t s2_2">Thoroughly	 mix	 the	 recommended	 amount	 of	</div>
+<div id="t2q_2" class="t s1_2">AVICTA</div>
+<div id="t2r_2" class="t s2_2">and	</div>
+<div id="t2s_2" class="t s2_2">other	 seed	 treatment	 products	 desired	 with	 the	 amount	 of	</div>
+<div id="t2t_2" class="t s2_2">water	required	for	the	slurry	treater	and	the	dilution	rate.	</div>
+<div id="t2u_2" class="t s2_2">•	</div>
+<div id="t2v_2" class="t s2_2">Mix	 thoroughly	 with	 the	 recommended	 amount	 of	 water	</div>
+<div id="t2w_2" class="t s2_2">before	adding	to	the	seed.		</div>
+<div id="t2x_2" class="t s2_2">•	</div>
+<div id="t2y_2" class="t s2_2">Use	mixture	immediately	after	preparation.</div>
+<div id="t2z_2" class="t s2_2">5.3	SEED	TREATMENT	</div>
+<div id="t30_2" class="t s2_2">•	</div>
+<div id="t31_2" class="t s1_2">AVICTA IS NOT FOR USE IN ANY FARMER-APPLIED </div>
+<div id="t32_2" class="t s1_2">APPLICATION. </div>
+<div id="t33_2" class="t s2_2">•	</div>
+<div id="t34_2" class="t s1_2">TO BE USED IN SEED TREATMENT EQUIPMENT WITH </div>
+<div id="t35_2" class="t s1_2">CLOSED-TRANSFER SYSTEM ONLY.</div>
+<div id="t36_2" class="t s2_2">•	</div>
+<div id="t37_2" class="t s1_2">AVICTA </div>
+<div id="t38_2" class="t s2_2">can	be	applied	with	closed	system	seed	treatment	</div>
+<div id="t39_2" class="t s2_2">apparatus,	 provided	 that	 the	 product	 mixture	 is	 applied	</div>
+<div id="t3a_2" class="t s2_2">directly	to	the	seed	through	spray	nozzles	or	by	rotary	disks,	</div>
+<div id="t3b_2" class="t s2_2">during	 the	 seed	 treatment	 process.	 	 It	 is	 important	 that	 the	</div>
+<div id="t3c_2" class="t s2_2">applicator	is	calibrated	using	</div>
+<div id="t3d_2" class="t s1_2">AVICTA</div>
+<div id="t3e_2" class="t s2_2">,	as	the	flow	rate	may	</div>
+<div id="t3f_2" class="t s2_2">differ	from	other	products	used	for	seed	treatments.</div>
+<div id="t3g_2" class="t s2_2">•	</div>
+<div id="t3h_2" class="t s2_2">Add	the	recommended	quantity	of	</div>
+<div id="t3i_2" class="t s1_2">AVICTA </div>
+<div id="t3j_2" class="t s2_2">to	clean	water	so	</div>
+<div id="t3k_2" class="t s2_2">that	the	prescribed	amount	of	mixture	per	volume	of	seed	is	</div>
+<div id="t3l_2" class="t s2_2">not	exceeded.</div>
+<div id="t3m_2" class="t s2_2">•	</div>
+<div id="t3n_2" class="t s2_2">Add	the	mixture	to	the	seed	while	mixing,	until	even	coverage	</div>
+<div id="t3o_2" class="t s2_2">is	achieved.		Mix	until	the	seed	is	evenly	coated	appears	dry	</div>
+<div id="t3p_2" class="t s2_2">and	no	excess	mixture	remains	on	the	sides	or	in	the	bottom	</div>
+<div id="t3q_2" class="t s2_2">of	the	mixer.		Do	not	mix	for	longer	than	ne	cessary.</div>
+<div id="t3r_2" class="t s1_2">COMMENT: </div>
+<div id="t3s_2" class="t s2_2">Clean	all	apparatus	thoroughly	after	treatment	and	</div>
+<div id="t3t_2" class="t s2_2">application.</div>
+<div id="t3u_2" class="t s1_2">6. APPLICATION RATE</div>
+<div id="t3v_2" class="t s2_2">A	 soil	 fumigant	 is	 recommended	 in	 areas	 with	 a	 history	 of	 high	</div>
+<div id="t3w_2" class="t s2_2">nematode	populations.</div>
+<div id="t3x_2" class="t s3_2">AVICTA</div>
+<div id="t3y_2" class="t s4_2">®</div>
+<div id="t3z_2" class="t s5_2">,	</div>
+<div id="t40_2" class="t s3_2">APRON</div>
+<div id="t41_2" class="t s4_2">®</div>
+<div id="t42_2" class="t s3_2">, CELEST</div>
+<div id="t43_2" class="t s4_2">®</div>
+<div id="t44_2" class="t s3_2">, DIVIDEND</div>
+<div id="t45_2" class="t s4_2">®</div>
+<div id="t46_2" class="t s3_2">, CRUISER</div>
+<div id="t47_2" class="t s4_2">®</div>
+<div id="t48_2" class="t s5_2">=	Registered	</div>
+<div id="t49_2" class="t s5_2">Trade	Marks	of	a	Syngenta	Group	Company.	</div>
+<div id="t4a_2" class="t s3_2">© SYNGENTA AG, 2000. </div>
+<div id="t4b_2" class="t s5_2">Copyright	in	this	document	is	reserved.		All	</div>
+<div id="t4c_2" class="t s5_2">unauthorised	reproduction	is	forbidden.	</div>
+<div id="t4d_2" class="t s5_2">SA	Reg.	2010-02-01	</div>
+<div id="t4e_2" class="t s1_2">Dosage in m</div>
+<div id="t4f_2" class="t s6_2">l</div>
+<div id="t4g_2" class="t s1_2">product/bag</div>
+<div id="t4h_2" class="t s2_2">62.5</div>
+<div id="t4i_2" class="t s2_2">56,25	</div>
+<div id="t4j_2" class="t s2_2">50</div>
+<div id="t4k_2" class="t s2_2">43,75</div>
+<div id="t4l_2" class="t s2_2">37,5</div>
+<div id="t4m_2" class="t s2_2">31,25</div>
+<div id="t4n_2" class="t s1_2">Package size in number of </div>
+<div id="t4o_2" class="t s1_2">kernels per bag</div>
+<div id="t4p_2" class="t s2_2">100	000</div>
+<div id="t4q_2" class="t s2_2">90	000	</div>
+<div id="t4r_2" class="t s2_2">80	000	</div>
+<div id="t4s_2" class="t s2_2">70	000	</div>
+<div id="t4t_2" class="t s2_2">60	000	</div>
+<div id="t4u_2" class="t s2_2">50	000</div>
+<div id="t4v_2" class="t s1_2">Pest</div>
+<div id="t4w_2" class="t s1_2">MAIZE </div>
+<div id="t4x_2" class="t s1_2">Root knot </div>
+<div id="t4y_2" class="t s1_2">nematode</div>
+<div id="t4z_2" class="t s7_2">(Meloidogyne </div>
+<div id="t50_2" class="t s7_2">incognita)</div>
+<div id="t51_2" class="t s1_2">Dosage rate</div>
+<div id="t52_2" class="t s2_2">0.000625	m</div>
+<div id="t53_2" class="t s6_2">l</div>
+<div id="t54_2" class="t s2_2">product	/	seed	</div>
+<div id="t55_2" class="t s2_2">(kernel)</div>
+<div id="t56_2" class="t s1_2">Comments</div>
+<div id="t57_2" class="t s2_2">Seed	 treated	 with	</div>
+<div id="t58_2" class="t s1_2">AVICTA</div>
+<div id="t59_2" class="t s2_2">must	 preferably	 be	 planted	</div>
+<div id="t5a_2" class="t s2_2">between	3	and	5	centimetres	</div>
+<div id="t5b_2" class="t s2_2">deep.	</div>
+<div id="t5c_2" class="t s2_2">Use	</div>
+<div id="t5d_2" class="t s2_2">the	</div>
+<div id="t5e_2" class="t s2_2">tables	</div>
+<div id="t5f_2" class="t s2_2">below	</div>
+<div id="t5g_2" class="t s2_2">to	</div>
+<div id="t5h_2" class="t s2_2">determine	 the	 correct	 dos-</div>
+<div id="t5i_2" class="t s2_2">age	 rates	 for	 early	 season	</div>
+<div id="t5j_2" class="t s2_2">protection	 for	 maize	 seed-</div>
+<div id="t5k_2" class="t s2_2">lings	against	nematodes.</div>
+<div id="t5l_2" class="t s1_2">This section applies for seed packed as number of ker-</div>
+<div id="t5m_2" class="t s1_2">nels per bag</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg2Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg2"><img src="2/2.png" id="pdf2" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f2 = [['t3_2',1300],['t5_2',418],['t6_2',949],['t7_2',239],['t8_2',211],['td_2',297],['te_2',1090],['tf_2',1387],['th_2',1387],['tj_2',211],['tm_2',1387],['to_2',469],['ts_2',501],['tt_2',1387],['tz_2',1387],['t10_2',1387],['t11_2',1387],['t12_2',1387],['t15_2',1373],['t16_2',1386],['t1a_2',566],['t1l_2',1300],['t1q_2',1300],['t1s_2',622],['t22_2',1300],['t27_2',1300],['t28_2',1300],['t2p_2',1000],['t2s_2',1300],['t2v_2',1300],['t31_2',1287],['t34_2',1286],['t35_2',866],['t39_2',1300],['t3b_2',1300],['t3u_2',562],['t3v_2',1387],['t42_2',190],['t44_2',230],['t46_2',217],['t4a_2',491],['t4e_2',294],['t4n_2',611],['t4o_2',365],['t4x_2',231],['t51_2',285],['t57_2',417],['t59_2',625],['t5h_2',611],['t5i_2',625],['t5j_2',611],['t5l_2',1335],['t5m_2',290]];
+var c2 = 0;
+function fontAdjustments2(){;
+	if (c2<f2.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f2[c2][0],f2[c2][1]);
+		c2++;
+		if (c2%10 == 0) {
+			setTimeout(function(){fontAdjustments2()},0);
+		} else {
+			fontAdjustments2();
+		}
+	}
+};
+function load2(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments2,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 203;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_2");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(2,2,909,1286,0);
+</script>
+</body>
+</html>

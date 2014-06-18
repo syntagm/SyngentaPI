@@ -1,0 +1,1114 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>Sorgomil_Gold_600_SC_Eng___2001_07_09 Page4</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load4();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_4{left:349px;top:41px;}
+#t2_4{left:503px;top:41px;}
+#t3_4{left:66px;top:69px;}
+#t4_4{left:131px;top:69px;}
+#t5_4{left:66px;top:83px;}
+#t6_4{left:140px;top:83px;}
+#t7_4{left:66px;top:98px;}
+#t8_4{left:66px;top:431px;}
+#t9_4{left:66px;top:446px;}
+#ta_4{left:373px;top:446px;}
+#tb_4{left:66px;top:460px;}
+#tc_4{left:125px;top:460px;}
+#td_4{left:236px;top:460px;}
+#te_4{left:66px;top:504px;}
+#tf_4{left:114px;top:504px;}
+#tg_4{left:66px;top:548px;}
+#th_4{left:101px;top:548px;}
+#ti_4{left:66px;top:591px;}
+#tj_4{left:229px;top:591px;}
+#tk_4{left:66px;top:606px;}
+#tl_4{left:66px;top:620px;}
+#tm_4{left:247px;top:620px;}
+#tn_4{left:66px;top:635px;}
+#to_4{left:66px;top:678px;}
+#tp_4{left:125px;top:678px;}
+#tq_4{left:296px;top:678px;}
+#tr_4{left:66px;top:693px;}
+#ts_4{left:66px;top:954px;}
+#tt_4{left:66px;top:983px;}
+#tu_4{left:84px;top:983px;}
+#tv_4{left:84px;top:997px;}
+#tw_4{left:118px;top:997px;}
+#tx_4{left:273px;top:997px;}
+#ty_4{left:66px;top:1027px;}
+#tz_4{left:84px;top:1027px;}
+#t10_4{left:84px;top:1041px;}
+#t11_4{left:66px;top:1099px;}
+#t12_4{left:101px;top:1099px;}
+#t13_4{left:101px;top:1114px;}
+#t14_4{left:66px;top:1157px;}
+#t15_4{left:231px;top:1157px;}
+#t16_4{left:66px;top:1172px;}
+#t17_4{left:66px;top:1186px;}
+#t18_4{left:66px;top:1201px;}
+#t19_4{left:66px;top:1215px;}
+#t1a_4{left:66px;top:1230px;}
+#t1b_4{left:99px;top:197px;}
+#t1c_4{left:71px;top:269px;}
+#t1d_4{left:71px;top:298px;}
+#t1e_4{left:71px;top:327px;}
+#t1f_4{left:71px;top:342px;}
+#t1g_4{left:71px;top:371px;}
+#t1h_4{left:71px;top:385px;}
+#t1i_4{left:195px;top:197px;}
+#t1j_4{left:200px;top:269px;}
+#t1k_4{left:196px;top:298px;}
+#t1l_4{left:196px;top:334px;}
+#t1m_4{left:204px;top:377px;}
+#t1n_4{left:249px;top:168px;}
+#t1o_4{left:253px;top:182px;}
+#t1p_4{left:274px;top:197px;}
+#t1q_4{left:267px;top:211px;}
+#t1r_4{left:271px;top:211px;}
+#t1s_4{left:276px;top:211px;}
+#t1t_4{left:279px;top:298px;}
+#t1u_4{left:274px;top:334px;}
+#t1v_4{left:331px;top:139px;}
+#t1w_4{left:325px;top:153px;}
+#t1x_4{left:363px;top:168px;}
+#t1y_4{left:348px;top:182px;}
+#t1z_4{left:343px;top:197px;}
+#t20_4{left:334px;top:211px;}
+#t21_4{left:347px;top:226px;}
+#t22_4{left:351px;top:240px;}
+#t23_4{left:355px;top:240px;}
+#t24_4{left:360px;top:240px;}
+#t25_4{left:346px;top:298px;}
+#t26_4{left:340px;top:334px;}
+#t27_4{left:263px;top:270px;}
+#t28_4{left:101px;top:755px;}
+#t29_4{left:71px;top:799px;}
+#t2a_4{left:71px;top:828px;}
+#t2b_4{left:71px;top:857px;}
+#t2c_4{left:71px;top:886px;}
+#t2d_4{left:71px;top:900px;}
+#t2e_4{left:203px;top:755px;}
+#t2f_4{left:207px;top:799px;}
+#t2g_4{left:204px;top:828px;}
+#t2h_4{left:204px;top:857px;}
+#t2i_4{left:211px;top:886px;}
+#t2j_4{left:283px;top:741px;}
+#t2k_4{left:315px;top:755px;}
+#t2l_4{left:322px;top:770px;}
+#t2m_4{left:325px;top:770px;}
+#t2n_4{left:331px;top:770px;}
+#t2o_4{left:270px;top:799px;}
+#t2p_4{left:327px;top:828px;}
+#t2q_4{left:332px;top:857px;}
+#t2r_4{left:332px;top:886px;}
+#t2s_4{left:263px;top:378px;}
+#t2t_4{left:457px;top:69px;}
+#t2u_4{left:710px;top:69px;}
+#t2v_4{left:457px;top:83px;}
+#t2w_4{left:457px;top:98px;}
+#t2x_4{left:457px;top:388px;}
+#t2y_4{left:457px;top:417px;}
+#t2z_4{left:475px;top:417px;}
+#t30_4{left:475px;top:431px;}
+#t31_4{left:629px;top:431px;}
+#t32_4{left:457px;top:460px;}
+#t33_4{left:475px;top:460px;}
+#t34_4{left:475px;top:475px;}
+#t35_4{left:475px;top:490px;}
+#t36_4{left:575px;top:490px;}
+#t37_4{left:665px;top:490px;}
+#t38_4{left:690px;top:490px;}
+#t39_4{left:475px;top:504px;}
+#t3a_4{left:603px;top:504px;}
+#t3b_4{left:457px;top:533px;}
+#t3c_4{left:457px;top:548px;}
+#t3d_4{left:457px;top:577px;}
+#t3e_4{left:482px;top:577px;}
+#t3f_4{left:457px;top:606px;}
+#t3g_4{left:492px;top:606px;}
+#t3h_4{left:646px;top:606px;}
+#t3i_4{left:457px;top:635px;}
+#t3j_4{left:524px;top:635px;}
+#t3k_4{left:457px;top:649px;}
+#t3l_4{left:457px;top:871px;}
+#t3m_4{left:492px;top:871px;}
+#t3n_4{left:646px;top:871px;}
+#t3o_4{left:457px;top:900px;}
+#t3p_4{left:545px;top:900px;}
+#t3q_4{left:637px;top:900px;}
+#t3r_4{left:663px;top:900px;}
+#t3s_4{left:716px;top:900px;}
+#t3t_4{left:746px;top:900px;}
+#t3u_4{left:457px;top:915px;}
+#t3v_4{left:481px;top:915px;}
+#t3w_4{left:530px;top:915px;}
+#t3x_4{left:584px;top:915px;}
+#t3y_4{left:684px;top:915px;}
+#t3z_4{left:770px;top:915px;}
+#t40_4{left:457px;top:929px;}
+#t41_4{left:620px;top:929px;}
+#t42_4{left:788px;top:929px;}
+#t43_4{left:457px;top:944px;}
+#t44_4{left:457px;top:973px;}
+#t45_4{left:522px;top:973px;}
+#t46_4{left:457px;top:987px;}
+#t47_4{left:515px;top:694px;}
+#t48_4{left:461px;top:738px;}
+#t49_4{left:461px;top:767px;}
+#t4a_4{left:461px;top:796px;}
+#t4b_4{left:461px;top:825px;}
+#t4c_4{left:633px;top:694px;}
+#t4d_4{left:637px;top:738px;}
+#t4e_4{left:634px;top:767px;}
+#t4f_4{left:634px;top:796px;}
+#t4g_4{left:641px;top:825px;}
+#t4h_4{left:688px;top:688px;}
+#t4i_4{left:703px;top:703px;}
+#t4j_4{left:752px;top:703px;}
+#t4k_4{left:757px;top:703px;}
+#t4l_4{left:733px;top:738px;}
+#t4m_4{left:733px;top:767px;}
+#t4n_4{left:738px;top:796px;}
+#t4o_4{left:486px;top:165px;}
+#t4p_4{left:461px;top:237px;}
+#t4q_4{left:464px;top:252px;}
+#t4r_4{left:461px;top:281px;}
+#t4s_4{left:461px;top:310px;}
+#t4t_4{left:461px;top:339px;}
+#t4u_4{left:461px;top:353px;}
+#t4v_4{left:574px;top:165px;}
+#t4w_4{left:578px;top:237px;}
+#t4x_4{left:575px;top:281px;}
+#t4y_4{left:575px;top:310px;}
+#t4z_4{left:582px;top:339px;}
+#t50_4{left:626px;top:143px;}
+#t51_4{left:629px;top:157px;}
+#t52_4{left:709px;top:157px;}
+#t53_4{left:641px;top:172px;}
+#t54_4{left:654px;top:186px;}
+#t55_4{left:656px;top:201px;}
+#t56_4{left:659px;top:201px;}
+#t57_4{left:665px;top:201px;}
+#t58_4{left:663px;top:280px;}
+#t59_4{left:663px;top:309px;}
+#t5a_4{left:654px;top:338px;}
+#t5b_4{left:746px;top:135px;}
+#t5c_4{left:729px;top:150px;}
+#t5d_4{left:728px;top:164px;}
+#t5e_4{left:732px;top:179px;}
+#t5f_4{left:753px;top:193px;}
+#t5g_4{left:748px;top:208px;}
+#t5h_4{left:752px;top:208px;}
+#t5i_4{left:757px;top:208px;}
+#t5j_4{left:753px;top:280px;}
+#t5k_4{left:759px;top:309px;}
+#t5l_4{left:759px;top:338px;}
+#t5m_4{left:644px;top:237px;}
+#t5n_4{left:499px;top:1038px;}
+#t5o_4{left:459px;top:1096px;}
+#t5p_4{left:459px;top:1123px;}
+#t5q_4{left:459px;top:1137px;}
+#t5r_4{left:459px;top:1163px;}
+#t5s_4{left:459px;top:1190px;}
+#t5t_4{left:459px;top:1216px;}
+#t5u_4{left:602px;top:1039px;}
+#t5v_4{left:607px;top:1097px;}
+#t5w_4{left:604px;top:1123px;}
+#t5x_4{left:604px;top:1163px;}
+#t5y_4{left:604px;top:1189px;}
+#t5z_4{left:611px;top:1215px;}
+#t60_4{left:655px;top:1023px;}
+#t61_4{left:658px;top:1037px;}
+#t62_4{left:680px;top:1052px;}
+#t63_4{left:673px;top:1066px;}
+#t64_4{left:676px;top:1066px;}
+#t65_4{left:682px;top:1066px;}
+#t66_4{left:680px;top:1095px;}
+#t67_4{left:680px;top:1121px;}
+#t68_4{left:685px;top:1161px;}
+#t69_4{left:680px;top:1187px;}
+#t6a_4{left:747px;top:1023px;}
+#t6b_4{left:747px;top:1037px;}
+#t6c_4{left:750px;top:1052px;}
+#t6d_4{left:754px;top:1052px;}
+#t6e_4{left:759px;top:1052px;}
+#t6f_4{left:752px;top:1095px;}
+#t6g_4{left:756px;top:1121px;}
+#t6h_4{left:756px;top:1161px;}
+#t6i_4{left:746px;top:1187px;}
+#t6j_4{left:660px;top:1216px;}
+#t6k_4{left:729px;top:823px;}
+#t6l_4{left:691px;top:838px;}
+
+.s1_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: LQYLHL-HelveticaNeueLTStd-Bd4;
+	color: rgb(0,0,0);
+}
+
+.s3_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: KIOFTN-HelveticaNeueLTStd-BdIt4;
+	color: rgb(0,0,0);
+}
+
+.s5_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: KIOFTN-Mt-ExtraPlain4;
+	color: rgb(0,0,0);
+}
+
+.s2_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: KIOFTN-HelveticaNeueLTStd-Lt4;
+	color: rgb(0,0,0);
+}
+
+.s4_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: KIOFTN-HelveticaNeueLTStd-It4;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: KIOFTN-HelveticaNeueLTStd-It4;
+	src: url("4/fonts/KIOFTN-HelveticaNeueLTStd-It.eot");
+	src: url("4/fonts/KIOFTN-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/KIOFTN-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: KIOFTN-Mt-ExtraPlain4;
+	src: url("4/fonts/KIOFTN-Mt-ExtraPlain.eot");
+	src: url("4/fonts/KIOFTN-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/KIOFTN-Mt-ExtraPlain.otf") format("opentype");
+}
+
+@font-face {
+	font-family: LQYLHL-HelveticaNeueLTStd-Bd4;
+	src: url("4/fonts/LQYLHL-HelveticaNeueLTStd-Bd.eot");
+	src: url("4/fonts/LQYLHL-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/LQYLHL-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: KIOFTN-HelveticaNeueLTStd-Lt4;
+	src: url("4/fonts/KIOFTN-HelveticaNeueLTStd-Lt.eot");
+	src: url("4/fonts/KIOFTN-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/KIOFTN-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: KIOFTN-HelveticaNeueLTStd-BdIt4;
+	src: url("4/fonts/KIOFTN-HelveticaNeueLTStd-BdIt.eot");
+	src: url("4/fonts/KIOFTN-HelveticaNeueLTStd-BdIt.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/KIOFTN-HelveticaNeueLTStd-BdIt.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="t2_4" class="t s2_4">/ 4</div>
+<div id="t3_4" class="t s1_4">TABLE 1: </div>
+<div id="t4_4" class="t s1_4">Pre-emergence application rates of SORGOMIL </div>
+<div id="t5_4" class="t s1_4">GOLD 600 </div>
+<div id="t6_4" class="t s1_4">SC or SORGOMIL GOLD 600 SC plus DUAL </div>
+<div id="t7_4" class="t s1_4">GOLD / METAGAN GOLD in grain sorghum:</div>
+<div id="t8_4" class="t s2_4">This tank mix with DUAL GOLD / METAGAN GOLD may be used </div>
+<div id="t9_4" class="t s2_4">to control grasses other than those listed above as well as </div>
+<div id="ta_4" class="t s1_4">yellow </div>
+<div id="tb_4" class="t s3_4">nutsedge </div>
+<div id="tc_4" class="t s4_4">(Cyperus esculentus</div>
+<div id="td_4" class="t s2_4">) under certain conditions. </div>
+<div id="te_4" class="t s2_4">Consult </div>
+<div id="tf_4" class="t s2_4">the DUAL GOLD / METAGAN GOLD label.</div>
+<div id="tg_4" class="t s2_4">7.1.2 </div>
+<div id="th_4" class="t s2_4">Post-emergence</div>
+<div id="ti_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="tj_4" class="t s2_4">may be used post-emergence in </div>
+<div id="tk_4" class="t s2_4">sorghum. However the crop should at least have reached the </div>
+<div id="tl_4" class="t s2_4">5-leaf stage before application. </div>
+<div id="tm_4" class="t s2_4">Pre-treatment of the sorghum </div>
+<div id="tn_4" class="t s2_4">seed with CONCEP 960 EC is not required.</div>
+<div id="to_4" class="t s1_4">TABLE 2: </div>
+<div id="tp_4" class="t s1_4">Post-emergence application </div>
+<div id="tq_4" class="t s1_4">rates of SORGOMIL </div>
+<div id="tr_4" class="t s1_4">GOLD 600 SC in grain sorghum:</div>
+<div id="ts_4" class="t s1_4">Important</div>
+<div id="tt_4" class="t s2_4">•	</div>
+<div id="tu_4" class="t s2_4">The adjuvant COMPLEMENT SUPER (L8169) must be added </div>
+<div id="tv_4" class="t s2_4">to the </div>
+<div id="tw_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="tx_4" class="t s2_4">spray mixture.</div>
+<div id="ty_4" class="t s2_4">•	</div>
+<div id="tz_4" class="t s2_4">The above-mentioned treatments will not provide adequate </div>
+<div id="t10_4" class="t s2_4">control of grass weeds.</div>
+<div id="t11_4" class="t s2_4">7.1.3 </div>
+<div id="t12_4" class="t s2_4">Post-emergence preceded by DUAL GOLD / METAGAN </div>
+<div id="t13_4" class="t s2_4">GOLD (split application)</div>
+<div id="t14_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="t15_4" class="t s2_4">may also be applied early post-</div>
+<div id="t16_4" class="t s2_4">emergence in grain sorghum as a follow-up treatment after the </div>
+<div id="t17_4" class="t s2_4">pre-emergence application of DUAL GOLD / METAGAN GOLD. </div>
+<div id="t18_4" class="t s2_4">Proper pre-treatment of the sorghum seed with CONCEP 960 </div>
+<div id="t19_4" class="t s2_4">EC, as prescribed is required before DUAL GOLD / METAGAN </div>
+<div id="t1a_4" class="t s2_4">GOLD can be used.</div>
+<div id="t1b_4" class="t s1_4">Soil type</div>
+<div id="t1c_4" class="t s1_4">Sand / sandy loam</div>
+<div id="t1d_4" class="t s1_4">Sandy clay loam</div>
+<div id="t1e_4" class="t s1_4">Sandy clay loam / </div>
+<div id="t1f_4" class="t s1_4">sandy clay</div>
+<div id="t1g_4" class="t s1_4">Heavier soils </div>
+<div id="t1h_4" class="t s1_4">including turf</div>
+<div id="t1i_4" class="t s1_4">% Clay</div>
+<div id="t1j_4" class="t s2_4">0 - 20</div>
+<div id="t1k_4" class="t s2_4">21 - 30</div>
+<div id="t1l_4" class="t s2_4">31 - 35</div>
+<div id="t1m_4" class="t s2_4">&gt; 35</div>
+<div id="t1n_4" class="t s1_4">SORGOMIL </div>
+<div id="t1o_4" class="t s1_4">GOLD 600 </div>
+<div id="t1p_4" class="t s1_4">SC</div>
+<div id="t1q_4" class="t s1_4">(</div>
+<div id="t1r_4" class="t s5_4">l</div>
+<div id="t1s_4" class="t s1_4">/ha)</div>
+<div id="t1t_4" class="t s2_4">3</div>
+<div id="t1u_4" class="t s2_4">3,7</div>
+<div id="t1v_4" class="t s1_4">SORGOMIL </div>
+<div id="t1w_4" class="t s1_4">GOLD 600 SC</div>
+<div id="t1x_4" class="t s1_4">+</div>
+<div id="t1y_4" class="t s1_4">DUAL</div>
+<div id="t1z_4" class="t s1_4">GOLD /</div>
+<div id="t20_4" class="t s1_4">METAGAN </div>
+<div id="t21_4" class="t s1_4">GOLD</div>
+<div id="t22_4" class="t s1_4">(</div>
+<div id="t23_4" class="t s5_4">l</div>
+<div id="t24_4" class="t s1_4">/ha)</div>
+<div id="t25_4" class="t s2_4">3 + 0,5</div>
+<div id="t26_4" class="t s2_4">3,7 + 0,6</div>
+<div id="t27_4" class="t s1_4">NOT RECOMMENDED</div>
+<div id="t28_4" class="t s1_4">Soil type</div>
+<div id="t29_4" class="t s1_4">Sand / loamy sand</div>
+<div id="t2a_4" class="t s1_4">Sandy loam</div>
+<div id="t2b_4" class="t s1_4">Sandy clay loam</div>
+<div id="t2c_4" class="t s1_4">Heavier soils </div>
+<div id="t2d_4" class="t s1_4">including turf</div>
+<div id="t2e_4" class="t s1_4">% Clay</div>
+<div id="t2f_4" class="t s2_4">0 - 15</div>
+<div id="t2g_4" class="t s2_4">16 - 20</div>
+<div id="t2h_4" class="t s2_4">21 - 30</div>
+<div id="t2i_4" class="t s2_4">&gt; 30</div>
+<div id="t2j_4" class="t s1_4">SORGOMIL GOLD </div>
+<div id="t2k_4" class="t s1_4">600 SC</div>
+<div id="t2l_4" class="t s1_4">(</div>
+<div id="t2m_4" class="t s5_4">l</div>
+<div id="t2n_4" class="t s1_4">/ha)</div>
+<div id="t2o_4" class="t s1_4">NOT RECOMMENDED</div>
+<div id="t2p_4" class="t s2_4">2,6</div>
+<div id="t2q_4" class="t s2_4">3</div>
+<div id="t2r_4" class="t s2_4">3</div>
+<div id="t2s_4" class="t s1_4">NOT RECOMMENDED</div>
+<div id="t2t_4" class="t s1_4">TABLE 3 : Pre-emergence application </div>
+<div id="t2u_4" class="t s1_4">rates of DUAL </div>
+<div id="t2v_4" class="t s1_4">GOLD/ METAGAN GOLD followed by a post-emergence </div>
+<div id="t2w_4" class="t s1_4">application of SORGOMIL GOLD 600 SC in grain sorghum:</div>
+<div id="t2x_4" class="t s1_4">Important </div>
+<div id="t2y_4" class="t s2_4">•	</div>
+<div id="t2z_4" class="t s2_4">The adjuvant COMPLEMENT SUPER must be added to the </div>
+<div id="t30_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="t31_4" class="t s2_4">spray mixture.</div>
+<div id="t32_4" class="t s2_4">•	</div>
+<div id="t33_4" class="t s2_4">The higher application rate of DUAL GOLD / METAGAN GOLD </div>
+<div id="t34_4" class="t s2_4">on the heavier soils can be used to improve the control of </div>
+<div id="t35_4" class="t s1_4">yellow nutsedge</div>
+<div id="t36_4" class="t s4_4">(C. esculentus)</div>
+<div id="t37_4" class="t s2_4">and </div>
+<div id="t38_4" class="t s1_4">sweet signal grass</div>
+<div id="t39_4" class="t s4_4">(Brachiaria eruciformis)</div>
+<div id="t3a_4" class="t s2_4">on turf.</div>
+<div id="t3b_4" class="t s1_4">Ensure that sufficient fertilizer is band placed near the seed </div>
+<div id="t3c_4" class="t s1_4">at planting to promote vigorous seedling growth.</div>
+<div id="t3d_4" class="t s2_4">7.2 </div>
+<div id="t3e_4" class="t s2_4">MAIZE (Pre-emergence)</div>
+<div id="t3f_4" class="t s2_4">7.2.1</div>
+<div id="t3g_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="t3h_4" class="t s2_4">only</div>
+<div id="t3i_4" class="t s1_4">TABLE 4 : </div>
+<div id="t3j_4" class="t s1_4">Pre-emergence application rates of SORGOMIL </div>
+<div id="t3k_4" class="t s1_4">GOLD 500 SC in maize:</div>
+<div id="t3l_4" class="t s2_4">7.2.2 </div>
+<div id="t3m_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="t3n_4" class="t s2_4">plus DUAL GOLD</div>
+<div id="t3o_4" class="t s2_4">To control other </div>
+<div id="t3p_4" class="t s1_4">annual grasses</div>
+<div id="t3q_4" class="t s2_4">(i.e., </div>
+<div id="t3r_4" class="t s4_4">Urochloa </div>
+<div id="t3s_4" class="t s2_4">spp.,</div>
+<div id="t3t_4" class="t s4_4">P. schinzii</div>
+<div id="t3u_4" class="t s2_4">and </div>
+<div id="t3v_4" class="t s4_4">Digitaria</div>
+<div id="t3w_4" class="t s2_4">spp.) and </div>
+<div id="t3x_4" class="t s1_4">yellow nutsedge</div>
+<div id="t3y_4" class="t s4_4">(C. esculentus)</div>
+<div id="t3z_4" class="t s2_4">DUAL </div>
+<div id="t40_4" class="t s2_4">GOLD should be added to </div>
+<div id="t41_4" class="t s1_4">SORGOMIL GOLD 600 SC</div>
+<div id="t42_4" class="t s2_4">as </div>
+<div id="t43_4" class="t s2_4">re commended below:</div>
+<div id="t44_4" class="t s1_4">TABLE 5: </div>
+<div id="t45_4" class="t s1_4">Pre-emergence application rates of SORGOMIL </div>
+<div id="t46_4" class="t s1_4">GOLD 600 SC plus DUAL GOLD in maize:</div>
+<div id="t47_4" class="t s1_4">Soil type</div>
+<div id="t48_4" class="t s1_4">Sand</div>
+<div id="t49_4" class="t s1_4">Loamy sand / sandy loam</div>
+<div id="t4a_4" class="t s1_4">Sandy clay loam</div>
+<div id="t4b_4" class="t s1_4">Heavier soils including turf</div>
+<div id="t4c_4" class="t s1_4">% Clay</div>
+<div id="t4d_4" class="t s2_4">0 - 10</div>
+<div id="t4e_4" class="t s2_4">11 - 20</div>
+<div id="t4f_4" class="t s2_4">21 - 30</div>
+<div id="t4g_4" class="t s2_4">&gt; 30</div>
+<div id="t4h_4" class="t s1_4">SORGOMIL GOLD </div>
+<div id="t4i_4" class="t s1_4">600 SC (</div>
+<div id="t4j_4" class="t s5_4">l</div>
+<div id="t4k_4" class="t s1_4">/ha)</div>
+<div id="t4l_4" class="t s2_4">2,2</div>
+<div id="t4m_4" class="t s2_4">2,6</div>
+<div id="t4n_4" class="t s2_4">3</div>
+<div id="t4o_4" class="t s1_4">Soil type</div>
+<div id="t4p_4" class="t s1_4">Sand / loamy</div>
+<div id="t4q_4" class="t s1_4">sand</div>
+<div id="t4r_4" class="t s1_4">Sandy loam</div>
+<div id="t4s_4" class="t s1_4">Sandy clay loam</div>
+<div id="t4t_4" class="t s1_4">Heavier soils </div>
+<div id="t4u_4" class="t s1_4">including turf</div>
+<div id="t4v_4" class="t s1_4">% Clay</div>
+<div id="t4w_4" class="t s2_4">0 - 15</div>
+<div id="t4x_4" class="t s2_4">16 - 20</div>
+<div id="t4y_4" class="t s2_4">21 - 30</div>
+<div id="t4z_4" class="t s2_4">&gt; 30</div>
+<div id="t50_4" class="t s1_4">Pre-emergence</div>
+<div id="t51_4" class="t s1_4">DUAL GOLD </div>
+<div id="t52_4" class="t s1_4">/</div>
+<div id="t53_4" class="t s1_4">METAGAN </div>
+<div id="t54_4" class="t s1_4">GOLD </div>
+<div id="t55_4" class="t s1_4">(</div>
+<div id="t56_4" class="t s5_4">l</div>
+<div id="t57_4" class="t s1_4">/ha)</div>
+<div id="t58_4" class="t s2_4">0,5</div>
+<div id="t59_4" class="t s2_4">0,6</div>
+<div id="t5a_4" class="t s2_4">0,7 - 1</div>
+<div id="t5b_4" class="t s1_4">Post-</div>
+<div id="t5c_4" class="t s1_4">emergence</div>
+<div id="t5d_4" class="t s1_4">SORGOMIL </div>
+<div id="t5e_4" class="t s1_4">GOLD 600 </div>
+<div id="t5f_4" class="t s1_4">SC </div>
+<div id="t5g_4" class="t s1_4">(</div>
+<div id="t5h_4" class="t s5_4">l</div>
+<div id="t5i_4" class="t s1_4">/ha)</div>
+<div id="t5j_4" class="t s2_4">2,6</div>
+<div id="t5k_4" class="t s2_4">3</div>
+<div id="t5l_4" class="t s2_4">3</div>
+<div id="t5m_4" class="t s1_4">NOT RECOMMENDED</div>
+<div id="t5n_4" class="t s1_4">Soil type</div>
+<div id="t5o_4" class="t s1_4">Sand</div>
+<div id="t5p_4" class="t s1_4">Loamy sand / sandy </div>
+<div id="t5q_4" class="t s1_4">loam</div>
+<div id="t5r_4" class="t s1_4">Sandy clay loam</div>
+<div id="t5s_4" class="t s1_4">Sandy clay loam</div>
+<div id="t5t_4" class="t s1_4">Sandy clay</div>
+<div id="t5u_4" class="t s1_4">% Clay</div>
+<div id="t5v_4" class="t s2_4">0 - 10</div>
+<div id="t5w_4" class="t s2_4">11 - 20</div>
+<div id="t5x_4" class="t s2_4">21 - 30</div>
+<div id="t5y_4" class="t s2_4">31 - 40</div>
+<div id="t5z_4" class="t s2_4">&gt; 40</div>
+<div id="t60_4" class="t s1_4">SORGOMIL </div>
+<div id="t61_4" class="t s1_4">GOLD 600 </div>
+<div id="t62_4" class="t s1_4">SC</div>
+<div id="t63_4" class="t s1_4">(</div>
+<div id="t64_4" class="t s5_4">l</div>
+<div id="t65_4" class="t s1_4">/ha)</div>
+<div id="t66_4" class="t s2_4">2,2</div>
+<div id="t67_4" class="t s2_4">2,6</div>
+<div id="t68_4" class="t s2_4">3</div>
+<div id="t69_4" class="t s2_4">3,7</div>
+<div id="t6a_4" class="t s1_4">DUAL </div>
+<div id="t6b_4" class="t s1_4">GOLD</div>
+<div id="t6c_4" class="t s1_4">(</div>
+<div id="t6d_4" class="t s5_4">l</div>
+<div id="t6e_4" class="t s1_4">/ha)</div>
+<div id="t6f_4" class="t s2_4">0,25</div>
+<div id="t6g_4" class="t s2_4">0,4</div>
+<div id="t6h_4" class="t s2_4">0,5</div>
+<div id="t6i_4" class="t s2_4">0,6 - 1</div>
+<div id="t6j_4" class="t s1_4">NOT RECOMMENDED</div>
+<div id="t6k_4" class="t s1_4">NOT </div>
+<div id="t6l_4" class="t s1_4">RECOM MENDED</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg4Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg4"><img src="4/4.png" id="pdf4" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f4 = [['t1_4',602],['t2_4',58],['t3_4',214],['t4_4',1113],['t5_4',246],['t6_4',1078],['t7_4',1015],['t8_4',1373],['t9_4',1212],['tc_4',442],['td_4',549],['tf_4',900],['ti_4',628],['tj_4',722],['tk_4',1373],['tl_4',676],['tm_4',651],['tn_4',924],['to_4',211],['tp_4',658],['tq_4',456],['tr_4',745],['tu_4',1304],['tv_4',122],['tw_4',602],['tx_4',298],['tz_4',1304],['t10_4',496],['t12_4',1235],['t13_4',497],['t14_4',633],['t15_4',715],['t16_4',1373],['t17_4',1373],['t18_4',1373],['t19_4',1373],['t1a_4',424],['t1b_4',202],['t1c_4',435],['t1d_4',382],['t1e_4',415],['t1f_4',247],['t1g_4',300],['t1h_4',309],['t1i_4',166],['t1j_4',129],['t1k_4',156],['t1l_4',156],['t1m_4',98],['t1o_4',240],['t1w_4',319],['t1z_4',173],['t25_4',154],['t26_4',195],['t27_4',521],['t28_4',202],['t29_4',435],['t2a_4',273],['t2b_4',382],['t2c_4',300],['t2d_4',309],['t2e_4',166],['t2f_4',129],['t2g_4',156],['t2h_4',156],['t2i_4',98],['t2j_4',423],['t2k_4',164],['t2o_4',521],['t2s_4',521],['t2t_4',946],['t2u_4',363],['t2v_4',1373],['t2w_4',1362],['t2z_4',1304],['t30_4',602],['t31_4',298],['t33_4',1304],['t34_4',1304],['t35_4',383],['t36_4',325],['t38_4',443],['t39_4',499],['t3a_4',150],['t3b_4',1373],['t3c_4',1145],['t3e_4',504],['t3g_4',602],['t3i_4',226],['t3j_4',1106],['t3k_4',543],['t3m_4',602],['t3n_4',373],['t3o_4',337],['t3p_4',354],['t3t_4',218],['t3w_4',201],['t3x_4',382],['t3y_4',324],['t40_4',620],['t41_4',645],['t43_4',462],['t44_4',214],['t45_4',1113],['t46_4',961],['t47_4',202],['t49_4',601],['t4a_4',382],['t4b_4',624],['t4c_4',166],['t4d_4',129],['t4e_4',156],['t4f_4',156],['t4g_4',98],['t4h_4',429],['t4i_4',195],['t4o_4',202],['t4p_4',306],['t4r_4',273],['t4s_4',382],['t4t_4',294],['t4u_4',302],['t4v_4',166],['t4w_4',129],['t4x_4',156],['t4y_4',156],['t4z_4',98],['t51_4',290],['t5a_4',143],['t5e_4',236],['t5m_4',521],['t5n_4',202],['t5p_4',541],['t5r_4',382],['t5s_4',382],['t5t_4',253],['t5u_4',166],['t5v_4',129],['t5w_4',156],['t5x_4',156],['t5y_4',156],['t5z_4',98],['t61_4',240],['t6i_4',143],['t6j_4',521],['t6l_4',406]];
+var c4 = 0;
+function fontAdjustments4(){;
+	if (c4<f4.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f4[c4][0],f4[c4][1]);
+		c4++;
+		if (c4%10 == 0) {
+			setTimeout(function(){fontAdjustments4()},0);
+		} else {
+			fontAdjustments4();
+		}
+	}
+};
+function load4(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments4,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 238;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_4");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(6,4,909,1286,0);
+</script>
+</body>
+</html>

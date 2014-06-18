@@ -1,0 +1,1115 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>e_metagan Page2</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load2();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_2{left:374px;top:41px;}
+#t2_2{left:478px;top:41px;}
+#t3_2{left:465px;top:76px;}
+#t4_2{left:465px;top:104px;}
+#t5_2{left:642px;top:104px;}
+#t6_2{left:465px;top:118px;}
+#t7_2{left:642px;top:118px;}
+#t8_2{left:465px;top:131px;}
+#t9_2{left:642px;top:131px;}
+#ta_2{left:465px;top:145px;}
+#tb_2{left:642px;top:145px;}
+#tc_2{left:465px;top:159px;}
+#td_2{left:642px;top:159px;}
+#te_2{left:465px;top:173px;}
+#tf_2{left:642px;top:173px;}
+#tg_2{left:465px;top:186px;}
+#th_2{left:642px;top:186px;}
+#ti_2{left:465px;top:200px;}
+#tj_2{left:642px;top:200px;}
+#tk_2{left:465px;top:214px;}
+#tl_2{left:642px;top:214px;}
+#tm_2{left:465px;top:228px;}
+#tn_2{left:642px;top:228px;}
+#to_2{left:465px;top:241px;}
+#tp_2{left:642px;top:241px;}
+#tq_2{left:465px;top:255px;}
+#tr_2{left:642px;top:255px;}
+#ts_2{left:456px;top:291px;}
+#tt_2{left:456px;top:319px;}
+#tu_2{left:561px;top:319px;}
+#tv_2{left:456px;top:346px;}
+#tw_2{left:541px;top:346px;}
+#tx_2{left:624px;top:346px;}
+#ty_2{left:456px;top:360px;}
+#tz_2{left:456px;top:388px;}
+#t10_2{left:474px;top:388px;}
+#t11_2{left:474px;top:403px;}
+#t12_2{left:456px;top:417px;}
+#t13_2{left:474px;top:417px;}
+#t14_2{left:456px;top:432px;}
+#t15_2{left:474px;top:432px;}
+#t16_2{left:474px;top:446px;}
+#t17_2{left:474px;top:461px;}
+#t18_2{left:611px;top:461px;}
+#t19_2{left:688px;top:461px;}
+#t1a_2{left:474px;top:475px;}
+#t1b_2{left:474px;top:490px;}
+#t1c_2{left:474px;top:504px;}
+#t1d_2{left:474px;top:519px;}
+#t1e_2{left:474px;top:533px;}
+#t1f_2{left:456px;top:548px;}
+#t1g_2{left:474px;top:548px;}
+#t1h_2{left:474px;top:562px;}
+#t1i_2{left:487px;top:562px;}
+#t1j_2{left:563px;top:562px;}
+#t1k_2{left:698px;top:562px;}
+#t1l_2{left:774px;top:562px;}
+#t1m_2{left:474px;top:577px;}
+#t1n_2{left:501px;top:577px;}
+#t1o_2{left:659px;top:577px;}
+#t1p_2{left:764px;top:577px;}
+#t1q_2{left:474px;top:591px;}
+#t1r_2{left:456px;top:606px;}
+#t1s_2{left:474px;top:606px;}
+#t1t_2{left:751px;top:606px;}
+#t1u_2{left:474px;top:620px;}
+#t1v_2{left:511px;top:620px;}
+#t1w_2{left:580px;top:620px;}
+#t1x_2{left:474px;top:635px;}
+#t1y_2{left:456px;top:662px;}
+#t1z_2{left:456px;top:691px;}
+#t20_2{left:474px;top:691px;}
+#t21_2{left:474px;top:705px;}
+#t22_2{left:580px;top:705px;}
+#t23_2{left:681px;top:705px;}
+#t24_2{left:474px;top:720px;}
+#t25_2{left:624px;top:720px;}
+#t26_2{left:474px;top:734px;}
+#t27_2{left:474px;top:749px;}
+#t28_2{left:474px;top:763px;}
+#t29_2{left:474px;top:778px;}
+#t2a_2{left:474px;top:792px;}
+#t2b_2{left:474px;top:807px;}
+#t2c_2{left:627px;top:807px;}
+#t2d_2{left:474px;top:821px;}
+#t2e_2{left:474px;top:836px;}
+#t2f_2{left:474px;top:850px;}
+#t2g_2{left:474px;top:865px;}
+#t2h_2{left:474px;top:879px;}
+#t2i_2{left:474px;top:894px;}
+#t2j_2{left:547px;top:894px;}
+#t2k_2{left:474px;top:908px;}
+#t2l_2{left:616px;top:908px;}
+#t2m_2{left:474px;top:923px;}
+#t2n_2{left:483px;top:923px;}
+#t2o_2{left:587px;top:923px;}
+#t2p_2{left:707px;top:923px;}
+#t2q_2{left:474px;top:937px;}
+#t2r_2{left:474px;top:952px;}
+#t2s_2{left:456px;top:980px;}
+#t2t_2{left:652px;top:980px;}
+#t2u_2{left:456px;top:1009px;}
+#t2v_2{left:487px;top:1009px;}
+#t2w_2{left:456px;top:1037px;}
+#t2x_2{left:564px;top:1037px;}
+#t2y_2{left:669px;top:1037px;}
+#t2z_2{left:456px;top:1050px;}
+#t30_2{left:456px;top:1064px;}
+#t31_2{left:456px;top:1078px;}
+#t32_2{left:456px;top:1092px;}
+#t33_2{left:456px;top:1105px;}
+#t34_2{left:456px;top:1133px;}
+#t35_2{left:559px;top:1133px;}
+#t36_2{left:456px;top:1147px;}
+#t37_2{left:456px;top:1160px;}
+#t38_2{left:794px;top:1162px;}
+#t39_2{left:456px;top:1174px;}
+#t3a_2{left:794px;top:1176px;}
+#t3b_2{left:456px;top:1188px;}
+#t3c_2{left:794px;top:1190px;}
+#t3d_2{left:456px;top:1202px;}
+#t3e_2{left:588px;top:1204px;}
+#t3f_2{left:599px;top:1202px;}
+#t3g_2{left:745px;top:1204px;}
+#t3h_2{left:756px;top:1202px;}
+#t3i_2{left:456px;top:1215px;}
+#t3j_2{left:582px;top:1217px;}
+#t3k_2{left:592px;top:1215px;}
+#t3l_2{left:677px;top:1217px;}
+#t3m_2{left:686px;top:1215px;}
+#t3n_2{left:456px;top:1229px;}
+#t3o_2{left:84px;top:69px;}
+#t3p_2{left:84px;top:83px;}
+#t3q_2{left:66px;top:98px;}
+#t3r_2{left:84px;top:98px;}
+#t3s_2{left:84px;top:112px;}
+#t3t_2{left:84px;top:127px;}
+#t3u_2{left:66px;top:141px;}
+#t3v_2{left:84px;top:141px;}
+#t3w_2{left:84px;top:156px;}
+#t3x_2{left:66px;top:183px;}
+#t3y_2{left:173px;top:183px;}
+#t3z_2{left:66px;top:197px;}
+#t40_2{left:66px;top:211px;}
+#t41_2{left:189px;top:211px;}
+#t42_2{left:259px;top:211px;}
+#t43_2{left:66px;top:224px;}
+#t44_2{left:300px;top:224px;}
+#t45_2{left:401px;top:224px;}
+#t46_2{left:66px;top:252px;}
+#t47_2{left:116px;top:254px;}
+#t48_2{left:125px;top:252px;}
+#t49_2{left:66px;top:266px;}
+#t4a_2{left:128px;top:266px;}
+#t4b_2{left:232px;top:266px;}
+#t4c_2{left:314px;top:266px;}
+#t4d_2{left:66px;top:293px;}
+#t4e_2{left:66px;top:316px;}
+#t4f_2{left:348px;top:316px;}
+#t4g_2{left:66px;top:329px;}
+#t4h_2{left:106px;top:329px;}
+#t4i_2{left:66px;top:343px;}
+#t4j_2{left:66px;top:371px;}
+#t4k_2{left:66px;top:394px;}
+#t4l_2{left:84px;top:394px;}
+#t4m_2{left:84px;top:408px;}
+#t4n_2{left:84px;top:423px;}
+#t4o_2{left:84px;top:437px;}
+#t4p_2{left:84px;top:452px;}
+#t4q_2{left:84px;top:466px;}
+#t4r_2{left:66px;top:481px;}
+#t4s_2{left:84px;top:481px;}
+#t4t_2{left:84px;top:495px;}
+#t4u_2{left:66px;top:510px;}
+#t4v_2{left:84px;top:510px;}
+#t4w_2{left:84px;top:524px;}
+#t4x_2{left:84px;top:539px;}
+#t4y_2{left:84px;top:553px;}
+#t4z_2{left:66px;top:568px;}
+#t50_2{left:84px;top:568px;}
+#t51_2{left:84px;top:582px;}
+#t52_2{left:66px;top:597px;}
+#t53_2{left:84px;top:597px;}
+#t54_2{left:84px;top:611px;}
+#t55_2{left:84px;top:626px;}
+#t56_2{left:84px;top:641px;}
+#t57_2{left:84px;top:655px;}
+#t58_2{left:66px;top:683px;}
+#t59_2{left:66px;top:696px;}
+#t5a_2{left:66px;top:719px;}
+#t5b_2{left:84px;top:719px;}
+#t5c_2{left:84px;top:734px;}
+#t5d_2{left:84px;top:748px;}
+#t5e_2{left:84px;top:763px;}
+#t5f_2{left:84px;top:777px;}
+#t5g_2{left:66px;top:792px;}
+#t5h_2{left:84px;top:792px;}
+#t5i_2{left:84px;top:807px;}
+#t5j_2{left:84px;top:821px;}
+#t5k_2{left:84px;top:836px;}
+#t5l_2{left:84px;top:850px;}
+#t5m_2{left:66px;top:878px;}
+#t5n_2{left:66px;top:891px;}
+#t5o_2{left:66px;top:905px;}
+#t5p_2{left:66px;top:933px;}
+#t5q_2{left:66px;top:960px;}
+#t5r_2{left:66px;top:974px;}
+#t5s_2{left:203px;top:974px;}
+#t5t_2{left:307px;top:974px;}
+#t5u_2{left:66px;top:988px;}
+#t5v_2{left:75px;top:1015px;}
+#t5w_2{left:253px;top:1015px;}
+#t5x_2{left:75px;top:1029px;}
+#t5y_2{left:253px;top:1029px;}
+#t5z_2{left:75px;top:1043px;}
+#t60_2{left:253px;top:1043px;}
+#t61_2{left:75px;top:1056px;}
+#t62_2{left:253px;top:1056px;}
+#t63_2{left:75px;top:1070px;}
+#t64_2{left:253px;top:1070px;}
+#t65_2{left:75px;top:1084px;}
+#t66_2{left:253px;top:1084px;}
+#t67_2{left:75px;top:1098px;}
+#t68_2{left:253px;top:1098px;}
+#t69_2{left:75px;top:1111px;}
+#t6a_2{left:253px;top:1111px;}
+#t6b_2{left:75px;top:1125px;}
+#t6c_2{left:253px;top:1125px;}
+#t6d_2{left:75px;top:1139px;}
+#t6e_2{left:253px;top:1139px;}
+#t6f_2{left:75px;top:1153px;}
+#t6g_2{left:253px;top:1153px;}
+#t6h_2{left:75px;top:1166px;}
+#t6i_2{left:253px;top:1166px;}
+#t6j_2{left:75px;top:1180px;}
+#t6k_2{left:253px;top:1180px;}
+#t6l_2{left:75px;top:1194px;}
+#t6m_2{left:253px;top:1194px;}
+#t6n_2{left:253px;top:1208px;}
+#t6o_2{left:75px;top:1221px;}
+#t6p_2{left:253px;top:1221px;}
+
+.s1_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: NAIHJH-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s3_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: MSYBVJ-HelveticaNeueLTStd-It2;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: NAIHJH-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+.s4_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: MSYBVJ-HelveticaNeueLTStd-BdIt2;
+	color: rgb(0,0,0);
+}
+
+.s5_2{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: NAIHJH-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: NAIHJH-HelveticaNeueLTStd-Bd2;
+	src: url("2/fonts/NAIHJH-HelveticaNeueLTStd-Bd.eot");
+	src: url("2/fonts/NAIHJH-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/NAIHJH-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: NAIHJH-HelveticaNeueLTStd-Lt2;
+	src: url("2/fonts/NAIHJH-HelveticaNeueLTStd-Lt.eot");
+	src: url("2/fonts/NAIHJH-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/NAIHJH-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: MSYBVJ-HelveticaNeueLTStd-BdIt2;
+	src: url("2/fonts/MSYBVJ-HelveticaNeueLTStd-BdIt.eot");
+	src: url("2/fonts/MSYBVJ-HelveticaNeueLTStd-BdIt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/MSYBVJ-HelveticaNeueLTStd-BdIt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: MSYBVJ-HelveticaNeueLTStd-It2;
+	src: url("2/fonts/MSYBVJ-HelveticaNeueLTStd-It.eot");
+	src: url("2/fonts/MSYBVJ-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/MSYBVJ-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_2" class="t s1_2">METAGAN GOLD </div>
+<div id="t2_2" class="t s2_2">/ 2</div>
+<div id="t3_2" class="t s1_2">Control of the following weeds is variable</div>
+<div id="t4_2" class="t s3_2">Amaranthus hybridus</div>
+<div id="t5_2" class="t s1_2">common pigweed</div>
+<div id="t6_2" class="t s3_2">Amaranthus spinosus</div>
+<div id="t7_2" class="t s1_2">thorny pigweed</div>
+<div id="t8_2" class="t s3_2">Amaranthus thunbergii</div>
+<div id="t9_2" class="t s1_2">red pigweed</div>
+<div id="ta_2" class="t s3_2">Chenopodium carinatum</div>
+<div id="tb_2" class="t s1_2">green goosefoot</div>
+<div id="tc_2" class="t s3_2">Cleome monophylla</div>
+<div id="td_2" class="t s1_2">spindlepod</div>
+<div id="te_2" class="t s3_2">Commelina benghalensis</div>
+<div id="tf_2" class="t s1_2">Bengal wandering Jew</div>
+<div id="tg_2" class="t s3_2">Cyperus esculentus</div>
+<div id="th_2" class="t s1_2">yellow nut sedge</div>
+<div id="ti_2" class="t s3_2">Datura ferox</div>
+<div id="tj_2" class="t s1_2">large thorn apple</div>
+<div id="tk_2" class="t s3_2">Datura stramonium</div>
+<div id="tl_2" class="t s1_2">thorn apple</div>
+<div id="tm_2" class="t s3_2">Galinsoga parviflora</div>
+<div id="tn_2" class="t s1_2">gallant soldier</div>
+<div id="to_2" class="t s3_2">Nicandra physaloides</div>
+<div id="tp_2" class="t s1_2">Apple of Peru</div>
+<div id="tq_2" class="t s3_2">Portulaca oleracea</div>
+<div id="tr_2" class="t s1_2">purslane</div>
+<div id="ts_2" class="t s1_2">Important</div>
+<div id="tt_2" class="t s1_2">Yellow nut sedge</div>
+<div id="tu_2" class="t s3_2">(Cyperus esculentus)</div>
+<div id="tv_2" class="t s1_2">The control of </div>
+<div id="tw_2" class="t s4_2">C. esculentus</div>
+<div id="tx_2" class="t s1_2">can be improved provided the </div>
+<div id="ty_2" class="t s1_2">following conditions are met:</div>
+<div id="tz_2" class="t s2_2">•	</div>
+<div id="t10_2" class="t s2_2">Planting is immediately preceded by thorough ploughing with </div>
+<div id="t11_2" class="t s2_2">a mouldboard plough.</div>
+<div id="t12_2" class="t s2_2">•	</div>
+<div id="t13_2" class="t s2_2">A relatively fine, even and firm seedbed is prepared.</div>
+<div id="t14_2" class="t s2_2">•	</div>
+<div id="t15_2" class="t s2_2">Herbicide	application	is	followed	by	at	least	10	-	20	mm	of	soft	</div>
+<div id="t16_2" class="t s2_2">penetrating	rain	(or	irrigation)	to	leach	the	herbicide	into	the	soil	</div>
+<div id="t17_2" class="t s2_2">prior to the emergence of </div>
+<div id="t18_2" class="t s3_2">C. esculentus</div>
+<div id="t19_2" class="t s2_2">(normally	7	-	10	days	</div>
+<div id="t1a_2" class="t s2_2">after	ploughing).	These	conditions	are	more	likely	to	occur	dur-</div>
+<div id="t1b_2" class="t s2_2">ing	the	latter	half	of	the	planting	season	(November).	More	rain	</div>
+<div id="t1c_2" class="t s2_2">or irrigation is required on heavier soils to obtain good results. </div>
+<div id="t1d_2" class="t s2_2">This is the reason for the poor control sometimes obtained on </div>
+<div id="t1e_2" class="t s2_2">turf soils.</div>
+<div id="t1f_2" class="t s2_2">•	</div>
+<div id="t1g_2" class="t s2_2">Rainfall following herbicide application but before emergence </div>
+<div id="t1h_2" class="t s2_2">of </div>
+<div id="t1i_2" class="t s3_2">C. esculentus</div>
+<div id="t1j_2" class="t s2_2">is necessary for optimum </div>
+<div id="t1k_2" class="t s3_2">C. esculentus</div>
+<div id="t1l_2" class="t s2_2">con-</div>
+<div id="t1m_2" class="t s2_2">trol. </div>
+<div id="t1n_2" class="t s2_2">For this reason application of </div>
+<div id="t1o_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t1p_2" class="t s2_2">should </div>
+<div id="t1q_2" class="t s2_2">be made at or immediately after planting onto moist soil.</div>
+<div id="t1r_2" class="t s2_2">•	</div>
+<div id="t1s_2" class="t s2_2">When	planting	into	dry	soil	(insufficient	moisture	for	</div>
+<div id="t1t_2" class="t s3_2">C. escu-</div>
+<div id="t1u_2" class="t s3_2">lentus</div>
+<div id="t1v_2" class="t s2_2">germination)</div>
+<div id="t1w_2" class="t s2_2">the application should be timed as close </div>
+<div id="t1x_2" class="t s2_2">as possible to, but definitely before the first rains.</div>
+<div id="t1y_2" class="t s1_2">Grass control</div>
+<div id="t1z_2" class="t s2_2">•	</div>
+<div id="t20_2" class="t s2_2">Grass killers belonging to the chloroacetamide group of herbi-</div>
+<div id="t21_2" class="t s2_2">cides	(that	includes	</div>
+<div id="t22_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t23_2" class="t s2_2">)	are	absorbed	via	the	</div>
+<div id="t24_2" class="t s2_2">coleoptiles of grass weeds. </div>
+<div id="t25_2" class="t s2_2">Therefore, for good grass control </div>
+<div id="t26_2" class="t s2_2">the herbicide needs to be present at lethal concentrations in </div>
+<div id="t27_2" class="t s2_2">the	top	±	50	mm	of	the	soil	profile.		The	adsorptive	capacity	</div>
+<div id="t28_2" class="t s2_2">of a soil for these herbicides, as well as the amount of water </div>
+<div id="t29_2" class="t s2_2">that moves through the soil profile with rain/irrigation, deter-</div>
+<div id="t2a_2" class="t s2_2">mine the resultant concentration of these herbicides in the </div>
+<div id="t2b_2" class="t s2_2">top layers of the soil profile. </div>
+<div id="t2c_2" class="t s2_2">As a result of the low adsorption </div>
+<div id="t2d_2" class="t s2_2">capacity	of	sandy	soils	(0	-	15	%	clay,	&lt;	1	%	organic	matter)	</div>
+<div id="t2e_2" class="t s2_2">the amount of these herbicides can be reduced to sub-lethal </div>
+<div id="t2f_2" class="t s2_2">concentrations	 in	 the	 top	 ±	 50	 mm	 after	 the	 occurrence	 of	</div>
+<div id="t2g_2" class="t s2_2">permeating	rain	(25	mm	and	more	within	one	day).		Persistent	</div>
+<div id="t2h_2" class="t s2_2">rain	(50	mm	and	more	distributed	over	3	-	7	days)	will	have	the	</div>
+<div id="t2i_2" class="t s2_2">same result. </div>
+<div id="t2j_2" class="t s2_2">It can therefore happen that grasses germinate </div>
+<div id="t2k_2" class="t s2_2">if such conditions prevail. </div>
+<div id="t2l_2" class="t s2_2">Split applications is recommended </div>
+<div id="t2m_2" class="t s2_2">if </div>
+<div id="t2n_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t2o_2" class="t s2_2">is used on such soils. </div>
+<div id="t2p_2" class="t s2_2">Permeating and / </div>
+<div id="t2q_2" class="t s2_2">or persistent rain after the split application will have the same </div>
+<div id="t2r_2" class="t s2_2">result.</div>
+<div id="t2s_2" class="t s1_2">6. DIRECTIONS FOR USE </div>
+<div id="t2t_2" class="t s2_2">Use only as directed</div>
+<div id="t2u_2" class="t s2_2">6.1	</div>
+<div id="t2v_2" class="t s2_2">COMPATIBILITY</div>
+<div id="t2w_2" class="t s2_2">The compatibility of </div>
+<div id="t2x_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t2y_2" class="t s2_2">with other products may </div>
+<div id="t2z_2" class="t s2_2">be influenced by the formulation of the products involved as well </div>
+<div id="t30_2" class="t s2_2">as the quality of the water. Since the formulation of other products </div>
+<div id="t31_2" class="t s2_2">may change without the knowledge of Syngenta and the quality </div>
+<div id="t32_2" class="t s2_2">of water may vary from farm to farm, a physical compatibility test </div>
+<div id="t33_2" class="t s2_2">should always be carried out prior to application. </div>
+<div id="t34_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t35_2" class="t s2_2">is	compatible	with	CALLISTO	(L6795),	AGRAL	</div>
+<div id="t36_2" class="t s2_2">90	 (L2967),	 BREAKTHRU	 (L5895), COMPLEMENT SUPER </div>
+<div id="t37_2" class="t s2_2">(L8169),	 TRONIC	 (L3685),	 SOLITAIRE	 (L6962),	 GARDOMIL</div>
+<div id="t38_2" class="t s5_2">®</div>
+<div id="t39_2" class="t s2_2">GOLD	600	SC	(L6246),	GESAPRIM	SUPER	(L3914),	SORGOMIL</div>
+<div id="t3a_2" class="t s5_2">®</div>
+<div id="t3b_2" class="t s2_2">GOLD	600	SC	(L5897),	GESAPRIM	90	WG	(L4767),	HAMMER</div>
+<div id="t3c_2" class="t s5_2">®</div>
+<div id="t3d_2" class="t s2_2">100	 SL	 (L5201),	 IGRAN</div>
+<div id="t3e_2" class="t s5_2">®</div>
+<div id="t3f_2" class="t s2_2">500	 SC	 (L0324),	 SENCOR</div>
+<div id="t3g_2" class="t s5_2">®</div>
+<div id="t3h_2" class="t s2_2">480	 SC	</div>
+<div id="t3i_2" class="t s2_2">(L3034),	 GRAMOXONE</div>
+<div id="t3j_2" class="t s5_2">®</div>
+<div id="t3k_2" class="t s2_2">(L1174),	 STING</div>
+<div id="t3l_2" class="t s5_2">®</div>
+<div id="t3m_2" class="t s2_2">(L3066),	 MCPA,	 and	</div>
+<div id="t3n_2" class="t s2_2">2,	4-D	amine	as	recommended	on	this	label.</div>
+<div id="t3o_2" class="t s2_2">a high incidence of soil borne diseases and/or where mono-</div>
+<div id="t3p_2" class="t s2_2">culture is practised.</div>
+<div id="t3q_2" class="t s2_2">•	</div>
+<div id="t3r_2" class="t s2_2">Dry beans in hot, dry conditions especially in the presence of </div>
+<div id="t3s_2" class="t s2_2">a compaction layer in the soil. Under these conditions beans </div>
+<div id="t3t_2" class="t s2_2">might also be susceptible to wind damage.</div>
+<div id="t3u_2" class="t s2_2">•	</div>
+<div id="t3v_2" class="t s2_2">Sunflowers and dry beans on waterlogged, shallow, sandy </div>
+<div id="t3w_2" class="t s2_2">soils	of	&lt;100	cm	depth	with	an	impermeable	clay	sub	soil.</div>
+<div id="t3x_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t3y_2" class="t s2_2">can only be used on forage sorghum which </div>
+<div id="t3z_2" class="t s2_2">are sorghum x sorghum hybrids and sorghum x Sudan grass </div>
+<div id="t40_2" class="t s2_2">hybrids. Hybrids with </div>
+<div id="t41_2" class="t s3_2">Pennisetum</div>
+<div id="t42_2" class="t s2_2">spp and hybrids containing </div>
+<div id="t43_2" class="t s2_2">the	BMR	genes	should	not	be	sprayed	with	</div>
+<div id="t44_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t45_2" class="t s2_2">.</div>
+<div id="t46_2" class="t s2_2">CONCEP</div>
+<div id="t47_2" class="t s5_2">®</div>
+<div id="t48_2" class="t s2_2">960	EC	seed	treatment	should	only	be	used	in	combi-</div>
+<div id="t49_2" class="t s2_2">nation with </div>
+<div id="t4a_2" class="t s1_2">METAGAN GOLD </div>
+<div id="t4b_2" class="t s2_2">or DUAL GOLD</div>
+<div id="t4c_2" class="t s1_2">. </div>
+<div id="t4d_2" class="t s1_2">Important</div>
+<div id="t4e_2" class="t s2_2">Where other herbicides are used in combination with</div>
+<div id="t4f_2" class="t s1_2">METAGAN </div>
+<div id="t4g_2" class="t s1_2">GOLD </div>
+<div id="t4h_2" class="t s2_2">the restrictions of use as given on the labels of the herbi-</div>
+<div id="t4i_2" class="t s2_2">cides concerned, must be adhered to.</div>
+<div id="t4j_2" class="t s1_2">Warning: Possible damage to triazine sensitive crops</div>
+<div id="t4k_2" class="t s2_2">•	</div>
+<div id="t4l_2" class="t s2_2">Where soils have been treated with lime to correct the soil pH, </div>
+<div id="t4m_2" class="t s2_2">the possibility of crop damage increases dramatically in fields </div>
+<div id="t4n_2" class="t s2_2">where triazines were previously applied. This is due to the </div>
+<div id="t4o_2" class="t s2_2">triazine molecules being replaced on the clay complex with </div>
+<div id="t4p_2" class="t s2_2">calcium cations and the triazine thus becoming more available </div>
+<div id="t4q_2" class="t s2_2">in the soil-water complex. </div>
+<div id="t4r_2" class="t s2_2">•	</div>
+<div id="t4s_2" class="t s2_2">Only maize should be planted in the season directly after soil </div>
+<div id="t4t_2" class="t s2_2">pH adjustment with lime.</div>
+<div id="t4u_2" class="t s2_2">•	</div>
+<div id="t4v_2" class="t s2_2">No triazine sensitive crops should be planted in the season </div>
+<div id="t4w_2" class="t s2_2">after the soil pH adjustment has been done with lime. This </div>
+<div id="t4x_2" class="t s2_2">applies even if triazines were used at crop rotation rates in </div>
+<div id="t4y_2" class="t s2_2">previous years.</div>
+<div id="t4z_2" class="t s2_2">•	</div>
+<div id="t50_2" class="t s2_2">Triazine sensitive crops include all broadleaf crops e.g. diffe-</div>
+<div id="t51_2" class="t s2_2">rent bean crops, sunflowers and all cereals e.g. wheat.</div>
+<div id="t52_2" class="t s2_2">•	</div>
+<div id="t53_2" class="t s2_2">These warnings however do not guarantee that no damage </div>
+<div id="t54_2" class="t s2_2">would be experienced to even the following maize crop as </div>
+<div id="t55_2" class="t s2_2">large volumes of previously applied triazines might now be </div>
+<div id="t56_2" class="t s2_2">available depending on the volume of lime applied and the </div>
+<div id="t57_2" class="t s2_2">rainfall experienced. </div>
+<div id="t58_2" class="t s1_2">Warning: Possible increased efficacy, phytotoxicity and </div>
+<div id="t59_2" class="t s1_2">residual action </div>
+<div id="t5a_2" class="t s2_2">•	</div>
+<div id="t5b_2" class="t s2_2">Increasing	the	soil	pH	levels	above	7	could	produce	conditions	</div>
+<div id="t5c_2" class="t s2_2">for increased efficacy and reduced selectivity. This increased </div>
+<div id="t5d_2" class="t s2_2">pH may also result in increased soil residual action by certain </div>
+<div id="t5e_2" class="t s2_2">herbicides influencing the choice of following crops especially </div>
+<div id="t5f_2" class="t s2_2">under irrigation.</div>
+<div id="t5g_2" class="t s2_2">•	</div>
+<div id="t5h_2" class="t s2_2">In situations where pH adjustments has been done, take care </div>
+<div id="t5i_2" class="t s2_2">when sulphonyl urea herbicides, triazolopyrimidine sulfonani-</div>
+<div id="t5j_2" class="t s2_2">lide herbicides and imidazolinone herbicides, which are all </div>
+<div id="t5k_2" class="t s2_2">sensitive to soil pH fluctuations, have been used or are about </div>
+<div id="t5l_2" class="t s2_2">to be used.</div>
+<div id="t5m_2" class="t s1_2">Contact your local SYNGENTA representative to discuss </div>
+<div id="t5n_2" class="t s1_2">crop rotation and crop protection programmes to follow </div>
+<div id="t5o_2" class="t s1_2">before embarking on any pH adjustment programme.</div>
+<div id="t5p_2" class="t s1_2">5. WEEDS CONTROLLED</div>
+<div id="t5q_2" class="t s2_2">The following weed species are normally controlled by a pre-</div>
+<div id="t5r_2" class="t s2_2">emergence application of </div>
+<div id="t5s_2" class="t s1_2">METAGAN GOLD</div>
+<div id="t5t_2" class="t s2_2">at the dosage rates </div>
+<div id="t5u_2" class="t s2_2">as indicated below:</div>
+<div id="t5v_2" class="t s3_2">Brachiaria eruciformis</div>
+<div id="t5w_2" class="t s1_2">sweet signal grass</div>
+<div id="t5x_2" class="t s3_2">Chloris virgata</div>
+<div id="t5y_2" class="t s1_2">feathertop Chloris</div>
+<div id="t5z_2" class="t s3_2">Dactyloctenium aegyptium</div>
+<div id="t60_2" class="t s1_2">crowfoot</div>
+<div id="t61_2" class="t s3_2">Digitaria sanguinalis</div>
+<div id="t62_2" class="t s1_2">crab finger-grass</div>
+<div id="t63_2" class="t s3_2">Echinochloa crusgalli</div>
+<div id="t64_2" class="t s1_2">barnyard grass</div>
+<div id="t65_2" class="t s3_2">Eleusine indica</div>
+<div id="t66_2" class="t s1_2">goose grass</div>
+<div id="t67_2" class="t s3_2">Panicum maximum</div>
+<div id="t68_2" class="t s1_2">common buffalo grass</div>
+<div id="t69_2" class="t s3_2">Panicum schinzii</div>
+<div id="t6a_2" class="t s1_2">sweet buffalo grass</div>
+<div id="t6b_2" class="t s3_2">Pseudobrachiaria deflexa</div>
+<div id="t6c_2" class="t s1_2">false signal grass</div>
+<div id="t6d_2" class="t s3_2">Setaria pallide-fusca</div>
+<div id="t6e_2" class="t s1_2">red bristle grass</div>
+<div id="t6f_2" class="t s3_2">Setaria verticillata</div>
+<div id="t6g_2" class="t s1_2">sticky bristle grass</div>
+<div id="t6h_2" class="t s3_2">Tragus berteronianus</div>
+<div id="t6i_2" class="t s1_2">small carrotseed grass</div>
+<div id="t6j_2" class="t s3_2">Tragus racemosus</div>
+<div id="t6k_2" class="t s1_2">large carrotseed grass</div>
+<div id="t6l_2" class="t s3_2">Urochloa mosambicensis</div>
+<div id="t6m_2" class="t s1_2">bushveld herringbone</div>
+<div id="t6n_2" class="t s1_2">grass</div>
+<div id="t6o_2" class="t s3_2">Urochloa panicoides</div>
+<div id="t6p_2" class="t s1_2">herringbone grass</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg2Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg2"><img src="2/2.png" id="pdf2" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f2 = [['t1_2',401],['t2_2',58],['t3_2',971],['t4_2',463],['t5_2',418],['t6_2',469],['t7_2',362],['t8_2',494],['t9_2',290],['ta_2',540],['tb_2',386],['tc_2',435],['te_2',547],['tf_2',532],['tg_2',429],['th_2',395],['ti_2',267],['tj_2',400],['tk_2',416],['tl_2',267],['tm_2',431],['tn_2',330],['to_2',467],['tp_2',318],['tq_2',406],['tt_2',402],['tu_2',454],['tv_2',326],['tw_2',318],['tx_2',696],['ty_2',680],['t10_2',1300],['t11_2',468],['t13_2',1094],['t17_2',534],['t18_2',296],['t1c_2',1300],['t1d_2',1300],['t1e_2',189],['t1g_2',1300],['t1i_2',294],['t1j_2',524],['t1k_2',294],['t1n_2',615],['t1o_2',402],['t1q_2',1191],['t1t_2',188],['t1w_2',875],['t1x_2',1036],['t1y_2',317],['t20_2',1300],['t22_2',403],['t24_2',574],['t25_2',696],['t26_2',1300],['t28_2',1300],['t29_2',1300],['t2a_2',1300],['t2b_2',582],['t2c_2',687],['t2e_2',1300],['t2f_2',1314],['t2i_2',259],['t2j_2',1006],['t2k_2',536],['t2l_2',731],['t2n_2',401],['t2o_2',454],['t2p_2',365],['t2q_2',1300],['t2s_2',605],['t2t_2',432],['t2w_2',413],['t2x_2',402],['t2y_2',520],['t2z_2',1369],['t30_2',1369],['t31_2',1369],['t32_2',1369],['t33_2',1030],['t34_2',398],['t36_2',1369],['t37_2',1349],['t3d_2',526],['t3f_2',586],['t3h_2',183],['t3i_2',503],['t3k_2',337],['t3m_2',462],['t3o_2',1304],['t3p_2',412],['t3r_2',1304],['t3s_2',1304],['t3t_2',910],['t3v_2',1304],['t3x_2',405],['t3y_2',948],['t3z_2',1373],['t40_2',463],['t42_2',603],['t44_2',401],['t49_2',229],['t4a_2',401],['t4b_2',328],['t4e_2',1112],['t4h_2',1216],['t4i_2',811],['t4j_2',1240],['t4l_2',1304],['t4m_2',1304],['t4n_2',1304],['t4o_2',1304],['t4p_2',1304],['t4q_2',542],['t4s_2',1304],['t4t_2',524],['t4v_2',1304],['t4w_2',1304],['t4x_2',1304],['t4y_2',318],['t50_2',1304],['t51_2',1158],['t53_2',1304],['t54_2',1304],['t55_2',1304],['t56_2',1304],['t57_2',417],['t58_2',1373],['t59_2',345],['t5c_2',1304],['t5d_2',1304],['t5e_2',1304],['t5f_2',328],['t5h_2',1304],['t5i_2',1304],['t5j_2',1304],['t5k_2',1304],['t5l_2',241],['t5m_2',1373],['t5n_2',1373],['t5o_2',1245],['t5p_2',601],['t5q_2',1373],['t5r_2',532],['t5s_2',401],['t5t_2',410],['t5u_2',409],['t5v_2',473],['t5w_2',437],['t5x_2',311],['t5y_2',423],['t5z_2',580],['t61_2',432],['t62_2',404],['t63_2',461],['t64_2',352],['t65_2',326],['t66_2',288],['t67_2',417],['t68_2',526],['t69_2',363],['t6a_2',460],['t6b_2',549],['t6c_2',409],['t6d_2',444],['t6e_2',381],['t6f_2',383],['t6g_2',442],['t6h_2',462],['t6i_2',536],['t6j_2',401],['t6k_2',530],['t6l_2',550],['t6m_2',508],['t6o_2',448],['t6p_2',427]];
+var c2 = 0;
+function fontAdjustments2(){;
+	if (c2<f2.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f2[c2][0],f2[c2][1]);
+		c2++;
+		if (c2%10 == 0) {
+			setTimeout(function(){fontAdjustments2()},0);
+		} else {
+			fontAdjustments2();
+		}
+	}
+};
+function load2(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments2,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 242;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_2");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(8,2,909,1286,0);
+</script>
+</body>
+</html>

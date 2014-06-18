@@ -1,0 +1,933 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>CALLISTO___Eng_2012_05_08 Page8</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load8();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_8{left:394px;top:42px;}
+#t2_8{left:459px;top:42px;}
+#t3_8{left:75px;top:86px;}
+#t4_8{left:77px;top:105px;}
+#t5_8{left:112px;top:105px;}
+#t6_8{left:117px;top:105px;}
+#t7_8{left:181px;top:71px;}
+#t8_8{left:149px;top:86px;}
+#t9_8{left:173px;top:100px;}
+#ta_8{left:162px;top:115px;}
+#tb_8{left:203px;top:115px;}
+#tc_8{left:208px;top:115px;}
+#td_8{left:277px;top:72px;}
+#te_8{left:265px;top:86px;}
+#tf_8{left:269px;top:101px;}
+#tg_8{left:261px;top:115px;}
+#th_8{left:296px;top:115px;}
+#ti_8{left:301px;top:115px;}
+#tj_8{left:358px;top:72px;}
+#tk_8{left:353px;top:86px;}
+#tl_8{left:351px;top:101px;}
+#tm_8{left:350px;top:115px;}
+#tn_8{left:71px;top:141px;}
+#to_8{left:287px;top:141px;}
+#tp_8{left:71px;top:166px;}
+#tq_8{left:70px;top:193px;}
+#tr_8{left:70px;top:208px;}
+#ts_8{left:70px;top:222px;}
+#tt_8{left:252px;top:193px;}
+#tu_8{left:252px;top:208px;}
+#tv_8{left:252px;top:222px;}
+#tw_8{left:67px;top:696px;}
+#tx_8{left:85px;top:696px;}
+#ty_8{left:136px;top:696px;}
+#tz_8{left:163px;top:696px;}
+#t10_8{left:221px;top:696px;}
+#t11_8{left:269px;top:696px;}
+#t12_8{left:329px;top:696px;}
+#t13_8{left:85px;top:711px;}
+#t14_8{left:85px;top:725px;}
+#t15_8{left:72px;top:557px;}
+#t16_8{left:72px;top:571px;}
+#t17_8{left:72px;top:599px;}
+#t18_8{left:72px;top:613px;}
+#t19_8{left:72px;top:628px;}
+#t1a_8{left:72px;top:642px;}
+#t1b_8{left:167px;top:642px;}
+#t1c_8{left:72px;top:657px;}
+#t1d_8{left:75px;top:393px;}
+#t1e_8{left:79px;top:412px;}
+#t1f_8{left:89px;top:426px;}
+#t1g_8{left:99px;top:426px;}
+#t1h_8{left:105px;top:426px;}
+#t1i_8{left:181px;top:383px;}
+#t1j_8{left:149px;top:397px;}
+#t1k_8{left:173px;top:412px;}
+#t1l_8{left:162px;top:426px;}
+#t1m_8{left:203px;top:426px;}
+#t1n_8{left:208px;top:426px;}
+#t1o_8{left:277px;top:383px;}
+#t1p_8{left:265px;top:398px;}
+#t1q_8{left:269px;top:412px;}
+#t1r_8{left:261px;top:427px;}
+#t1s_8{left:296px;top:427px;}
+#t1t_8{left:301px;top:427px;}
+#t1u_8{left:358px;top:383px;}
+#t1v_8{left:353px;top:398px;}
+#t1w_8{left:351px;top:412px;}
+#t1x_8{left:350px;top:427px;}
+#t1y_8{left:71px;top:453px;}
+#t1z_8{left:287px;top:453px;}
+#t20_8{left:71px;top:478px;}
+#t21_8{left:70px;top:505px;}
+#t22_8{left:70px;top:519px;}
+#t23_8{left:70px;top:534px;}
+#t24_8{left:252px;top:505px;}
+#t25_8{left:252px;top:519px;}
+#t26_8{left:252px;top:534px;}
+#t27_8{left:74px;top:246px;}
+#t28_8{left:74px;top:260px;}
+#t29_8{left:74px;top:288px;}
+#t2a_8{left:74px;top:302px;}
+#t2b_8{left:74px;top:317px;}
+#t2c_8{left:74px;top:332px;}
+#t2d_8{left:74px;top:346px;}
+#t2e_8{left:465px;top:277px;}
+#t2f_8{left:523px;top:276px;}
+#t2g_8{left:527px;top:277px;}
+#t2h_8{left:538px;top:277px;}
+#t2i_8{left:591px;top:276px;}
+#t2j_8{left:596px;top:277px;}
+#t2k_8{left:684px;top:276px;}
+#t2l_8{left:689px;top:277px;}
+#t2m_8{left:729px;top:276px;}
+#t2n_8{left:733px;top:277px;}
+#t2o_8{left:784px;top:276px;}
+#t2p_8{left:788px;top:277px;}
+#t2q_8{left:465px;top:291px;letter-spacing:1px;}
+#t2r_8{left:526px;top:290px;}
+#t2s_8{left:531px;top:291px;}
+#t2t_8{left:550px;top:291px;letter-spacing:1px;}
+#t2u_8{left:609px;top:290px;}
+#t2v_8{left:614px;top:291px;}
+#t2w_8{left:633px;top:291px;letter-spacing:1px;}
+#t2x_8{left:689px;top:290px;}
+#t2y_8{left:694px;top:291px;}
+#t2z_8{left:713px;top:291px;letter-spacing:1px;}
+#t30_8{left:784px;top:290px;}
+#t31_8{left:788px;top:291px;}
+#t32_8{left:465px;top:306px;}
+#t33_8{left:538px;top:305px;}
+#t34_8{left:549px;top:306px;}
+#t35_8{left:619px;top:305px;}
+#t36_8{left:630px;top:306px;}
+#t37_8{left:465px;top:321px;}
+#t38_8{left:465px;top:363px;}
+#t39_8{left:506px;top:362px;}
+#t3a_8{left:517px;top:363px;}
+#t3b_8{left:465px;top:378px;}
+#t3c_8{left:523px;top:377px;}
+#t3d_8{left:535px;top:378px;}
+#t3e_8{left:620px;top:377px;}
+#t3f_8{left:640px;top:378px;}
+#t3g_8{left:465px;top:392px;}
+#t3h_8{left:465px;top:407px;}
+#t3i_8{left:568px;top:407px;}
+#t3j_8{left:465px;top:422px;}
+#t3k_8{left:465px;top:436px;}
+#t3l_8{left:514px;top:436px;}
+#t3m_8{left:538px;top:436px;}
+#t3n_8{left:658px;top:436px;}
+#t3o_8{left:671px;top:436px;}
+#t3p_8{left:465px;top:451px;}
+#t3q_8{left:465px;top:466px;}
+#t3r_8{left:512px;top:466px;}
+#t3s_8{left:521px;top:466px;}
+#t3t_8{left:465px;top:480px;}
+#t3u_8{left:512px;top:480px;}
+#t3v_8{left:522px;top:480px;}
+#t3w_8{left:465px;top:527px;}
+#t3x_8{left:583px;top:527px;}
+#t3y_8{left:465px;top:541px;}
+#t3z_8{left:703px;top:575px;}
+
+.s6_8{
+	FONT-SIZE: 21px;
+	FONT-FAMILY: QJLBKB-HelveticaNeueLTStd-Bd8;
+	color: rgb(0,0,0);
+}
+
+.s1_8{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: QJLBKB-HelveticaNeueLTStd-Bd8;
+	color: rgb(0,0,0);
+}
+
+.s3_8{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: OTRPIF-MT-Extra8;
+	color: rgb(0,0,0);
+}
+
+.s2_8{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: OTRPIF-HelveticaNeueLTStd-Lt8;
+	color: rgb(0,0,0);
+}
+
+.s5_8{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: QJLBKB-HelveticaNeueLTStd-Bd8;
+	color: rgb(0,0,0);
+}
+
+.s4_8{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: NLHJUH-HelveticaNeueLTStd-It8;
+	color: rgb(0,0,0);
+}
+
+.s7_8{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: OTRPIF-HelveticaNeueLTStd-Lt8;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: OTRPIF-MT-Extra8;
+	src: url("8/fonts/OTRPIF-MT-Extra.eot");
+	src: url("8/fonts/OTRPIF-MT-Extra.eot?#iefix") format("embedded-opentype"),
+		url("8/fonts/OTRPIF-MT-Extra.otf") format("opentype");
+}
+
+@font-face {
+	font-family: NLHJUH-HelveticaNeueLTStd-It8;
+	src: url("8/fonts/NLHJUH-HelveticaNeueLTStd-It.eot");
+	src: url("8/fonts/NLHJUH-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("8/fonts/NLHJUH-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: QJLBKB-HelveticaNeueLTStd-Bd8;
+	src: url("8/fonts/QJLBKB-HelveticaNeueLTStd-Bd.eot");
+	src: url("8/fonts/QJLBKB-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("8/fonts/QJLBKB-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: OTRPIF-HelveticaNeueLTStd-Lt8;
+	src: url("8/fonts/OTRPIF-HelveticaNeueLTStd-Lt.eot");
+	src: url("8/fonts/OTRPIF-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("8/fonts/OTRPIF-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_8" class="t s1_8">CALLISTO</div>
+<div id="t2_8" class="t s2_8">/	8</div>
+<div id="t3_8" class="t s1_8">CALLISTO</div>
+<div id="t4_8" class="t s2_8">312	m</div>
+<div id="t5_8" class="t s3_8">l</div>
+<div id="t6_8" class="t s2_8">/ha</div>
+<div id="t7_8" class="t s1_8">plus</div>
+<div id="t8_8" class="t s1_8">FALCON GOLD </div>
+<div id="t9_8" class="t s1_8">960 EC</div>
+<div id="ta_8" class="t s2_8">1562	m</div>
+<div id="tb_8" class="t s3_8">l</div>
+<div id="tc_8" class="t s2_8">/ha</div>
+<div id="td_8" class="t s1_8">plus </div>
+<div id="te_8" class="t s1_8">DIURON </div>
+<div id="tf_8" class="t s1_8">800 SC</div>
+<div id="tg_8" class="t s2_8">500	m</div>
+<div id="th_8" class="t s3_8">l</div>
+<div id="ti_8" class="t s2_8">/ha</div>
+<div id="tj_8" class="t s2_8">plus	a</div>
+<div id="tk_8" class="t s1_8">recom-</div>
+<div id="tl_8" class="t s1_8">mended </div>
+<div id="tm_8" class="t s1_8">adjuvant</div>
+<div id="tn_8" class="t s1_8">Botanical name </div>
+<div id="to_8" class="t s1_8">Common name </div>
+<div id="tp_8" class="t s1_8">All of the above mentioned weeds will be controlled plus</div>
+<div id="tq_8" class="t s4_8">Cyperus esculentus</div>
+<div id="tr_8" class="t s4_8">Panicum maximum </div>
+<div id="ts_8" class="t s4_8">Panicum schinzii</div>
+<div id="tt_8" class="t s2_8">yellow	nutsedge</div>
+<div id="tu_8" class="t s2_8">common	buffalo	grass</div>
+<div id="tv_8" class="t s2_8">sweet	buffalo	grass</div>
+<div id="tw_8" class="t s2_8">•	</div>
+<div id="tx_8" class="t s2_8">Consult	</div>
+<div id="ty_8" class="t s2_8">the	</div>
+<div id="tz_8" class="t s2_8">FALCON	</div>
+<div id="t10_8" class="t s2_8">GOLD,	</div>
+<div id="t11_8" class="t s2_8">DIURON,	</div>
+<div id="t12_8" class="t s2_8">GRAMOXONE,	</div>
+<div id="t13_8" class="t s2_8">COMPLEMENT	SUPER,	PENETREX,	SOLITAIRE	and	TRONIC	</div>
+<div id="t14_8" class="t s2_8">labels	for	warnings,	precautions	and	directions	for	use.</div>
+<div id="t15_8" class="t s1_8">At this rate and application stage the following weeds are </div>
+<div id="t16_8" class="t s1_8">controlled pre–emergence</div>
+<div id="t17_8" class="t s4_8">Aizoon glinoides,</div>
+<div id="t18_8" class="t s4_8">Cyperus esculentus, </div>
+<div id="t19_8" class="t s4_8">Panicum maximum, </div>
+<div id="t1a_8" class="t s4_8">Panicum schinzii </div>
+<div id="t1b_8" class="t s2_8">en	</div>
+<div id="t1c_8" class="t s4_8">Setaria pallide-fusca</div>
+<div id="t1d_8" class="t s1_8">CALLISTO</div>
+<div id="t1e_8" class="t s2_8">469	-	520	</div>
+<div id="t1f_8" class="t s2_8">m</div>
+<div id="t1g_8" class="t s3_8">l</div>
+<div id="t1h_8" class="t s2_8">/ha</div>
+<div id="t1i_8" class="t s1_8">plus</div>
+<div id="t1j_8" class="t s1_8">FALCON GOLD </div>
+<div id="t1k_8" class="t s1_8">960 EC</div>
+<div id="t1l_8" class="t s2_8">1041	m</div>
+<div id="t1m_8" class="t s3_8">l</div>
+<div id="t1n_8" class="t s2_8">/ha</div>
+<div id="t1o_8" class="t s1_8">plus </div>
+<div id="t1p_8" class="t s1_8">DIURON </div>
+<div id="t1q_8" class="t s1_8">800 SC</div>
+<div id="t1r_8" class="t s2_8">500	m</div>
+<div id="t1s_8" class="t s3_8">l</div>
+<div id="t1t_8" class="t s2_8">/ha</div>
+<div id="t1u_8" class="t s2_8">plus	a</div>
+<div id="t1v_8" class="t s1_8">recom-</div>
+<div id="t1w_8" class="t s1_8">mended </div>
+<div id="t1x_8" class="t s1_8">adjuvant</div>
+<div id="t1y_8" class="t s1_8">Botanical name </div>
+<div id="t1z_8" class="t s1_8">Common name </div>
+<div id="t20_8" class="t s1_8">All of the above mentioned weeds will be controlled plus</div>
+<div id="t21_8" class="t s4_8">Cyperus esculentus</div>
+<div id="t22_8" class="t s4_8">Panicum maximum</div>
+<div id="t23_8" class="t s4_8">Panicum schinzii</div>
+<div id="t24_8" class="t s2_8">yellow	nutsedge</div>
+<div id="t25_8" class="t s2_8">common	buffalo	grass</div>
+<div id="t26_8" class="t s2_8">sweet	buffalo	grass	</div>
+<div id="t27_8" class="t s1_8">At this rate and application stage the following weeds are </div>
+<div id="t28_8" class="t s1_8">controlled pre–emergence</div>
+<div id="t29_8" class="t s4_8">Aizoon glinoides, </div>
+<div id="t2a_8" class="t s4_8">Cyperus esculentus, </div>
+<div id="t2b_8" class="t s4_8">Panicum maximum, </div>
+<div id="t2c_8" class="t s4_8">Panicum schinzii</div>
+<div id="t2d_8" class="t s4_8">Setaria pallide-fusca</div>
+<div id="t2e_8" class="t s5_8">BATELEUR</div>
+<div id="t2f_8" class="t s6_8">®</div>
+<div id="t2g_8" class="t s5_8">,</div>
+<div id="t2h_8" class="t s5_8">CALLISTO</div>
+<div id="t2i_8" class="t s6_8">®</div>
+<div id="t2j_8" class="t s5_8">, COMPLEMENT</div>
+<div id="t2k_8" class="t s6_8">®</div>
+<div id="t2l_8" class="t s5_8">, DUAL</div>
+<div id="t2m_8" class="t s6_8">®</div>
+<div id="t2n_8" class="t s5_8">, GARDO</div>
+<div id="t2o_8" class="t s6_8">®</div>
+<div id="t2p_8" class="t s5_8">, </div>
+<div id="t2q_8" class="t s5_8">GARDOMIL</div>
+<div id="t2r_8" class="t s6_8">®</div>
+<div id="t2s_8" class="t s5_8">, </div>
+<div id="t2t_8" class="t s5_8">GESAPRIM</div>
+<div id="t2u_8" class="t s6_8">®</div>
+<div id="t2v_8" class="t s5_8">, </div>
+<div id="t2w_8" class="t s5_8">METAGAN</div>
+<div id="t2x_8" class="t s6_8">®</div>
+<div id="t2y_8" class="t s5_8">, </div>
+<div id="t2z_8" class="t s5_8">PRIMAGRAM</div>
+<div id="t30_8" class="t s6_8">®</div>
+<div id="t31_8" class="t s5_8">, </div>
+<div id="t32_8" class="t s5_8">TOUCHDOWN</div>
+<div id="t33_8" class="t s6_8">®</div>
+<div id="t34_8" class="t s5_8">and KARATE</div>
+<div id="t35_8" class="t s6_8">®</div>
+<div id="t36_8" class="t s7_8">=	 Registered	 Trade	 Marks	 of	 a	</div>
+<div id="t37_8" class="t s7_8">Syngenta	Group	Company</div>
+<div id="t38_8" class="t s5_8">TRONIC</div>
+<div id="t39_8" class="t s6_8">®</div>
+<div id="t3a_8" class="t s7_8">=	Registered	Trade	name	of		PLAASKEM.</div>
+<div id="t3b_8" class="t s5_8">PENETREX</div>
+<div id="t3c_8" class="t s6_8">®</div>
+<div id="t3d_8" class="t s5_8">and SOLITAIRE</div>
+<div id="t3e_8" class="t s6_8">®</div>
+<div id="t3f_8" class="t s7_8">=	 Registered	 Trade	 name	 of	 	</div>
+<div id="t3g_8" class="t s7_8">SAFAGRIC</div>
+<div id="t3h_8" class="t s5_8">VELOCITY GLYFO</div>
+<div id="t3i_8" class="t s7_8">=	 Registered	 Trade	 name	 of	 	 VILLA	 CROP	</div>
+<div id="t3j_8" class="t s7_8">CHEMICALS</div>
+<div id="t3k_8" class="t s5_8">DIURON</div>
+<div id="t3l_8" class="t s7_8">and	</div>
+<div id="t3m_8" class="t s5_8">BROADSTRIKE 80WG </div>
+<div id="t3n_8" class="t s7_8">=</div>
+<div id="t3o_8" class="t s7_8">Registered	 tradename	 of	</div>
+<div id="t3p_8" class="t s7_8">DOW	Agrosciences	(PTY)	LTD</div>
+<div id="t3q_8" class="t s5_8">ACCENT </div>
+<div id="t3r_8" class="t s7_8">=</div>
+<div id="t3s_8" class="t s7_8">Registered	tradename	of	DUPONT	DE	NEMOURS	INT	S.A.</div>
+<div id="t3t_8" class="t s5_8">BIODEW </div>
+<div id="t3u_8" class="t s7_8">=</div>
+<div id="t3v_8" class="t s7_8">Registered	tradename	of	PLAASKEM	(PTY)	LTD</div>
+<div id="t3w_8" class="t s5_8">SYNGENTA AG, 2000. </div>
+<div id="t3x_8" class="t s7_8">Copyright	 in	 this	 document	 is	 reserved.	 	 All	</div>
+<div id="t3y_8" class="t s7_8">unauthorised	reproduction	is	forbidden</div>
+<div id="t3z_8" class="t s7_8">SA	Reg.	2012-05-08</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg8Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg8"><img src="8/8.png" id="pdf8" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f8 = [['t8_8',357],['t9_8',164],['tf_8',164],['tn_8',354],['to_8',349],['tp_8',1284],['tq_8',429],['tr_8',417],['ts_8',363],['t15_8',1335],['t16_8',615],['t17_8',371],['t18_8',443],['t19_8',430],['t1a_8',363],['t1c_8',444],['t1j_8',357],['t1k_8',164],['t1q_8',164],['t1y_8',354],['t1z_8',349],['t20_8',1284],['t21_8',429],['t22_8',417],['t23_8',363],['t27_8',1326],['t28_8',615],['t29_8',371],['t2a_8',443],['t2b_8',430],['t2c_8',363],['t2d_8',444],['t2j_8',354],['t2l_8',161],['t2n_8',201],['t34_8',278],['t36_8',654],['t3d_8',338],['t3f_8',632],['t3h_8',385],['t3i_8',902],['t3m_8',456],['t3o_8',492],['t3w_8',453],['t3x_8',844]];
+var c8 = 0;
+function fontAdjustments8(){;
+	if (c8<f8.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f8[c8][0],f8[c8][1]);
+		c8++;
+		if (c8%10 == 0) {
+			setTimeout(function(){fontAdjustments8()},0);
+		} else {
+			fontAdjustments8();
+		}
+	}
+};
+function load8(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments8,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 144;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_8");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(8,8,909,1286,0);
+</script>
+</body>
+</html>

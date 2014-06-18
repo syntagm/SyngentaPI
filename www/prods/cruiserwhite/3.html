@@ -1,0 +1,845 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>CRUISER_White___Eng_2007_11_22 Page3</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load3();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_3{left:194px;top:776px;}
+#t2_3{left:232px;top:777px;}
+#t3_3{left:237px;top:776px;}
+#t4_3{left:243px;top:776px;}
+#t5_3{left:284px;top:777px;}
+#t6_3{left:289px;top:776px;}
+#t7_3{left:295px;top:776px;}
+#t8_3{left:341px;top:777px;}
+#t9_3{left:345px;top:776px;}
+#ta_3{left:352px;top:776px;}
+#tb_3{left:400px;top:777px;}
+#tc_3{left:407px;top:776px;}
+#td_3{left:428px;top:776px;}
+#te_3{left:480px;top:777px;}
+#tf_3{left:487px;top:776px;}
+#tg_3{left:222px;top:834px;}
+#th_3{left:347px;top:834px;}
+#ti_3{left:732px;top:876px;}
+#tj_3{left:423px;top:41px;}
+#tk_3{left:515px;top:41px;}
+#tl_3{left:265px;top:289px;}
+#tm_3{left:338px;top:289px;}
+#tn_3{left:347px;top:289px;}
+#to_3{left:335px;top:318px;}
+#tp_3{left:335px;top:333px;}
+#tq_3{left:335px;top:347px;}
+#tr_3{left:335px;top:362px;}
+#ts_3{left:322px;top:550px;}
+#tt_3{left:357px;top:550px;}
+#tu_3{left:331px;top:565px;}
+#tv_3{left:301px;top:579px;}
+#tw_3{left:345px;top:579px;}
+#tx_3{left:354px;top:579px;}
+#ty_3{left:322px;top:608px;}
+#tz_3{left:357px;top:608px;}
+#t10_3{left:293px;top:623px;}
+#t11_3{left:353px;top:623px;}
+#t12_3{left:362px;top:623px;}
+#t13_3{left:514px;top:288px;}
+#t14_3{left:620px;top:317px;}
+#t15_3{left:618px;top:332px;}
+#t16_3{left:618px;top:346px;}
+#t17_3{left:618px;top:361px;}
+#t18_3{left:604px;top:549px;}
+#t19_3{left:604px;top:607px;}
+#t1a_3{left:144px;top:76px;}
+#t1b_3{left:114px;top:105px;}
+#t1c_3{left:161px;top:105px;}
+#t1d_3{left:114px;top:119px;}
+#t1e_3{left:114px;top:134px;letter-spacing:1px;}
+#t1f_3{left:177px;top:134px;letter-spacing:1px;}
+#t1g_3{left:209px;top:134px;letter-spacing:1px;}
+#t1h_3{left:114px;top:148px;}
+#t1i_3{left:114px;top:163px;}
+#t1j_3{left:297px;top:76px;}
+#t1k_3{left:291px;top:105px;}
+#t1l_3{left:307px;top:119px;}
+#t1m_3{left:292px;top:134px;}
+#t1n_3{left:270px;top:148px;}
+#t1o_3{left:303px;top:163px;}
+#t1p_3{left:374px;top:163px;}
+#t1q_3{left:296px;top:177px;}
+#t1r_3{left:599px;top:76px;}
+#t1s_3{left:435px;top:105px;}
+#t1t_3{left:435px;top:119px;}
+#t1u_3{left:592px;top:119px;}
+#t1v_3{left:652px;top:119px;}
+#t1w_3{left:697px;top:119px;}
+#t1x_3{left:435px;top:134px;}
+#t1y_3{left:435px;top:148px;}
+#t1z_3{left:435px;top:177px;}
+#t20_3{left:505px;top:177px;}
+#t21_3{left:566px;top:177px;}
+#t22_3{left:611px;top:177px;}
+#t23_3{left:435px;top:192px;}
+#t24_3{left:435px;top:206px;}
+#t25_3{left:435px;top:235px;}
+#t26_3{left:281px;top:260px;}
+#t27_3{left:114px;top:391px;}
+#t28_3{left:114px;top:420px;}
+#t29_3{left:399px;top:420px;}
+#t2a_3{left:458px;top:420px;}
+#t2b_3{left:500px;top:420px;}
+#t2c_3{left:663px;top:420px;}
+#t2d_3{left:835px;top:420px;}
+#t2e_3{left:118px;top:449px;}
+#t2f_3{left:273px;top:449px;}
+#t2g_3{left:284px;top:449px;}
+#t2h_3{left:114px;top:478px;}
+#t2i_3{left:117px;top:478px;}
+#t2j_3{left:128px;top:478px;}
+#t2k_3{left:169px;top:484px;}
+#t2l_3{left:222px;top:484px;}
+#t2m_3{left:231px;top:484px;}
+#t2n_3{left:118px;top:497px;}
+#t2o_3{left:114px;top:521px;}
+#t2p_3{left:114px;top:549px;}
+#t2q_3{left:114px;top:564px;}
+#t2r_3{left:114px;top:607px;}
+
+.s5_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Bd3;
+	color: rgb(0,0,0);
+}
+
+.s1_3{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Bd3;
+	color: rgb(0,0,0);
+}
+
+.s4_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Lt3;
+	color: rgb(0,0,0);
+}
+
+.s7_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-It3;
+	color: rgb(0,0,0);
+}
+
+.s3_3{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Lt3;
+	color: rgb(0,0,0);
+}
+
+.s6_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-Mt-ExtraPlain3;
+	color: rgb(0,0,0);
+}
+
+.s2_3{
+	FONT-SIZE: 21px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Lt3;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: JLFAFP-Mt-ExtraPlain3;
+	src: url("3/fonts/JLFAFP-Mt-ExtraPlain.eot");
+	src: url("3/fonts/JLFAFP-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/JLFAFP-Mt-ExtraPlain.otf") format("opentype");
+}
+
+@font-face {
+	font-family: JLFAFP-HelveticaNeueLTStd-It3;
+	src: url("3/fonts/JLFAFP-HelveticaNeueLTStd-It.eot");
+	src: url("3/fonts/JLFAFP-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/JLFAFP-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: JLFAFP-HelveticaNeueLTStd-Lt3;
+	src: url("3/fonts/JLFAFP-HelveticaNeueLTStd-Lt.eot");
+	src: url("3/fonts/JLFAFP-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/JLFAFP-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: JLFAFP-HelveticaNeueLTStd-Bd3;
+	src: url("3/fonts/JLFAFP-HelveticaNeueLTStd-Bd.eot");
+	src: url("3/fonts/JLFAFP-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/JLFAFP-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_3" class="t s1_3">APRON</div>
+<div id="t2_3" class="t s2_3">®</div>
+<div id="t3_3" class="t s3_3">,	</div>
+<div id="t4_3" class="t s1_3">CELEST</div>
+<div id="t5_3" class="t s2_3">®</div>
+<div id="t6_3" class="t s3_3">,	</div>
+<div id="t7_3" class="t s1_3">CONCEP</div>
+<div id="t8_3" class="t s2_3">®</div>
+<div id="t9_3" class="t s3_3">,	</div>
+<div id="ta_3" class="t s1_3">CRUISER</div>
+<div id="tb_3" class="t s2_3">®</div>
+<div id="tc_3" class="t s3_3">and	</div>
+<div id="td_3" class="t s1_3">DIVIDEND</div>
+<div id="te_3" class="t s2_3">®</div>
+<div id="tf_3" class="t s3_3">=	Registered	Trade	Marks	of	a	Syngenta	Group	Company.</div>
+<div id="tg_3" class="t s1_3">© SYNGENTA AG, 2000.</div>
+<div id="th_3" class="t s3_3">Copyright	in	this	document	is	reserved.		All	unauthorised	reproduction	is	forbidden.</div>
+<div id="ti_3" class="t s4_3">SA	Reg.	2007-11-22</div>
+<div id="tj_3" class="t s5_3">CRUISER White</div>
+<div id="tk_3" class="t s4_3">/	3</div>
+<div id="tl_3" class="t s5_3">Dosage in m</div>
+<div id="tm_3" class="t s6_3">l</div>
+<div id="tn_3" class="t s5_3">product/bag</div>
+<div id="to_3" class="t s4_3">75</div>
+<div id="tp_3" class="t s4_3">67</div>
+<div id="tq_3" class="t s4_3">58</div>
+<div id="tr_3" class="t s4_3">50</div>
+<div id="ts_3" class="t s4_3">292	m</div>
+<div id="tt_3" class="t s6_3">l</div>
+<div id="tu_3" class="t s4_3">plus</div>
+<div id="tv_3" class="t s4_3">1	200	m</div>
+<div id="tw_3" class="t s6_3">l</div>
+<div id="tx_3" class="t s4_3">water</div>
+<div id="ty_3" class="t s4_3">595	m</div>
+<div id="tz_3" class="t s6_3">l</div>
+<div id="t10_3" class="t s4_3">plus	905	m</div>
+<div id="t11_3" class="t s6_3">l</div>
+<div id="t12_3" class="t s4_3">water</div>
+<div id="t13_3" class="t s5_3">Package size in number of kernels per bag </div>
+<div id="t14_3" class="t s4_3">90	000</div>
+<div id="t15_3" class="t s4_3">80	000</div>
+<div id="t16_3" class="t s4_3">70	000</div>
+<div id="t17_3" class="t s4_3">60	000</div>
+<div id="t18_3" class="t s4_3">100	kg	seed</div>
+<div id="t19_3" class="t s4_3">100	kg	seed</div>
+<div id="t1a_3" class="t s5_3">CROP/PEST </div>
+<div id="t1b_3" class="t s5_3">MAIZE </div>
+<div id="t1c_3" class="t s4_3">(cont)</div>
+<div id="t1d_3" class="t s5_3">Maize leafhopper </div>
+<div id="t1e_3" class="t s5_3">(vector </div>
+<div id="t1f_3" class="t s5_3">of </div>
+<div id="t1g_3" class="t s5_3">maize </div>
+<div id="t1h_3" class="t s5_3">streak virus)</div>
+<div id="t1i_3" class="t s7_3">(Cicadulina mbila)</div>
+<div id="t1j_3" class="t s5_3">DOSAGE RATE</div>
+<div id="t1k_3" class="t s4_3">0,85	mg	ai	/	kernel</div>
+<div id="t1l_3" class="t s4_3">Add	water	to	</div>
+<div id="t1m_3" class="t s5_3">CRUISER WHITE</div>
+<div id="t1n_3" class="t s4_3">so	that	the	final	application	</div>
+<div id="t1o_3" class="t s4_3">volume	is	1,5</div>
+<div id="t1p_3" class="t s6_3">l</div>
+<div id="t1q_3" class="t s4_3">per	100	kg	seed.</div>
+<div id="t1r_3" class="t s5_3">COMMENTS</div>
+<div id="t1s_3" class="t s4_3">Limited	streak	virus	symptoms	may	still	occur	within	six	weeks	after	planting,	</div>
+<div id="t1t_3" class="t s4_3">despite	 seed	 treatment	 with	</div>
+<div id="t1u_3" class="t s5_3">CRUISER</div>
+<div id="t1v_3" class="t s5_3">WHITE </div>
+<div id="t1w_3" class="t s4_3">since	 leafhoppers	 have	 to	</div>
+<div id="t1x_3" class="t s4_3">feed	to	ingest	the	product.		Symptoms	can	also	develop	after	six	weeks	but	</div>
+<div id="t1y_3" class="t s4_3">should	not	affect	the	yield.</div>
+<div id="t1z_3" class="t s4_3">When	 using	</div>
+<div id="t20_3" class="t s5_3">CRUISER</div>
+<div id="t21_3" class="t s5_3">WHITE </div>
+<div id="t22_3" class="t s4_3">on	 flood	 irrigated	 fields,	 fields	 should	 not	</div>
+<div id="t23_3" class="t s4_3">be	 flooded	 after	 planting	 until	 seedlings	 have	 emerged	 and	 established.	</div>
+<div id="t24_3" class="t s4_3">(Normally	no	flooding	in	first	14	days	after	planting).</div>
+<div id="t25_3" class="t s4_3">Cold	wet	conditions	after	planting	can	cause	delayed	emergence.</div>
+<div id="t26_3" class="t s5_3">This section applies for seed packed as number of kernels per bag</div>
+<div id="t27_3" class="t s5_3">This section applies for seed packed per weight and the Thousand Grain Weight (TGW) is KNOWN for the batch.</div>
+<div id="t28_3" class="t s4_3">Please	use	the	two	formulas	to	calculate	the	volume	of	</div>
+<div id="t29_3" class="t s5_3">CRUISER</div>
+<div id="t2a_3" class="t s5_3">WHITE</div>
+<div id="t2b_3" class="t s4_3">needed	to	treat	100	kg	of	seed	</div>
+<div id="t2c_3" class="t s5_3">(NB only use if TGW is known)</div>
+<div id="t2d_3" class="t s4_3">.</div>
+<div id="t2e_3" class="t s4_3">(1	000	÷	TGW	)	x	100	000	=	</div>
+<div id="t2f_3" class="t s5_3">n </div>
+<div id="t2g_3" class="t s4_3">kernels	/	100	kg</div>
+<div id="t2h_3" class="t s4_3">(</div>
+<div id="t2i_3" class="t s5_3">n</div>
+<div id="t2j_3" class="t s4_3">x	0,5	)		</div>
+<div id="t2k_3" class="t s4_3">÷	0,6	=	m</div>
+<div id="t2l_3" class="t s6_3">l</div>
+<div id="t2m_3" class="t s4_3">product	/	100	kg	seed</div>
+<div id="t2n_3" class="t s4_3">1	000</div>
+<div id="t2o_3" class="t s5_3">This section applies for seed packed per weight and the Thousand Grain Weight (TGW) is UNKNOWN for the batch</div>
+<div id="t2p_3" class="t s5_3">All pests except maize </div>
+<div id="t2q_3" class="t s5_3">leafhopper</div>
+<div id="t2r_3" class="t s5_3">Maize leafhopper</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg3Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg3"><img src="3/3.png" id="pdf3" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f3 = [['tg_3',489],['tj_3',368],['tl_3',294],['t13_3',1002],['t1d_3',404],['t1h_3',288],['t1i_3',386],['t1j_3',353],['t1m_3',394],['t1t_3',620],['t1w_3',573],['t1z_3',271],['t22_3',917],['t23_3',1623],['t26_3',1565],['t27_3',2627],['t2c_3',687],['t2o_3',2686],['t2p_3',527],['t2r_3',404]];
+var c3 = 0;
+function fontAdjustments3(){;
+	if (c3<f3.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f3[c3][0],f3[c3][1]);
+		c3++;
+		if (c3%10 == 0) {
+			setTimeout(function(){fontAdjustments3()},0);
+		} else {
+			fontAdjustments3();
+		}
+	}
+};
+function load3(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments3,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 100;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_3");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(3,3,909,1286,0);
+</script>
+</body>
+</html>

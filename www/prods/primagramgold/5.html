@@ -1,0 +1,1153 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>PRIMAGRAM_GOLD___Eng_2009_07_16 Page5</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load5();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_5{left:409px;top:41px;}
+#t2_5{left:529px;top:41px;}
+#t3_5{left:158px;top:75px;}
+#t4_5{left:170px;top:89px;}
+#t5_5{left:205px;top:89px;}
+#t6_5{left:210px;top:89px;}
+#t7_5{left:153px;top:118px;}
+#t8_5{left:115px;top:147px;}
+#t9_5{left:115px;top:162px;}
+#ta_5{left:115px;top:176px;}
+#tb_5{left:115px;top:191px;}
+#tc_5{left:115px;top:205px;}
+#td_5{left:314px;top:75px;}
+#te_5{left:324px;top:89px;}
+#tf_5{left:398px;top:89px;}
+#tg_5{left:403px;top:89px;}
+#th_5{left:327px;top:118px;}
+#ti_5{left:295px;top:147px;}
+#tj_5{left:295px;top:162px;}
+#tk_5{left:295px;top:176px;}
+#tl_5{left:295px;top:191px;}
+#tm_5{left:295px;top:205px;}
+#tn_5{left:158px;top:269px;}
+#to_5{left:170px;top:283px;}
+#tp_5{left:205px;top:283px;}
+#tq_5{left:210px;top:283px;}
+#tr_5{left:153px;top:312px;}
+#ts_5{left:115px;top:341px;}
+#tt_5{left:115px;top:370px;}
+#tu_5{left:314px;top:269px;}
+#tv_5{left:324px;top:283px;}
+#tw_5{left:398px;top:283px;}
+#tx_5{left:403px;top:283px;}
+#ty_5{left:327px;top:312px;}
+#tz_5{left:295px;top:370px;}
+#t10_5{left:158px;top:434px;}
+#t11_5{left:170px;top:449px;}
+#t12_5{left:205px;top:449px;}
+#t13_5{left:210px;top:449px;}
+#t14_5{left:153px;top:478px;}
+#t15_5{left:115px;top:507px;}
+#t16_5{left:115px;top:536px;}
+#t17_5{left:115px;top:550px;}
+#t18_5{left:314px;top:434px;}
+#t19_5{left:321px;top:449px;}
+#t1a_5{left:401px;top:449px;}
+#t1b_5{left:406px;top:449px;}
+#t1c_5{left:327px;top:478px;}
+#t1d_5{left:295px;top:536px;}
+#t1e_5{left:295px;top:550px;}
+#t1f_5{left:158px;top:616px;}
+#t1g_5{left:170px;top:631px;}
+#t1h_5{left:205px;top:631px;}
+#t1i_5{left:210px;top:631px;}
+#t1j_5{left:153px;top:660px;}
+#t1k_5{left:115px;top:689px;}
+#t1l_5{left:115px;top:718px;}
+#t1m_5{left:115px;top:732px;}
+#t1n_5{left:314px;top:616px;}
+#t1o_5{left:321px;top:631px;}
+#t1p_5{left:401px;top:631px;}
+#t1q_5{left:406px;top:631px;}
+#t1r_5{left:327px;top:660px;}
+#t1s_5{left:295px;top:718px;}
+#t1t_5{left:295px;top:733px;}
+#t1u_5{left:158px;top:792px;}
+#t1v_5{left:170px;top:807px;}
+#t1w_5{left:204px;top:807px;}
+#t1x_5{left:210px;top:807px;}
+#t1y_5{left:153px;top:836px;}
+#t1z_5{left:115px;top:865px;}
+#t20_5{left:115px;top:894px;}
+#t21_5{left:115px;top:908px;}
+#t22_5{left:115px;top:923px;}
+#t23_5{left:115px;top:937px;}
+#t24_5{left:115px;top:952px;}
+#t25_5{left:115px;top:966px;}
+#t26_5{left:115px;top:981px;}
+#t27_5{left:115px;top:995px;}
+#t28_5{left:115px;top:1010px;}
+#t29_5{left:313px;top:792px;}
+#t2a_5{left:320px;top:807px;}
+#t2b_5{left:401px;top:807px;}
+#t2c_5{left:406px;top:807px;}
+#t2d_5{left:327px;top:836px;}
+#t2e_5{left:295px;top:894px;}
+#t2f_5{left:295px;top:908px;}
+#t2g_5{left:295px;top:923px;}
+#t2h_5{left:295px;top:937px;}
+#t2i_5{left:295px;top:952px;}
+#t2j_5{left:295px;top:966px;}
+#t2k_5{left:295px;top:981px;}
+#t2l_5{left:295px;top:995px;}
+#t2m_5{left:295px;top:1010px;}
+#t2n_5{left:158px;top:1062px;}
+#t2o_5{left:170px;top:1076px;}
+#t2p_5{left:204px;top:1076px;}
+#t2q_5{left:210px;top:1076px;}
+#t2r_5{left:153px;top:1106px;}
+#t2s_5{left:115px;top:1135px;}
+#t2t_5{left:115px;top:1164px;}
+#t2u_5{left:115px;top:1178px;}
+#t2v_5{left:115px;top:1193px;}
+#t2w_5{left:115px;top:1207px;}
+#t2x_5{left:115px;top:1222px;}
+#t2y_5{left:313px;top:1062px;}
+#t2z_5{left:320px;top:1077px;}
+#t30_5{left:401px;top:1077px;}
+#t31_5{left:406px;top:1077px;}
+#t32_5{left:327px;top:1106px;}
+#t33_5{left:295px;top:1164px;}
+#t34_5{left:295px;top:1178px;}
+#t35_5{left:295px;top:1193px;}
+#t36_5{left:295px;top:1207px;}
+#t37_5{left:295px;top:1222px;}
+#t38_5{left:500px;top:585px;}
+#t39_5{left:500px;top:600px;}
+#t3a_5{left:500px;top:623px;}
+#t3b_5{left:555px;top:623px;}
+#t3c_5{left:726px;top:623px;}
+#t3d_5{left:500px;top:637px;}
+#t3e_5{left:500px;top:661px;}
+#t3f_5{left:628px;top:661px;}
+#t3g_5{left:500px;top:675px;}
+#t3h_5{left:500px;top:698px;}
+#t3i_5{left:518px;top:698px;}
+#t3j_5{left:500px;top:713px;}
+#t3k_5{left:518px;top:713px;}
+#t3l_5{left:500px;top:736px;}
+#t3m_5{left:500px;top:759px;}
+#t3n_5{left:702px;top:759px;}
+#t3o_5{left:822px;top:759px;}
+#t3p_5{left:500px;top:774px;}
+#t3q_5{left:500px;top:788px;}
+#t3r_5{left:500px;top:807px;}
+#t3s_5{left:518px;top:807px;}
+#t3t_5{left:596px;top:807px;}
+#t3u_5{left:602px;top:807px;}
+#t3v_5{left:630px;top:807px;}
+#t3w_5{left:639px;top:807px;}
+#t3x_5{left:500px;top:824px;}
+#t3y_5{left:518px;top:824px;}
+#t3z_5{left:614px;top:824px;}
+#t40_5{left:619px;top:824px;}
+#t41_5{left:647px;top:824px;}
+#t42_5{left:656px;top:824px;}
+#t43_5{left:500px;top:840px;}
+#t44_5{left:518px;top:840px;}
+#t45_5{left:672px;top:840px;}
+#t46_5{left:678px;top:840px;}
+#t47_5{left:500px;top:857px;}
+#t48_5{left:518px;top:857px;}
+#t49_5{left:616px;top:857px;}
+#t4a_5{left:621px;top:857px;}
+#t4b_5{left:649px;top:857px;}
+#t4c_5{left:659px;top:857px;}
+#t4d_5{left:500px;top:874px;}
+#t4e_5{left:518px;top:874px;}
+#t4f_5{left:611px;top:874px;}
+#t4g_5{left:616px;top:874px;}
+#t4h_5{left:644px;top:874px;}
+#t4i_5{left:654px;top:874px;}
+#t4j_5{left:500px;top:890px;}
+#t4k_5{left:518px;top:890px;}
+#t4l_5{left:602px;top:890px;}
+#t4m_5{left:607px;top:890px;}
+#t4n_5{left:500px;top:914px;}
+#t4o_5{left:760px;top:914px;}
+#t4p_5{left:771px;top:914px;}
+#t4q_5{left:500px;top:928px;}
+#t4r_5{left:500px;top:943px;}
+#t4s_5{left:500px;top:957px;}
+#t4t_5{left:500px;top:980px;}
+#t4u_5{left:500px;top:995px;}
+#t4v_5{left:500px;top:1009px;}
+#t4w_5{left:500px;top:1024px;}
+#t4x_5{left:547px;top:75px;}
+#t4y_5{left:559px;top:90px;}
+#t4z_5{left:593px;top:90px;}
+#t50_5{left:599px;top:90px;}
+#t51_5{left:542px;top:119px;}
+#t52_5{left:504px;top:148px;}
+#t53_5{left:504px;top:177px;}
+#t54_5{left:504px;top:191px;}
+#t55_5{left:504px;top:206px;}
+#t56_5{left:504px;top:220px;}
+#t57_5{left:703px;top:75px;}
+#t58_5{left:730px;top:90px;}
+#t59_5{left:771px;top:90px;}
+#t5a_5{left:776px;top:90px;}
+#t5b_5{left:717px;top:119px;}
+#t5c_5{left:685px;top:177px;}
+#t5d_5{left:685px;top:191px;}
+#t5e_5{left:685px;top:206px;}
+#t5f_5{left:685px;top:220px;}
+#t5g_5{left:547px;top:260px;}
+#t5h_5{left:559px;top:275px;}
+#t5i_5{left:593px;top:275px;}
+#t5j_5{left:599px;top:275px;}
+#t5k_5{left:542px;top:304px;}
+#t5l_5{left:504px;top:333px;}
+#t5m_5{left:504px;top:362px;}
+#t5n_5{left:504px;top:377px;}
+#t5o_5{left:504px;top:391px;}
+#t5p_5{left:504px;top:406px;}
+#t5q_5{left:504px;top:420px;}
+#t5r_5{left:504px;top:435px;}
+#t5s_5{left:504px;top:449px;}
+#t5t_5{left:504px;top:478px;}
+#t5u_5{left:504px;top:507px;}
+#t5v_5{left:504px;top:522px;}
+#t5w_5{left:504px;top:536px;}
+#t5x_5{left:504px;top:551px;}
+#t5y_5{left:703px;top:261px;}
+#t5z_5{left:729px;top:275px;}
+#t60_5{left:770px;top:275px;}
+#t61_5{left:775px;top:275px;}
+#t62_5{left:716px;top:304px;}
+#t63_5{left:684px;top:362px;}
+#t64_5{left:684px;top:377px;}
+#t65_5{left:684px;top:391px;}
+#t66_5{left:684px;top:406px;}
+#t67_5{left:684px;top:420px;}
+#t68_5{left:684px;top:435px;}
+#t69_5{left:684px;top:449px;}
+#t6a_5{left:684px;top:507px;}
+#t6b_5{left:684px;top:522px;}
+#t6c_5{left:684px;top:536px;}
+#t6d_5{left:684px;top:551px;}
+#t6e_5{left:520px;top:1064px;}
+#t6f_5{left:519px;top:1078px;}
+#t6g_5{left:553px;top:1078px;}
+#t6h_5{left:559px;top:1078px;}
+#t6i_5{left:505px;top:1116px;}
+#t6j_5{left:544px;top:1145px;}
+#t6k_5{left:544px;top:1160px;}
+#t6l_5{left:544px;top:1174px;}
+#t6m_5{left:544px;top:1189px;}
+#t6n_5{left:544px;top:1203px;}
+#t6o_5{left:544px;top:1218px;}
+#t6p_5{left:652px;top:1058px;}
+#t6q_5{left:605px;top:1073px;}
+#t6r_5{left:615px;top:1087px;}
+#t6s_5{left:689px;top:1087px;}
+#t6t_5{left:694px;top:1087px;}
+#t6u_5{left:618px;top:1116px;}
+#t6v_5{left:599px;top:1145px;}
+#t6w_5{left:599px;top:1160px;}
+#t6x_5{left:599px;top:1174px;}
+#t6y_5{left:599px;top:1189px;}
+#t6z_5{left:599px;top:1203px;}
+#t70_5{left:599px;top:1218px;}
+#t71_5{left:771px;top:1058px;}
+#t72_5{left:797px;top:1058px;}
+#t73_5{left:745px;top:1073px;}
+#t74_5{left:758px;top:1087px;}
+#t75_5{left:743px;top:1116px;}
+#t76_5{left:736px;top:1145px;}
+#t77_5{left:736px;top:1160px;}
+#t78_5{left:736px;top:1174px;}
+#t79_5{left:736px;top:1189px;}
+#t7a_5{left:736px;top:1203px;}
+#t7b_5{left:736px;top:1218px;}
+
+.s1_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: PPSPGD-HelveticaNeueLTStd-Bd5;
+	color: rgb(0,0,0);
+}
+
+.s3_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: PPSPGD-Mt-ExtraPlain5;
+	color: rgb(0,0,0);
+}
+
+.s2_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: QXCVUB-HelveticaNeueLTStd-Lt5;
+	color: rgb(0,0,0);
+}
+
+.s4_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: PPSPGD-HelveticaNeueLTStd-It5;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: PPSPGD-HelveticaNeueLTStd-Bd5;
+	src: url("5/fonts/PPSPGD-HelveticaNeueLTStd-Bd.eot");
+	src: url("5/fonts/PPSPGD-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/PPSPGD-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: PPSPGD-Mt-ExtraPlain5;
+	src: url("5/fonts/PPSPGD-Mt-ExtraPlain.eot");
+	src: url("5/fonts/PPSPGD-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/PPSPGD-Mt-ExtraPlain.otf") format("opentype");
+}
+
+@font-face {
+	font-family: QXCVUB-HelveticaNeueLTStd-Lt5;
+	src: url("5/fonts/QXCVUB-HelveticaNeueLTStd-Lt.eot");
+	src: url("5/fonts/QXCVUB-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/QXCVUB-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: PPSPGD-HelveticaNeueLTStd-It5;
+	src: url("5/fonts/PPSPGD-HelveticaNeueLTStd-It.eot");
+	src: url("5/fonts/PPSPGD-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/PPSPGD-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t2_5" class="t s2_5">/	5</div>
+<div id="t3_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t4_5" class="t s2_5">104	m</div>
+<div id="t5_5" class="t s3_5">l</div>
+<div id="t6_5" class="t s2_5">/ha</div>
+<div id="t7_5" class="t s1_5">Botanical name</div>
+<div id="t8_5" class="t s4_5">Acanthospermum hispidum</div>
+<div id="t9_5" class="t s4_5">Chenopodium album</div>
+<div id="ta_5" class="t s4_5">Echinochloa colona</div>
+<div id="tb_5" class="t s4_5">Nicandra physaloides</div>
+<div id="tc_5" class="t s4_5">Physalis angulata</div>
+<div id="td_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="te_5" class="t s2_5">690	-	2448	m</div>
+<div id="tf_5" class="t s3_5">l</div>
+<div id="tg_5" class="t s2_5">/ha</div>
+<div id="th_5" class="t s1_5">Common name</div>
+<div id="ti_5" class="t s1_5">upright starbur</div>
+<div id="tj_5" class="t s1_5">white goosefoot</div>
+<div id="tk_5" class="t s1_5">marsh grass </div>
+<div id="tl_5" class="t s1_5">apple-of-Peru</div>
+<div id="tm_5" class="t s1_5">wild gooseberry</div>
+<div id="tn_5" class="t s2_5">CALLISTO	plus</div>
+<div id="to_5" class="t s2_5">104	m</div>
+<div id="tp_5" class="t s3_5">l</div>
+<div id="tq_5" class="t s2_5">/ha</div>
+<div id="tr_5" class="t s1_5">Botanical name</div>
+<div id="ts_5" class="t s1_5">The above weeds plus </div>
+<div id="tt_5" class="t s4_5">Tagetes minuta</div>
+<div id="tu_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="tv_5" class="t s2_5">897	-	2448	m</div>
+<div id="tw_5" class="t s3_5">l</div>
+<div id="tx_5" class="t s2_5">/ha</div>
+<div id="ty_5" class="t s1_5">Common name</div>
+<div id="tz_5" class="t s1_5">khaki weed</div>
+<div id="t10_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t11_5" class="t s2_5">156	m</div>
+<div id="t12_5" class="t s3_5">l</div>
+<div id="t13_5" class="t s2_5">/ha</div>
+<div id="t14_5" class="t s1_5">Botanical name</div>
+<div id="t15_5" class="t s1_5">The above weeds plus </div>
+<div id="t16_5" class="t s4_5">Chenopodium carinatum</div>
+<div id="t17_5" class="t s4_5">Setaria pallide-fusca</div>
+<div id="t18_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t19_5" class="t s2_5">1010	-	2448	m</div>
+<div id="t1a_5" class="t s3_5">l</div>
+<div id="t1b_5" class="t s2_5">/ha</div>
+<div id="t1c_5" class="t s1_5">Common name</div>
+<div id="t1d_5" class="t s1_5">green goosefoot</div>
+<div id="t1e_5" class="t s1_5">red bristle grass</div>
+<div id="t1f_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t1g_5" class="t s2_5">156	m</div>
+<div id="t1h_5" class="t s3_5">l</div>
+<div id="t1i_5" class="t s2_5">/ha</div>
+<div id="t1j_5" class="t s1_5">Botanical name</div>
+<div id="t1k_5" class="t s1_5">The above weeds plus</div>
+<div id="t1l_5" class="t s4_5">Eleusine indica</div>
+<div id="t1m_5" class="t s4_5">Panicum schinzii</div>
+<div id="t1n_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t1o_5" class="t s2_5">1344	-	2448	m</div>
+<div id="t1p_5" class="t s3_5">l</div>
+<div id="t1q_5" class="t s2_5">/ha</div>
+<div id="t1r_5" class="t s1_5">Common name</div>
+<div id="t1s_5" class="t s1_5">goose grass</div>
+<div id="t1t_5" class="t s1_5">sweet buffalo grass</div>
+<div id="t1u_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t1v_5" class="t s2_5">208	m</div>
+<div id="t1w_5" class="t s3_5">l</div>
+<div id="t1x_5" class="t s2_5">/ha</div>
+<div id="t1y_5" class="t s1_5">Botanical name</div>
+<div id="t1z_5" class="t s1_5">The above weeds plus </div>
+<div id="t20_5" class="t s4_5">Amaranthus hybridus</div>
+<div id="t21_5" class="t s4_5">Bidens pilosa </div>
+<div id="t22_5" class="t s4_5">Brachiaria eruciformis</div>
+<div id="t23_5" class="t s4_5">Crotalaria sphaerocarpa</div>
+<div id="t24_5" class="t s4_5">Datura ferox</div>
+<div id="t25_5" class="t s4_5">Eragrostis curvula</div>
+<div id="t26_5" class="t s4_5">Hibiscus trionum</div>
+<div id="t27_5" class="t s4_5">Polygonum aviculare</div>
+<div id="t28_5" class="t s4_5">Tribulus terrestris</div>
+<div id="t29_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t2a_5" class="t s2_5">1344	-	2448	m</div>
+<div id="t2b_5" class="t s3_5">l</div>
+<div id="t2c_5" class="t s2_5">/ha</div>
+<div id="t2d_5" class="t s1_5">Common name</div>
+<div id="t2e_5" class="t s1_5">common pigweed</div>
+<div id="t2f_5" class="t s1_5">blackjack</div>
+<div id="t2g_5" class="t s1_5">sweet signal grass</div>
+<div id="t2h_5" class="t s1_5">mealie Crotalaria</div>
+<div id="t2i_5" class="t s1_5">large thorn apple</div>
+<div id="t2j_5" class="t s1_5">weeping love grass</div>
+<div id="t2k_5" class="t s1_5">bladder weed</div>
+<div id="t2l_5" class="t s1_5">prostrate knotweed</div>
+<div id="t2m_5" class="t s1_5">dubbeltjie</div>
+<div id="t2n_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t2o_5" class="t s2_5">208	m</div>
+<div id="t2p_5" class="t s3_5">l</div>
+<div id="t2q_5" class="t s2_5">/ha</div>
+<div id="t2r_5" class="t s1_5">Botanical name</div>
+<div id="t2s_5" class="t s1_5">The above weeds plus </div>
+<div id="t2t_5" class="t s4_5">Cleome monophylla</div>
+<div id="t2u_5" class="t s4_5">Commelina benghalensis</div>
+<div id="t2v_5" class="t s4_5">Digitaria sanguinalis</div>
+<div id="t2w_5" class="t s4_5">Hibiscus cannabinus</div>
+<div id="t2x_5" class="t s4_5">Triumfetta pilosa</div>
+<div id="t2y_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t2z_5" class="t s2_5">1792	-	2448	m</div>
+<div id="t30_5" class="t s3_5">l</div>
+<div id="t31_5" class="t s2_5">/ha</div>
+<div id="t32_5" class="t s1_5">Common name</div>
+<div id="t33_5" class="t s1_5">spindlepod</div>
+<div id="t34_5" class="t s1_5">Benghal wandering Jew</div>
+<div id="t35_5" class="t s1_5">crab fingergrass</div>
+<div id="t36_5" class="t s1_5">kenaf</div>
+<div id="t37_5" class="t s1_5">-</div>
+<div id="t38_5" class="t s2_5">Consult	the	CALLISTO	label	for	warnings,	precautions	and	direc-</div>
+<div id="t39_5" class="t s2_5">tions	for	use.</div>
+<div id="t3a_5" class="t s2_5">6.4.2.7		</div>
+<div id="t3b_5" class="t s2_5">Post-emergence	 application	 of	</div>
+<div id="t3c_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t3d_5" class="t s2_5">plus	CALLISTO	plus	an	adjuvant	in	maize.</div>
+<div id="t3e_5" class="t s1_5">PRIMAGRAM GOLD </div>
+<div id="t3f_5" class="t s2_5">plus	 CALLISTO	 must	 be	 applied	 post	</div>
+<div id="t3g_5" class="t s2_5">emergence	before	the	target	</div>
+<div id="t3h_5" class="t s2_5">•	</div>
+<div id="t3i_5" class="t s2_5">grasses	are	between	the	2	-	3	leaf	stage	</div>
+<div id="t3j_5" class="t s2_5">•	</div>
+<div id="t3k_5" class="t s2_5">broadleaf	weeds	are	between	the	2	-	6	leaf	stages.</div>
+<div id="t3l_5" class="t s2_5">Recommended	adjuvants:</div>
+<div id="t3m_5" class="t s2_5">In	all	post	emergence	applications	of		</div>
+<div id="t3n_5" class="t s1_5">PRIMAGRAM GOLD </div>
+<div id="t3o_5" class="t s2_5">plus	</div>
+<div id="t3p_5" class="t s2_5">CALLISTO	an	adjuvant	must	be	used.	The	following	adjuvants	are	</div>
+<div id="t3q_5" class="t s2_5">recommended:</div>
+<div id="t3r_5" class="t s2_5">•	</div>
+<div id="t3s_5" class="t s2_5">Agral	at	200	m</div>
+<div id="t3t_5" class="t s3_5">l</div>
+<div id="t3u_5" class="t s2_5">/100	</div>
+<div id="t3v_5" class="t s3_5">l</div>
+<div id="t3w_5" class="t s2_5">spray	volume	</div>
+<div id="t3x_5" class="t s2_5">•	</div>
+<div id="t3y_5" class="t s2_5">Breakthru	at	50	m</div>
+<div id="t3z_5" class="t s3_5">l</div>
+<div id="t40_5" class="t s2_5">/100	</div>
+<div id="t41_5" class="t s3_5">l</div>
+<div id="t42_5" class="t s2_5">spray	volume</div>
+<div id="t43_5" class="t s2_5">•	</div>
+<div id="t44_5" class="t s2_5">Complement	Super	at	100	m</div>
+<div id="t45_5" class="t s3_5">l</div>
+<div id="t46_5" class="t s2_5">/ha	</div>
+<div id="t47_5" class="t s2_5">•	</div>
+<div id="t48_5" class="t s2_5">Penetrex	at	500	m</div>
+<div id="t49_5" class="t s3_5">l</div>
+<div id="t4a_5" class="t s2_5">/100	</div>
+<div id="t4b_5" class="t s3_5">l</div>
+<div id="t4c_5" class="t s2_5">spray	volume</div>
+<div id="t4d_5" class="t s2_5">•	</div>
+<div id="t4e_5" class="t s2_5">Solitaire	at	100	m</div>
+<div id="t4f_5" class="t s3_5">l</div>
+<div id="t4g_5" class="t s2_5">/100	</div>
+<div id="t4h_5" class="t s3_5">l</div>
+<div id="t4i_5" class="t s2_5">spray	volume</div>
+<div id="t4j_5" class="t s2_5">•	</div>
+<div id="t4k_5" class="t s2_5">Tronic	at	500	m</div>
+<div id="t4l_5" class="t s3_5">l</div>
+<div id="t4m_5" class="t s2_5">/ha</div>
+<div id="t4n_5" class="t s2_5">To	 enhance	 the	 activity	 on	 larger	 weeds	 250	 m</div>
+<div id="t4o_5" class="t s3_5">l</div>
+<div id="t4p_5" class="t s2_5">2,4-D	 can	 be	</div>
+<div id="t4q_5" class="t s2_5">added	 to	 the	 tank	 mixtures	 mentioned	 below.	 The	 addition	 of	</div>
+<div id="t4r_5" class="t s2_5">2,4-D	is	recommended	for	the	control	of	morning	glory	and	other	</div>
+<div id="t4s_5" class="t s2_5">problem	weeds.</div>
+<div id="t4t_5" class="t s2_5">This	post-emergence	application	should	be	preceded	by	a	pre-</div>
+<div id="t4u_5" class="t s2_5">emergence	 application	 of	 CALLISTO,	 DUAL	 GOLD,	 GARDOMIL	</div>
+<div id="t4v_5" class="t s2_5">GOLD	 or	 GESAPRIM	 SUPER	 as	 indicated	 on	 the	 registered	</div>
+<div id="t4w_5" class="t s2_5">labels.</div>
+<div id="t4x_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t4y_5" class="t s2_5">208	m</div>
+<div id="t4z_5" class="t s3_5">l</div>
+<div id="t50_5" class="t s2_5">/ha</div>
+<div id="t51_5" class="t s1_5">Botanical name</div>
+<div id="t52_5" class="t s1_5">The above weeds plus </div>
+<div id="t53_5" class="t s4_5">Bidens pilosa </div>
+<div id="t54_5" class="t s4_5">Crotalaria sphaerocarpa</div>
+<div id="t55_5" class="t s4_5">Portulaca oleracea</div>
+<div id="t56_5" class="t s4_5">Tribulus terrestris</div>
+<div id="t57_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t58_5" class="t s2_5">2448	m</div>
+<div id="t59_5" class="t s3_5">l</div>
+<div id="t5a_5" class="t s2_5">/ha</div>
+<div id="t5b_5" class="t s1_5">Common name</div>
+<div id="t5c_5" class="t s1_5">blackjack </div>
+<div id="t5d_5" class="t s1_5">mealie Crotalaria</div>
+<div id="t5e_5" class="t s1_5">purslane</div>
+<div id="t5f_5" class="t s1_5">dubbeltjie</div>
+<div id="t5g_5" class="t s2_5">CALLISTO	plus</div>
+<div id="t5h_5" class="t s2_5">260	m</div>
+<div id="t5i_5" class="t s3_5">l</div>
+<div id="t5j_5" class="t s2_5">/ha</div>
+<div id="t5k_5" class="t s1_5">Botanical name</div>
+<div id="t5l_5" class="t s1_5">The above weeds plus </div>
+<div id="t5m_5" class="t s4_5">Bidens pilosa </div>
+<div id="t5n_5" class="t s4_5">Crotalaria sphaerocarpa</div>
+<div id="t5o_5" class="t s4_5">Cyperus esculentus</div>
+<div id="t5p_5" class="t s4_5">Portulaca oleracea</div>
+<div id="t5q_5" class="t s4_5">Tribulus terrestris</div>
+<div id="t5r_5" class="t s4_5">Urochloa panicoides</div>
+<div id="t5s_5" class="t s4_5">Xanthium strumarium</div>
+<div id="t5t_5" class="t s1_5">Only suppression of: </div>
+<div id="t5u_5" class="t s4_5">Bidens bipinnata</div>
+<div id="t5v_5" class="t s4_5">Citrullus lanatus </div>
+<div id="t5w_5" class="t s4_5">Cosmos bipinnatus</div>
+<div id="t5x_5" class="t s4_5">Ipomoea purpurea</div>
+<div id="t5y_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t5z_5" class="t s2_5">2448	m</div>
+<div id="t60_5" class="t s3_5">l</div>
+<div id="t61_5" class="t s2_5">/ha</div>
+<div id="t62_5" class="t s1_5">Common name</div>
+<div id="t63_5" class="t s1_5">blackjack </div>
+<div id="t64_5" class="t s1_5">mealie Crotalaria</div>
+<div id="t65_5" class="t s1_5">yellow nutsedge </div>
+<div id="t66_5" class="t s1_5">purslane</div>
+<div id="t67_5" class="t s1_5">dubbeltjie</div>
+<div id="t68_5" class="t s1_5">herringbone grass</div>
+<div id="t69_5" class="t s1_5">cocklebur</div>
+<div id="t6a_5" class="t s1_5">Spanish blackjack</div>
+<div id="t6b_5" class="t s1_5">bitter apple</div>
+<div id="t6c_5" class="t s1_5">cosmos</div>
+<div id="t6d_5" class="t s1_5">common morning glory</div>
+<div id="t6e_5" class="t s2_5">CALLISTO</div>
+<div id="t6f_5" class="t s2_5">104	m</div>
+<div id="t6g_5" class="t s3_5">l</div>
+<div id="t6h_5" class="t s2_5">/ha</div>
+<div id="t6i_5" class="t s1_5">Weeks control</div>
+<div id="t6j_5" class="t s2_5">4</div>
+<div id="t6k_5" class="t s2_5">4</div>
+<div id="t6l_5" class="t s2_5">4</div>
+<div id="t6m_5" class="t s2_5">4</div>
+<div id="t6n_5" class="t s2_5">4</div>
+<div id="t6o_5" class="t s2_5">4</div>
+<div id="t6p_5" class="t s2_5">Plus</div>
+<div id="t6q_5" class="t s1_5">PRIMAGRAM GOLD</div>
+<div id="t6r_5" class="t s2_5">447	-	1682	m</div>
+<div id="t6s_5" class="t s3_5">l</div>
+<div id="t6t_5" class="t s2_5">/ha</div>
+<div id="t6u_5" class="t s1_5">Botanical name</div>
+<div id="t6v_5" class="t s4_5">Amaranthus hybridus</div>
+<div id="t6w_5" class="t s4_5">Crotalaria sphaerocarpa</div>
+<div id="t6x_5" class="t s4_5">Galinsoga parviflora</div>
+<div id="t6y_5" class="t s4_5">Hibiscus trionum</div>
+<div id="t6z_5" class="t s4_5">Tagetes minuta</div>
+<div id="t70_5" class="t s4_5">Xanthium strumarium</div>
+<div id="t71_5" class="t s2_5">plus</div>
+<div id="t72_5" class="t s1_5">a</div>
+<div id="t73_5" class="t s1_5">recommended</div>
+<div id="t74_5" class="t s1_5">adjuvant *</div>
+<div id="t75_5" class="t s1_5">Common name</div>
+<div id="t76_5" class="t s1_5">common pigweed</div>
+<div id="t77_5" class="t s1_5">mealie Crotalaria</div>
+<div id="t78_5" class="t s1_5">gallant soldier</div>
+<div id="t79_5" class="t s1_5">bladder weed</div>
+<div id="t7a_5" class="t s1_5">khaki weed</div>
+<div id="t7b_5" class="t s1_5">Cocklebur</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg5Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg5"><img src="5/5.png" id="pdf5" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f5 = [['t1_5',465],['t7_5',364],['t8_5',601],['t9_5',458],['ta_5',427],['tb_5',467],['tc_5',376],['td_5',465],['th_5',357],['ti_5',349],['tj_5',378],['tk_5',291],['tm_5',375],['tr_5',364],['ts_5',522],['tt_5',335],['tu_5',465],['ty_5',357],['tz_5',266],['t14_5',364],['t15_5',522],['t16_5',540],['t17_5',444],['t18_5',465],['t1c_5',357],['t1d_5',386],['t1e_5',381],['t1j_5',364],['t1k_5',522],['t1l_5',326],['t1m_5',363],['t1n_5',465],['t1r_5',357],['t1s_5',288],['t1t_5',460],['t1y_5',364],['t1z_5',522],['t20_5',463],['t21_5',292],['t22_5',473],['t23_5',522],['t24_5',267],['t25_5',388],['t26_5',368],['t27_5',453],['t28_5',377],['t29_5',465],['t2d_5',357],['t2e_5',418],['t2g_5',437],['t2h_5',399],['t2i_5',400],['t2j_5',452],['t2k_5',318],['t2l_5',459],['t2r_5',364],['t2s_5',522],['t2t_5',435],['t2u_5',547],['t2v_5',432],['t2w_5',450],['t2x_5',363],['t2y_5',465],['t32_5',357],['t34_5',561],['t35_5',384],['t3b_5',673],['t3c_5',472],['t3e_5',480],['t3f_5',876],['t3n_5',465],['t4n_5',1040],['t4p_5',304],['t4q_5',1387],['t4u_5',1387],['t4v_5',1387],['t51_5',364],['t52_5',522],['t53_5',292],['t54_5',522],['t55_5',406],['t56_5',377],['t57_5',465],['t5b_5',357],['t5d_5',399],['t5k_5',364],['t5l_5',522],['t5m_5',292],['t5n_5',522],['t5o_5',429],['t5p_5',406],['t5q_5',377],['t5r_5',448],['t5s_5',465],['t5t_5',480],['t5u_5',365],['t5v_5',347],['t5w_5',420],['t5x_5',402],['t5y_5',465],['t62_5',357],['t64_5',399],['t65_5',380],['t68_5',427],['t6a_5',425],['t6b_5',267],['t6d_5',545],['t6i_5',337],['t6q_5',465],['t6u_5',364],['t6v_5',463],['t6w_5',511],['t6x_5',431],['t6y_5',368],['t6z_5',335],['t70_5',465],['t74_5',235],['t75_5',357],['t76_5',411],['t77_5',399],['t78_5',330],['t79_5',318],['t7a_5',266]];
+var c5 = 0;
+function fontAdjustments5(){;
+	if (c5<f5.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f5[c5][0],f5[c5][1]);
+		c5++;
+		if (c5%10 == 0) {
+			setTimeout(function(){fontAdjustments5()},0);
+		} else {
+			fontAdjustments5();
+		}
+	}
+};
+function load5(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments5,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 264;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_5");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(7,5,909,1286,0);
+</script>
+</body>
+</html>

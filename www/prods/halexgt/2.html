@@ -1,0 +1,1055 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>HALEX_GT___Eng_2009_08_21 Page2</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load2();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_2{left:478px;top:70px;}
+#t2_2{left:498px;top:70px;}
+#t3_2{left:478px;top:84px;}
+#t4_2{left:500px;top:84px;}
+#t5_2{left:500px;top:99px;}
+#t6_2{left:478px;top:113px;}
+#t7_2{left:500px;top:113px;}
+#t8_2{left:500px;top:128px;}
+#t9_2{left:500px;top:142px;}
+#ta_2{left:478px;top:157px;}
+#tb_2{left:500px;top:157px;}
+#tc_2{left:500px;top:171px;}
+#td_2{left:456px;top:186px;}
+#te_2{left:478px;top:186px;}
+#tf_2{left:521px;top:186px;}
+#tg_2{left:553px;top:186px;}
+#th_2{left:478px;top:200px;}
+#ti_2{left:500px;top:200px;}
+#tj_2{left:500px;top:215px;}
+#tk_2{left:500px;top:229px;}
+#tl_2{left:478px;top:244px;}
+#tm_2{left:500px;top:244px;}
+#tn_2{left:500px;top:258px;}
+#to_2{left:500px;top:273px;}
+#tp_2{left:478px;top:288px;}
+#tq_2{left:500px;top:288px;}
+#tr_2{left:500px;top:302px;}
+#ts_2{left:500px;top:317px;}
+#tt_2{left:456px;top:331px;}
+#tu_2{left:478px;top:331px;}
+#tv_2{left:527px;top:331px;}
+#tw_2{left:478px;top:346px;}
+#tx_2{left:543px;top:346px;}
+#ty_2{left:739px;top:346px;}
+#tz_2{left:478px;top:360px;}
+#t10_2{left:456px;top:375px;}
+#t11_2{left:478px;top:375px;}
+#t12_2{left:522px;top:375px;}
+#t13_2{left:555px;top:375px;}
+#t14_2{left:621px;top:375px;}
+#t15_2{left:478px;top:389px;}
+#t16_2{left:456px;top:404px;}
+#t17_2{left:478px;top:418px;}
+#t18_2{left:478px;top:433px;}
+#t19_2{left:456px;top:462px;}
+#t1a_2{left:456px;top:491px;}
+#t1b_2{left:478px;top:491px;}
+#t1c_2{left:478px;top:505px;}
+#t1d_2{left:492px;top:505px;}
+#t1e_2{left:553px;top:505px;}
+#t1f_2{left:456px;top:520px;}
+#t1g_2{left:478px;top:520px;}
+#t1h_2{left:489px;top:520px;}
+#t1i_2{left:558px;top:520px;}
+#t1j_2{left:478px;top:534px;}
+#t1k_2{left:478px;top:549px;}
+#t1l_2{left:456px;top:563px;}
+#t1m_2{left:478px;top:563px;}
+#t1n_2{left:478px;top:578px;}
+#t1o_2{left:478px;top:620px;}
+#t1p_2{left:694px;top:620px;}
+#t1q_2{left:478px;top:649px;}
+#t1r_2{left:694px;top:649px;}
+#t1s_2{left:478px;top:678px;}
+#t1t_2{left:694px;top:678px;}
+#t1u_2{left:478px;top:707px;}
+#t1v_2{left:694px;top:707px;}
+#t1w_2{left:478px;top:721px;}
+#t1x_2{left:478px;top:750px;}
+#t1y_2{left:694px;top:750px;}
+#t1z_2{left:456px;top:790px;}
+#t20_2{left:478px;top:790px;}
+#t21_2{left:478px;top:805px;}
+#t22_2{left:478px;top:819px;}
+#t23_2{left:478px;top:834px;}
+#t24_2{left:759px;top:834px;}
+#t25_2{left:478px;top:848px;}
+#t26_2{left:495px;top:848px;}
+#t27_2{left:456px;top:877px;}
+#t28_2{left:456px;top:892px;}
+#t29_2{left:456px;top:906px;}
+#t2a_2{left:456px;top:935px;}
+#t2b_2{left:456px;top:964px;}
+#t2c_2{left:478px;top:964px;}
+#t2d_2{left:478px;top:979px;}
+#t2e_2{left:456px;top:998px;}
+#t2f_2{left:478px;top:998px;}
+#t2g_2{left:478px;top:1012px;}
+#t2h_2{left:478px;top:1027px;}
+#t2i_2{left:478px;top:1041px;}
+#t2j_2{left:456px;top:1060px;}
+#t2k_2{left:478px;top:1060px;}
+#t2l_2{left:478px;top:1075px;}
+#t2m_2{left:478px;top:1089px;}
+#t2n_2{left:478px;top:1104px;}
+#t2o_2{left:478px;top:1118px;}
+#t2p_2{left:456px;top:1137px;}
+#t2q_2{left:478px;top:1137px;}
+#t2r_2{left:478px;top:1152px;}
+#t2s_2{left:456px;top:1170px;}
+#t2t_2{left:478px;top:1170px;}
+#t2u_2{left:478px;top:1185px;}
+#t2v_2{left:478px;top:1199px;}
+#t2w_2{left:478px;top:1214px;}
+#t2x_2{left:478px;top:1229px;}
+#t2y_2{left:393px;top:41px;}
+#t2z_2{left:458px;top:41px;}
+#t30_2{left:66px;top:69px;}
+#t31_2{left:141px;top:69px;}
+#t32_2{left:66px;top:83px;}
+#t33_2{left:66px;top:112px;}
+#t34_2{left:133px;top:112px;}
+#t35_2{left:66px;top:127px;}
+#t36_2{left:66px;top:141px;}
+#t37_2{left:66px;top:156px;}
+#t38_2{left:66px;top:170px;}
+#t39_2{left:66px;top:185px;}
+#t3a_2{left:66px;top:199px;}
+#t3b_2{left:66px;top:228px;}
+#t3c_2{left:66px;top:243px;}
+#t3d_2{left:66px;top:257px;}
+#t3e_2{left:66px;top:286px;}
+#t3f_2{left:88px;top:286px;}
+#t3g_2{left:88px;top:301px;}
+#t3h_2{left:88px;top:315px;}
+#t3i_2{left:88px;top:330px;}
+#t3j_2{left:66px;top:344px;}
+#t3k_2{left:88px;top:344px;}
+#t3l_2{left:88px;top:359px;}
+#t3m_2{left:88px;top:373px;}
+#t3n_2{left:66px;top:388px;}
+#t3o_2{left:88px;top:388px;}
+#t3p_2{left:88px;top:402px;}
+#t3q_2{left:66px;top:417px;}
+#t3r_2{left:88px;top:417px;}
+#t3s_2{left:88px;top:431px;}
+#t3t_2{left:66px;top:446px;}
+#t3u_2{left:88px;top:446px;}
+#t3v_2{left:66px;top:460px;}
+#t3w_2{left:88px;top:460px;}
+#t3x_2{left:88px;top:475px;}
+#t3y_2{left:88px;top:490px;}
+#t3z_2{left:88px;top:504px;}
+#t40_2{left:66px;top:533px;}
+#t41_2{left:66px;top:548px;}
+#t42_2{left:66px;top:562px;}
+#t43_2{left:66px;top:577px;}
+#t44_2{left:66px;top:591px;}
+#t45_2{left:127px;top:591px;}
+#t46_2{left:197px;top:591px;}
+#t47_2{left:66px;top:606px;}
+#t48_2{left:80px;top:606px;}
+#t49_2{left:145px;top:606px;}
+#t4a_2{left:66px;top:635px;}
+#t4b_2{left:66px;top:649px;}
+#t4c_2{left:66px;top:678px;}
+#t4d_2{left:66px;top:707px;}
+#t4e_2{left:66px;top:736px;}
+#t4f_2{left:88px;top:736px;}
+#t4g_2{left:137px;top:736px;}
+#t4h_2{left:162px;top:736px;}
+#t4i_2{left:233px;top:736px;}
+#t4j_2{left:88px;top:751px;}
+#t4k_2{left:88px;top:765px;}
+#t4l_2{left:66px;top:780px;}
+#t4m_2{left:88px;top:780px;}
+#t4n_2{left:154px;top:780px;}
+#t4o_2{left:88px;top:794px;}
+#t4p_2{left:271px;top:796px;}
+#t4q_2{left:280px;top:794px;}
+#t4r_2{left:347px;top:796px;}
+#t4s_2{left:356px;top:794px;}
+#t4t_2{left:88px;top:809px;}
+#t4u_2{left:66px;top:823px;}
+#t4v_2{left:88px;top:823px;}
+#t4w_2{left:185px;top:823px;}
+#t4x_2{left:253px;top:823px;}
+#t4y_2{left:88px;top:838px;}
+#t4z_2{left:66px;top:852px;}
+#t50_2{left:88px;top:852px;}
+#t51_2{left:131px;top:852px;}
+#t52_2{left:163px;top:852px;}
+#t53_2{left:228px;top:852px;}
+#t54_2{left:66px;top:867px;}
+#t55_2{left:88px;top:867px;}
+#t56_2{left:131px;top:867px;}
+#t57_2{left:163px;top:867px;}
+#t58_2{left:228px;top:867px;}
+#t59_2{left:66px;top:881px;}
+#t5a_2{left:88px;top:881px;}
+#t5b_2{left:88px;top:896px;}
+#t5c_2{left:88px;top:910px;}
+#t5d_2{left:66px;top:925px;}
+#t5e_2{left:88px;top:925px;}
+#t5f_2{left:88px;top:939px;}
+#t5g_2{left:88px;top:954px;}
+#t5h_2{left:88px;top:968px;}
+#t5i_2{left:88px;top:983px;}
+#t5j_2{left:88px;top:997px;}
+#t5k_2{left:332px;top:997px;}
+#t5l_2{left:402px;top:997px;}
+#t5m_2{left:88px;top:1012px;}
+#t5n_2{left:88px;top:1027px;}
+#t5o_2{left:66px;top:1041px;}
+#t5p_2{left:88px;top:1041px;}
+#t5q_2{left:88px;top:1056px;}
+#t5r_2{left:88px;top:1070px;}
+#t5s_2{left:88px;top:1085px;}
+#t5t_2{left:88px;top:1099px;}
+#t5u_2{left:66px;top:1114px;}
+#t5v_2{left:88px;top:1114px;}
+#t5w_2{left:88px;top:1128px;}
+#t5x_2{left:343px;top:1128px;}
+#t5y_2{left:406px;top:1128px;}
+#t5z_2{left:88px;top:1143px;}
+#t60_2{left:66px;top:1157px;}
+#t61_2{left:88px;top:1172px;}
+#t62_2{left:276px;top:1172px;}
+#t63_2{left:342px;top:1172px;}
+#t64_2{left:88px;top:1186px;}
+#t65_2{left:88px;top:1201px;}
+#t66_2{left:88px;top:1215px;}
+#t67_2{left:66px;top:1230px;}
+#t68_2{left:369px;top:1230px;}
+
+.s1_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: XEICYN-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: XEICYN-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+.s3_2{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: XEICYN-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: XEICYN-HelveticaNeueLTStd-Bd2;
+	src: url("2/fonts/XEICYN-HelveticaNeueLTStd-Bd.eot");
+	src: url("2/fonts/XEICYN-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/XEICYN-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: XEICYN-HelveticaNeueLTStd-Lt2;
+	src: url("2/fonts/XEICYN-HelveticaNeueLTStd-Lt.eot");
+	src: url("2/fonts/XEICYN-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/XEICYN-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_2" class="t s1_2">GT </div>
+<div id="t2_2" class="t s2_2">is	applied	</div>
+<div id="t3_2" class="t s2_2">a)	</div>
+<div id="t4_2" class="t s2_2">post-emergence	in	a	tank	mix	with	emulsifiable	concen-</div>
+<div id="t5_2" class="t s2_2">trate	grass	herbicides.	</div>
+<div id="t6_2" class="t s2_2">b)	</div>
+<div id="t7_2" class="t s2_2">post-emergence	 to	 maize	 crops	 that	 were	 treated	 with	</div>
+<div id="t8_2" class="t s2_2">soil	insecticides	containing	organophosphate	e.g.	terbufos</div>
+<div id="t9_2" class="t s2_2">or	chlorpiryphos	(see	11a	&	b	below)</div>
+<div id="ta_2" class="t s2_2">c)	</div>
+<div id="tb_2" class="t s2_2">foliar	post-emergence	in	a	tank	mix	with	any	organophos-</div>
+<div id="tc_2" class="t s2_2">phate	or	carbamate	insecticide.</div>
+<div id="td_2" class="t s2_2">12.	</div>
+<div id="te_2" class="t s1_2">Do not</div>
+<div id="tf_2" class="t s2_2">apply	</div>
+<div id="tg_2" class="t s1_2">HALEX GT </div>
+<div id="th_2" class="t s2_2">a)	</div>
+<div id="ti_2" class="t s2_2">within	28	days	of	a	soil	applied	organophosphates	(e.g.	</div>
+<div id="tj_2" class="t s2_2">terbufos)	 or	 carbamate	 insecticide	 had	 been	 applied	 at	</div>
+<div id="tk_2" class="t s2_2">planting</div>
+<div id="tl_2" class="t s2_2">b)	</div>
+<div id="tm_2" class="t s2_2">in	 tank	 mixture	 with	 organophosphate(e.g.	 terbufos)	 or	</div>
+<div id="tn_2" class="t s2_2">carbamate	(e.g.	methomyl)	insecticides	for	foliar	applica-</div>
+<div id="to_2" class="t s2_2">tions	or	</div>
+<div id="tp_2" class="t s2_2">c)	</div>
+<div id="tq_2" class="t s2_2">within	7	days	before	or	within	7	days	after	organophos-</div>
+<div id="tr_2" class="t s2_2">phate	 (e.g.	 terbufos)	 or	 carbamate	 (e.g.	 methomyl)	 or	</div>
+<div id="ts_2" class="t s2_2">carbamate	insecticide	for	foliar	applications	</div>
+<div id="tt_2" class="t s2_2">13.	</div>
+<div id="tu_2" class="t s1_2">Do not </div>
+<div id="tv_2" class="t s2_2">cultivate	 maize	 within	 7	 days	 before	 or	 after	 an	</div>
+<div id="tw_2" class="t s1_2">HALEX GT </div>
+<div id="tx_2" class="t s2_2">application	as	weed	control	from	the	</div>
+<div id="ty_2" class="t s1_2">HALEX GT </div>
+<div id="tz_2" class="t s2_2">application	may	be	reduced.</div>
+<div id="t10_2" class="t s2_2">14.		</div>
+<div id="t11_2" class="t s1_2">Do not </div>
+<div id="t12_2" class="t s2_2">apply	</div>
+<div id="t13_2" class="t s1_2">HALEX GT </div>
+<div id="t14_2" class="t s2_2">with	suspension	fertilizers	or	urea	</div>
+<div id="t15_2" class="t s2_2">ammonium	nitrate	(UAN)	as	the	carrier.</div>
+<div id="t16_2" class="t s2_2">15.		To	 avoid	 contamination,	 it	 is	 recommended	 that	 the	 spray	</div>
+<div id="t17_2" class="t s2_2">system	be	thoroughly	cleaned	with	water	and	a	commercial	</div>
+<div id="t18_2" class="t s2_2">tank	cleaner	before	and	after	each	use.</div>
+<div id="t19_2" class="t s1_2">4.2 Follow-on crops:</div>
+<div id="t1a_2" class="t s2_2">1.	</div>
+<div id="t1b_2" class="t s2_2">If	the	maize	crop	is	lost	or	destroyed	following	an	application	</div>
+<div id="t1c_2" class="t s2_2">of	</div>
+<div id="t1d_2" class="t s1_2">HALEX GT</div>
+<div id="t1e_2" class="t s2_2">,	follow	the	rotational	guidelines	below.	</div>
+<div id="t1f_2" class="t s2_2">2.	</div>
+<div id="t1g_2" class="t s2_2">If	</div>
+<div id="t1h_2" class="t s1_2">HALEX GT</div>
+<div id="t1i_2" class="t s2_2">is	 applied	 sequentially	 or	 in	 a	 tank	 mix	 with	</div>
+<div id="t1j_2" class="t s2_2">other	herbicides,	refer	to	the	rotational	guidelines	on	all	other	</div>
+<div id="t1k_2" class="t s2_2">herbicide	labels	and	follow	the	most	restrictive	guidelines.</div>
+<div id="t1l_2" class="t s2_2">3.	</div>
+<div id="t1m_2" class="t s2_2">The	following	waiting	periods	or	rotational	guidelines	should	</div>
+<div id="t1n_2" class="t s2_2">be	adhered	to:</div>
+<div id="t1o_2" class="t s2_2">Wheat	and	barley		</div>
+<div id="t1p_2" class="t s2_2">1	month	</div>
+<div id="t1q_2" class="t s2_2">Grain	sorghum		</div>
+<div id="t1r_2" class="t s2_2">2	months	</div>
+<div id="t1s_2" class="t s2_2">Potatoes		</div>
+<div id="t1t_2" class="t s2_2">6	months	</div>
+<div id="t1u_2" class="t s2_2">Soybeans,	dry	beans,	groundnuts,	</div>
+<div id="t1v_2" class="t s2_2">9	months</div>
+<div id="t1w_2" class="t s2_2">sunflowers	and	cotton		</div>
+<div id="t1x_2" class="t s2_2">All	other	crops	</div>
+<div id="t1y_2" class="t s2_2">24	months	</div>
+<div id="t1z_2" class="t s2_2">4.	</div>
+<div id="t20_2" class="t s2_2">All	 rotational	 crops	 should	 be	 planted	 only	 after	 thorough	</div>
+<div id="t21_2" class="t s2_2">cultivation.	 Since	 the	 product	 is	 metabolised	 by	 microbial	</div>
+<div id="t22_2" class="t s2_2">activity,	periods	of	low	microbial	activity	e.g.	cold	winters	or	</div>
+<div id="t23_2" class="t s2_2">very	dry	summers	might	extend	the	residual	activity	of	</div>
+<div id="t24_2" class="t s1_2">HALEX </div>
+<div id="t25_2" class="t s1_2">GT</div>
+<div id="t26_2" class="t s2_2">.	</div>
+<div id="t27_2" class="t s1_2">Contact your local SYNGENTA representative to discuss </div>
+<div id="t28_2" class="t s1_2">crop rotation and crop protection programmes to follow </div>
+<div id="t29_2" class="t s1_2">before embarking on any pH adjustment programme.</div>
+<div id="t2a_2" class="t s1_2">4.3 Spray drift</div>
+<div id="t2b_2" class="t s2_2">1.	</div>
+<div id="t2c_2" class="t s2_2">Avoid	spray	drift	at	all	times	to	adjacent	crops	and	especially	</div>
+<div id="t2d_2" class="t s2_2">to	adjacent	non	glyphosate	tolerant	crops.</div>
+<div id="t2e_2" class="t s2_2">2.	</div>
+<div id="t2f_2" class="t s2_2">The	 interaction	 of	 equipment	 and	 weather	 related	 factors	</div>
+<div id="t2g_2" class="t s2_2">determine	 the	 potential	 for	 spray	 drift.	 The	 applicator	 is	</div>
+<div id="t2h_2" class="t s2_2">responsible	for	considering	all	these	factors	when	making	a	</div>
+<div id="t2i_2" class="t s2_2">decision	to	apply.</div>
+<div id="t2j_2" class="t s2_2">3.	</div>
+<div id="t2k_2" class="t s2_2">The	pesticide	should	only	be	applied	when	the	potential	for	</div>
+<div id="t2l_2" class="t s2_2">drift	to	adjacent	sensitive	areas,	(e.g.,	residential	areas,	bodies	</div>
+<div id="t2m_2" class="t s2_2">of	 water,	 known	 habitat	 for	 threatened	 or	 endangered	 spe-</div>
+<div id="t2n_2" class="t s2_2">cies,	non-target	crops)	is	minimal	(e.g.	when	wind	is	blowing	</div>
+<div id="t2o_2" class="t s2_2">away	from	the	sensitive	areas).</div>
+<div id="t2p_2" class="t s2_2">4.	</div>
+<div id="t2q_2" class="t s2_2">Do	 not	 apply	 when	 weather	 conditions	 may	 cause	 drift	 to	</div>
+<div id="t2r_2" class="t s2_2">non-target	areas.</div>
+<div id="t2s_2" class="t s2_2">5.	</div>
+<div id="t2t_2" class="t s2_2">The	 most	 effective	 way	 to	 reduce	 spray	 drift	 potential	 is	 to	</div>
+<div id="t2u_2" class="t s2_2">apply	large	droplets	that	provide	sufficient	coverage	and	con-</div>
+<div id="t2v_2" class="t s2_2">trol.	 Applying	 larger	 droplets	 reduces	 drift	 potential,	 but	 will	</div>
+<div id="t2w_2" class="t s2_2">not	prevent	drift	if	applications	are	made	improperly	or	under	</div>
+<div id="t2x_2" class="t s2_2">unfavourable	environmental	conditions.</div>
+<div id="t2y_2" class="t s1_2">HALEX GT </div>
+<div id="t2z_2" class="t s2_2">/	2</div>
+<div id="t30_2" class="t s1_2">HALEX GT</div>
+<div id="t31_2" class="t s2_2">will	 control	 broadleaf	 weeds	 that	 are	 showing	</div>
+<div id="t32_2" class="t s2_2">increased	tolerance	or	resistance	to	glyphosate.</div>
+<div id="t33_2" class="t s1_2">HALEX GT</div>
+<div id="t34_2" class="t s2_2">will	not	provide	control	of	emerged	grasses	that	are	</div>
+<div id="t35_2" class="t s2_2">resistant	to	glyphosate.	For	control	of	glyphosate	resistant	grass	</div>
+<div id="t36_2" class="t s2_2">weeds,	 a	 weed	 control	 program	 that	 includes	 pre-emergence	</div>
+<div id="t37_2" class="t s2_2">herbicides	e.g.	DUAL	GOLD	(L5749),	GARDOMIL	GOLD	(L6246),	</div>
+<div id="t38_2" class="t s2_2">GESAPRIM	 SUPER	 (L3914),	 PRIMAGRAM	 GOLD	 (L7308),	</div>
+<div id="t39_2" class="t s2_2">CALLISTO	 (L6795),	 CAMIX	 (L8089)	 LEXAR	 (L8326)	 and	 CAMIX	</div>
+<div id="t3a_2" class="t s2_2">PLUS	(L8327)	will	reduce	the	dependence	on	glyphosate.</div>
+<div id="t3b_2" class="t s2_2">The	best	weed	management	practice	includes	the	diversification	</div>
+<div id="t3c_2" class="t s2_2">of	glyphosate	dependent	weed	control	programs	with	alternative	</div>
+<div id="t3d_2" class="t s2_2">mode	of	action	herbicides	or	cultural	practices.</div>
+<div id="t3e_2" class="t s2_2">1.	</div>
+<div id="t3f_2" class="t s2_2">In	glyphosate	tolerant	(GT)	maize	do	not	use	more	than	two	</div>
+<div id="t3g_2" class="t s2_2">applications	 of	 a	 glyphosate	 based	 herbicide	 in	 the	 same	</div>
+<div id="t3h_2" class="t s2_2">season.	 Diversify	 with	 alternative	 mode	 of	 action	 herbicides	</div>
+<div id="t3i_2" class="t s2_2">and/or	cultural	practices.</div>
+<div id="t3j_2" class="t s2_2">2.	</div>
+<div id="t3k_2" class="t s2_2">Use	 alternative	 (non-glyphosate)	 burn	 down	 and/or	 residual	</div>
+<div id="t3l_2" class="t s2_2">herbicides	for	GT	crops	likely	to	require	more	than	one	appli-</div>
+<div id="t3m_2" class="t s2_2">cation	of	glyphosate.</div>
+<div id="t3n_2" class="t s2_2">3.	</div>
+<div id="t3o_2" class="t s2_2">To	help	manage	GT	resistant	volunteers	rotate	GT	crops	with	</div>
+<div id="t3p_2" class="t s2_2">conventional	or	non-GT	crops.</div>
+<div id="t3q_2" class="t s2_2">4.	</div>
+<div id="t3r_2" class="t s2_2">Use	full	labelled	rates.	Strive	to	get	100%	control	to	prevent	</div>
+<div id="t3s_2" class="t s2_2">resistance	and	minimize	weed	escapes.</div>
+<div id="t3t_2" class="t s2_2">5.	</div>
+<div id="t3u_2" class="t s2_2">Monitor	treated	weed	populations	for	any	loss	of	field	efficacy.</div>
+<div id="t3v_2" class="t s2_2">6.	</div>
+<div id="t3w_2" class="t s2_2">Contact	your	local	extension	specialist,	certified	crop	advisor,	</div>
+<div id="t3x_2" class="t s2_2">and/or	Syngenta	representative	for	herbicide	resistance	man-</div>
+<div id="t3y_2" class="t s2_2">agement	and/or	integrated	weed	management	recommenda-</div>
+<div id="t3z_2" class="t s2_2">tions.	</div>
+<div id="t40_2" class="t s2_2">Due	to	the	fact	that	resistance	weed	populations	vary	in	size	and	</div>
+<div id="t41_2" class="t s2_2">localities	and	are	difficult	to	ascertain,	it	is	essential	that	each	field	</div>
+<div id="t42_2" class="t s2_2">must	be	inspected	annually	to	identify	possible	resistance	early.	</div>
+<div id="t43_2" class="t s2_2">If	 the	 preventative	 measures	 discussed	 above	 are	 not	 strictly	</div>
+<div id="t44_2" class="t s2_2">adhered	to	</div>
+<div id="t45_2" class="t s1_2">SYNGENTA </div>
+<div id="t46_2" class="t s2_2">cannot	be	held	responsible	for	the	failure	</div>
+<div id="t47_2" class="t s2_2">of	</div>
+<div id="t48_2" class="t s1_2">HALEX GT </div>
+<div id="t49_2" class="t s2_2">to	control	resistant	weeds</div>
+<div id="t4a_2" class="t s1_2">For specific information on resistance management con-</div>
+<div id="t4b_2" class="t s1_2">tact the registration holder of this product.</div>
+<div id="t4c_2" class="t s1_2">4. USE RESTRICTIONS:</div>
+<div id="t4d_2" class="t s1_2">4.1 General</div>
+<div id="t4e_2" class="t s2_2">1.	</div>
+<div id="t4f_2" class="t s1_2">Do not</div>
+<div id="t4g_2" class="t s2_2">use	</div>
+<div id="t4h_2" class="t s1_2">HALEX GT </div>
+<div id="t4i_2" class="t s2_2">on	 inbred	 parent	 lines	 of	 maize	</div>
+<div id="t4j_2" class="t s2_2">hybrids	or	newly	released	cultivars	without	first	consulting	with	</div>
+<div id="t4k_2" class="t s2_2">your	chemical	supplier	or	with	the	seed	company	concerned.</div>
+<div id="t4l_2" class="t s2_2">2.	</div>
+<div id="t4m_2" class="t s1_2">HALEX GT </div>
+<div id="t4n_2" class="t s2_2">can	only	be	applied	post-emergence	to	glypho-</div>
+<div id="t4o_2" class="t s2_2">sate	tolerant	(e.g.	Roundup	Ready</div>
+<div id="t4p_2" class="t s3_2">®</div>
+<div id="t4q_2" class="t s2_2">and	Agrisure</div>
+<div id="t4r_2" class="t s3_2">®</div>
+<div id="t4s_2" class="t s2_2">GT)	maize	</div>
+<div id="t4t_2" class="t s2_2">only.	</div>
+<div id="t4u_2" class="t s2_2">3.	</div>
+<div id="t4v_2" class="t s2_2">An	 application	 of	</div>
+<div id="t4w_2" class="t s1_2">HALEX GT </div>
+<div id="t4x_2" class="t s2_2">to	 a	 maize	 hybrid	 that	 is	 not	</div>
+<div id="t4y_2" class="t s2_2">glyphosate	tolerant	will	result	in	crop	death.</div>
+<div id="t4z_2" class="t s2_2">4.	</div>
+<div id="t50_2" class="t s1_2">Do not</div>
+<div id="t51_2" class="t s2_2">apply	</div>
+<div id="t52_2" class="t s1_2">HALEX GT</div>
+<div id="t53_2" class="t s2_2">through	any	irrigation	system.</div>
+<div id="t54_2" class="t s2_2">5.	</div>
+<div id="t55_2" class="t s1_2">Do not</div>
+<div id="t56_2" class="t s2_2">apply	</div>
+<div id="t57_2" class="t s1_2">HALEX GT</div>
+<div id="t58_2" class="t s2_2">by	aerial	application.	</div>
+<div id="t59_2" class="t s2_2">6.	</div>
+<div id="t5a_2" class="t s2_2">Disturbance	 of	 soil	 after	 both	 pre-	 and/or	 post-emergence	</div>
+<div id="t5b_2" class="t s2_2">applications	can	result	in	re-germination	of	weeds	resulting	in	</div>
+<div id="t5c_2" class="t s2_2">reduced	weed	control.</div>
+<div id="t5d_2" class="t s2_2">7.	</div>
+<div id="t5e_2" class="t s2_2">When	weeds	are	stressed	due	to	drought,	heat,	lack	of	ferti-</div>
+<div id="t5f_2" class="t s2_2">lity,	flooding,	or	prolonged	cool	temperatures,	control	can	be	</div>
+<div id="t5g_2" class="t s2_2">reduced	or	delayed	since	the	weeds	are	not	actively	growing.	</div>
+<div id="t5h_2" class="t s2_2">Weed	 escapes	 or	 re-growth	 may	 occur	 when	 application	 is	</div>
+<div id="t5i_2" class="t s2_2">made	 under	 prolonged	 stress	 conditions.	 Optimum	 weed	</div>
+<div id="t5j_2" class="t s2_2">control	 will	 be	 obtained	 if	 an	 application	 of	</div>
+<div id="t5k_2" class="t s1_2">HALEX GT </div>
+<div id="t5l_2" class="t s2_2">is	</div>
+<div id="t5m_2" class="t s2_2">made	 following	 label	 directions	 when	 weeds	 are	 actively	</div>
+<div id="t5n_2" class="t s2_2">growing.</div>
+<div id="t5o_2" class="t s2_2">8	</div>
+<div id="t5p_2" class="t s2_2">Crop	injury	may	occur	under	extreme	weather	conditions	or	</div>
+<div id="t5q_2" class="t s2_2">when	the	crop	is	under	stress	due	to	inadequate	or	abnormal-</div>
+<div id="t5r_2" class="t s2_2">ly	 high	 moisture	 levels	 or	 extreme	 temperatures	 or	 extreme	</div>
+<div id="t5s_2" class="t s2_2">temperature	 changes.	 Prolonged	 overcast	 conditions	 may	</div>
+<div id="t5t_2" class="t s2_2">lead	to	temporary	crop	bleaching.</div>
+<div id="t5u_2" class="t s2_2">9.	</div>
+<div id="t5v_2" class="t s2_2">If	an	activating	rain	(10	-	20	mm)	is	not	received	within	7	-	14	</div>
+<div id="t5w_2" class="t s2_2">days	 after	 the	 post-emergence	 application	 of	</div>
+<div id="t5x_2" class="t s1_2">HALEX GT</div>
+<div id="t5y_2" class="t s2_2">,	</div>
+<div id="t5z_2" class="t s2_2">residual	weed	control	will	be	reduced.</div>
+<div id="t60_2" class="t s2_2">10.		Avoid	drift	onto	adjacent	crops.	Severe	damage	or	destruc-</div>
+<div id="t61_2" class="t s2_2">tion	may	be	caused	by	contact	of	</div>
+<div id="t62_2" class="t s1_2">HALEX GT </div>
+<div id="t63_2" class="t s2_2">to	any	vege-</div>
+<div id="t64_2" class="t s2_2">tation	 (including	 leaves,	 green	 stems,	 exposed	 non-woody	</div>
+<div id="t65_2" class="t s2_2">roots,	 or	 fruit)	 of	 crops,	 trees,	 and	 other	 desirable	 plants	 to	</div>
+<div id="t66_2" class="t s2_2">which	treatment	is	not	intended.</div>
+<div id="t67_2" class="t s2_2">11.		Severe	maize	injury	resulting	in	yield	loss	may	occur	if	</div>
+<div id="t68_2" class="t s1_2">HALEX </div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg2Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg2"><img src="2/2.png" id="pdf2" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f2 = [['t7_2',1214],['te_2',157],['tg_2',244],['tj_2',1213],['tm_2',1214],['tr_2',1213],['tu_2',170],['tv_2',1102],['tw_2',244],['ty_2',244],['t11_2',159],['t13_2',247],['t16_2',1387],['t19_2',477],['t1d_2',244],['t1h_2',252],['t1i_2',978],['t20_2',1300],['t21_2',1300],['t27_2',1373],['t28_2',1373],['t29_2',1245],['t2a_2',326],['t2f_2',1300],['t2g_2',1300],['t2m_2',1286],['t2q_2',1300],['t2t_2',1300],['t2v_2',1300],['t2y_2',244],['t30_2',264],['t31_2',1087],['t33_2',247],['t36_2',1387],['t38_2',1387],['t39_2',1387],['t3g_2',1300],['t3h_2',1300],['t3k_2',1300],['t43_2',1387],['t48_2',244],['t4a_2',1373],['t4b_2',999],['t4c_2',548],['t4d_2',264],['t4f_2',168],['t4h_2',256],['t4i_2',721],['t4m_2',247],['t4v_2',380],['t4w_2',251],['t4x_2',640],['t50_2',157],['t52_2',244],['t55_2',157],['t57_2',244],['t5a_2',1300],['t5h_2',1300],['t5i_2',1300],['t5j_2',966],['t5k_2',253],['t5m_2',1300],['t5r_2',1300],['t5s_2',1300],['t5w_2',1008],['t5x_2',254],['t62_2',248],['t64_2',1300],['t65_2',1300]];
+var c2 = 0;
+function fontAdjustments2(){;
+	if (c2<f2.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f2[c2][0],f2[c2][1]);
+		c2++;
+		if (c2%10 == 0) {
+			setTimeout(function(){fontAdjustments2()},0);
+		} else {
+			fontAdjustments2();
+		}
+	}
+};
+function load2(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments2,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 225;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_2");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(4,2,909,1286,0);
+</script>
+</body>
+</html>

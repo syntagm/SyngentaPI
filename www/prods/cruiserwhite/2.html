@@ -1,0 +1,1092 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>CRUISER_White___Eng_2007_11_22 Page2</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load2();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_2{left:66px;top:69px;}
+#t2_2{left:300px;top:69px;}
+#t3_2{left:66px;top:98px;}
+#t4_2{left:66px;top:127px;}
+#t5_2{left:84px;top:127px;}
+#t6_2{left:189px;top:127px;}
+#t7_2{left:84px;top:141px;}
+#t8_2{left:217px;top:141px;}
+#t9_2{left:321px;top:141px;}
+#ta_2{left:84px;top:156px;}
+#tb_2{left:84px;top:170px;}
+#tc_2{left:84px;top:185px;}
+#td_2{left:84px;top:199px;}
+#te_2{left:193px;top:199px;}
+#tf_2{left:227px;top:199px;}
+#tg_2{left:329px;top:199px;}
+#th_2{left:84px;top:214px;}
+#ti_2{left:84px;top:228px;}
+#tj_2{left:84px;top:243px;}
+#tk_2{left:84px;top:257px;}
+#tl_2{left:66px;top:272px;}
+#tm_2{left:84px;top:272px;}
+#tn_2{left:174px;top:274px;}
+#to_2{left:183px;top:272px;}
+#tp_2{left:84px;top:286px;}
+#tq_2{left:84px;top:301px;}
+#tr_2{left:195px;top:301px;}
+#ts_2{left:297px;top:301px;}
+#tt_2{left:66px;top:315px;}
+#tu_2{left:84px;top:315px;}
+#tv_2{left:187px;top:315px;}
+#tw_2{left:84px;top:330px;}
+#tx_2{left:84px;top:344px;}
+#ty_2{left:66px;top:359px;}
+#tz_2{left:84px;top:359px;}
+#t10_2{left:84px;top:373px;}
+#t11_2{left:183px;top:373px;}
+#t12_2{left:291px;top:373px;}
+#t13_2{left:84px;top:388px;}
+#t14_2{left:84px;top:402px;}
+#t15_2{left:207px;top:402px;}
+#t16_2{left:66px;top:431px;}
+#t17_2{left:66px;top:460px;}
+#t18_2{left:84px;top:460px;}
+#t19_2{left:187px;top:460px;}
+#t1a_2{left:84px;top:475px;}
+#t1b_2{left:84px;top:490px;}
+#t1c_2{left:84px;top:504px;}
+#t1d_2{left:456px;top:69px;}
+#t1e_2{left:456px;top:98px;}
+#t1f_2{left:474px;top:98px;}
+#t1g_2{left:576px;top:98px;}
+#t1h_2{left:474px;top:112px;}
+#t1i_2{left:474px;top:127px;}
+#t1j_2{left:474px;top:141px;}
+#t1k_2{left:474px;top:156px;}
+#t1l_2{left:660px;top:156px;}
+#t1m_2{left:759px;top:156px;}
+#t1n_2{left:474px;top:170px;}
+#t1o_2{left:474px;top:185px;}
+#t1p_2{left:456px;top:206px;}
+#t1q_2{left:474px;top:206px;}
+#t1r_2{left:657px;top:206px;}
+#t1s_2{left:758px;top:206px;}
+#t1t_2{left:474px;top:220px;}
+#t1u_2{left:474px;top:235px;}
+#t1v_2{left:474px;top:256px;}
+#t1w_2{left:547px;top:256px;}
+#t1x_2{left:474px;top:270px;}
+#t1y_2{left:655px;top:270px;}
+#t1z_2{left:660px;top:270px;}
+#t20_2{left:731px;top:270px;}
+#t21_2{left:744px;top:270px;}
+#t22_2{left:474px;top:285px;}
+#t23_2{left:517px;top:285px;}
+#t24_2{left:576px;top:285px;}
+#t25_2{left:585px;top:285px;}
+#t26_2{left:680px;top:285px;}
+#t27_2{left:690px;top:285px;}
+#t28_2{left:456px;top:306px;}
+#t29_2{left:474px;top:306px;}
+#t2a_2{left:474px;top:320px;}
+#t2b_2{left:474px;top:335px;}
+#t2c_2{left:474px;top:349px;}
+#t2d_2{left:456px;top:370px;}
+#t2e_2{left:474px;top:370px;}
+#t2f_2{left:474px;top:385px;}
+#t2g_2{left:474px;top:399px;}
+#t2h_2{left:474px;top:414px;}
+#t2i_2{left:690px;top:414px;}
+#t2j_2{left:474px;top:428px;}
+#t2k_2{left:477px;top:428px;}
+#t2l_2{left:598px;top:428px;}
+#t2m_2{left:610px;top:428px;}
+#t2n_2{left:746px;top:428px;}
+#t2o_2{left:749px;top:428px;}
+#t2p_2{left:474px;top:443px;}
+#t2q_2{left:528px;top:443px;}
+#t2r_2{left:542px;top:443px;}
+#t2s_2{left:631px;top:443px;}
+#t2t_2{left:634px;top:443px;}
+#t2u_2{left:740px;top:443px;}
+#t2v_2{left:755px;top:443px;}
+#t2w_2{left:474px;top:457px;}
+#t2x_2{left:514px;top:457px;}
+#t2y_2{left:517px;top:457px;}
+#t2z_2{left:582px;top:457px;}
+#t30_2{left:612px;top:457px;}
+#t31_2{left:678px;top:457px;}
+#t32_2{left:681px;top:457px;}
+#t33_2{left:456px;top:489px;}
+#t34_2{left:533px;top:489px;}
+#t35_2{left:456px;top:503px;}
+#t36_2{left:381px;top:41px;}
+#t37_2{left:440px;top:41px;}
+#t38_2{left:66px;top:558px;}
+#t39_2{left:116px;top:594px;}
+#t3a_2{left:71px;top:623px;}
+#t3b_2{left:71px;top:637px;}
+#t3c_2{left:71px;top:652px;}
+#t3d_2{left:74px;top:652px;}
+#t3e_2{left:153px;top:652px;}
+#t3f_2{left:71px;top:675px;}
+#t3g_2{left:71px;top:689px;}
+#t3h_2{left:74px;top:689px;}
+#t3i_2{left:71px;top:713px;}
+#t3j_2{left:71px;top:727px;}
+#t3k_2{left:71px;top:756px;}
+#t3l_2{left:71px;top:771px;}
+#t3m_2{left:71px;top:785px;}
+#t3n_2{left:74px;top:785px;}
+#t3o_2{left:161px;top:785px;}
+#t3p_2{left:71px;top:852px;}
+#t3q_2{left:71px;top:866px;}
+#t3r_2{left:71px;top:881px;}
+#t3s_2{left:74px;top:881px;}
+#t3t_2{left:155px;top:881px;}
+#t3u_2{left:71px;top:910px;}
+#t3v_2{left:71px;top:924px;}
+#t3w_2{left:71px;top:939px;}
+#t3x_2{left:116px;top:1026px;}
+#t3y_2{left:71px;top:1055px;}
+#t3z_2{left:71px;top:1070px;}
+#t40_2{left:71px;top:1084px;}
+#t41_2{left:71px;top:1109px;}
+#t42_2{left:71px;top:1124px;}
+#t43_2{left:74px;top:1124px;}
+#t44_2{left:135px;top:1124px;}
+#t45_2{left:71px;top:1138px;}
+#t46_2{left:158px;top:1138px;}
+#t47_2{left:71px;top:1164px;}
+#t48_2{left:71px;top:1178px;}
+#t49_2{left:74px;top:1178px;}
+#t4a_2{left:155px;top:1178px;}
+#t4b_2{left:71px;top:1204px;}
+#t4c_2{left:71px;top:1218px;}
+#t4d_2{left:117px;top:1218px;}
+#t4e_2{left:243px;top:594px;}
+#t4f_2{left:291px;top:637px;}
+#t4g_2{left:325px;top:637px;}
+#t4h_2{left:300px;top:652px;}
+#t4i_2{left:274px;top:666px;}
+#t4j_2{left:309px;top:666px;}
+#t4k_2{left:318px;top:666px;}
+#t4l_2{left:291px;top:771px;}
+#t4m_2{left:325px;top:771px;}
+#t4n_2{left:300px;top:785px;}
+#t4o_2{left:269px;top:800px;}
+#t4p_2{left:314px;top:800px;}
+#t4q_2{left:323px;top:800px;}
+#t4r_2{left:291px;top:852px;}
+#t4s_2{left:325px;top:852px;}
+#t4t_2{left:300px;top:866px;}
+#t4u_2{left:274px;top:881px;}
+#t4v_2{left:309px;top:881px;}
+#t4w_2{left:318px;top:881px;}
+#t4x_2{left:291px;top:910px;}
+#t4y_2{left:325px;top:910px;}
+#t4z_2{left:300px;top:924px;}
+#t50_2{left:269px;top:939px;}
+#t51_2{left:314px;top:939px;}
+#t52_2{left:323px;top:939px;}
+#t53_2{left:266px;top:1026px;}
+#t54_2{left:264px;top:1055px;}
+#t55_2{left:254px;top:1070px;}
+#t56_2{left:264px;top:1084px;}
+#t57_2{left:273px;top:1099px;}
+#t58_2{left:261px;top:1113px;}
+#t59_2{left:561px;top:594px;}
+#t5a_2{left:390px;top:637px;}
+#t5b_2{left:390px;top:652px;}
+#t5c_2{left:511px;top:652px;}
+#t5d_2{left:390px;top:681px;}
+#t5e_2{left:390px;top:695px;}
+#t5f_2{left:390px;top:771px;}
+#t5g_2{left:390px;top:785px;}
+#t5h_2{left:469px;top:785px;}
+#t5i_2{left:390px;top:808px;}
+#t5j_2{left:493px;top:808px;}
+#t5k_2{left:390px;top:823px;}
+#t5l_2{left:390px;top:852px;}
+#t5m_2{left:390px;top:866px;}
+#t5n_2{left:390px;top:910px;}
+#t5o_2{left:435px;top:910px;}
+#t5p_2{left:541px;top:910px;}
+#t5q_2{left:390px;top:924px;}
+#t5r_2{left:390px;top:953px;}
+#t5s_2{left:554px;top:953px;}
+#t5t_2{left:658px;top:953px;}
+#t5u_2{left:390px;top:968px;}
+#t5v_2{left:390px;top:983px;}
+#t5w_2{left:390px;top:997px;}
+#t5x_2{left:555px;top:1026px;}
+#t5y_2{left:390px;top:1055px;}
+#t5z_2{left:390px;top:1070px;}
+#t60_2{left:445px;top:1070px;}
+#t61_2{left:390px;top:1099px;}
+#t62_2{left:488px;top:1099px;}
+#t63_2{left:547px;top:1099px;}
+#t64_2{left:591px;top:1099px;}
+#t65_2{left:390px;top:1113px;}
+#t66_2{left:390px;top:1142px;}
+
+.s1_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s4_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: IDVURR-HelveticaNeueLTStd-BdIt2;
+	color: rgb(0,0,0);
+}
+
+.s6_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-It2;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+.s5_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: JLFAFP-Mt-ExtraPlain2;
+	color: rgb(0,0,0);
+}
+
+.s3_2{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: JLFAFP-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: JLFAFP-Mt-ExtraPlain2;
+	src: url("2/fonts/JLFAFP-Mt-ExtraPlain.eot");
+	src: url("2/fonts/JLFAFP-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/JLFAFP-Mt-ExtraPlain.otf") format("opentype");
+}
+
+@font-face {
+	font-family: JLFAFP-HelveticaNeueLTStd-It2;
+	src: url("2/fonts/JLFAFP-HelveticaNeueLTStd-It.eot");
+	src: url("2/fonts/JLFAFP-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/JLFAFP-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: JLFAFP-HelveticaNeueLTStd-Lt2;
+	src: url("2/fonts/JLFAFP-HelveticaNeueLTStd-Lt.eot");
+	src: url("2/fonts/JLFAFP-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/JLFAFP-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: IDVURR-HelveticaNeueLTStd-BdIt2;
+	src: url("2/fonts/IDVURR-HelveticaNeueLTStd-BdIt.eot");
+	src: url("2/fonts/IDVURR-HelveticaNeueLTStd-BdIt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/IDVURR-HelveticaNeueLTStd-BdIt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: JLFAFP-HelveticaNeueLTStd-Bd2;
+	src: url("2/fonts/JLFAFP-HelveticaNeueLTStd-Bd.eot");
+	src: url("2/fonts/JLFAFP-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/JLFAFP-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_2" class="t s1_2">5. DIRECTIONS FOR USE </div>
+<div id="t2_2" class="t s2_2">Use	only	as	directed</div>
+<div id="t3_2" class="t s2_2">5.1		COMPATIBILITY</div>
+<div id="t4_2" class="t s2_2">•	</div>
+<div id="t5_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t6_2" class="t s2_2">may	 be	 used	 on	 seed	 previously	 treated	</div>
+<div id="t7_2" class="t s2_2">with	a	fungicide.	Should	</div>
+<div id="t8_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t9_2" class="t s2_2">be	used	in	com-</div>
+<div id="ta_2" class="t s2_2">bination	 with	 a	 fungicide	 seed	 treatment	 product,	 the	 seed	</div>
+<div id="tb_2" class="t s2_2">must	 first	 be	 treated	 with	 the	 fungicide	 according	 to	 the	</div>
+<div id="tc_2" class="t s2_2">manufac	turer’s	instructions.		Thereafter	it	may	be	treated	with	</div>
+<div id="td_2" class="t s1_2">CRUISER WHITE. </div>
+<div id="te_2" class="t s2_2">When	</div>
+<div id="tf_2" class="t s1_2">CRUISER WHITE</div>
+<div id="tg_2" class="t s2_2">is	used	in	com-</div>
+<div id="th_2" class="t s2_2">bination	 with	 Syngenta	 fungicide	 seed	 treatments	 (APRON	</div>
+<div id="ti_2" class="t s2_2">XL	350	ES	(L6837),	CELEST	XL	035	FS	(L6353),	CELEST	XL	</div>
+<div id="tj_2" class="t s2_2">WHITE	 (L7480)	 and	 DIVIDEND	 030	 FS	 (L6390),	 these	 pro-</div>
+<div id="tk_2" class="t s2_2">ducts	can	be	mixed	and	applied	simultaneously.</div>
+<div id="tl_2" class="t s2_2">•	</div>
+<div id="tm_2" class="t s2_2">Should	CONCEP</div>
+<div id="tn_2" class="t s3_2">®</div>
+<div id="to_2" class="t s2_2">960	EC	(L5051)	be	used	on	grain	sorghum	</div>
+<div id="tp_2" class="t s2_2">seed,	this	treatment	must	be	applied	first,	allowed	to	dry	and	</div>
+<div id="tq_2" class="t s2_2">then	followed	by	the	</div>
+<div id="tr_2" class="t s1_2">CRUISER WHITE </div>
+<div id="ts_2" class="t s2_2">treatment.</div>
+<div id="tt_2" class="t s2_2">•	</div>
+<div id="tu_2" class="t s1_2">CRUISER WHITE</div>
+<div id="tv_2" class="t s2_2">must	not	be	used	together	with	Teprosyn	</div>
+<div id="tw_2" class="t s2_2">Mo/P	 since	 this	 product	 impedes	 the	 seed	 coverage	 of	</div>
+<div id="tx_2" class="t s1_2">CRUISER WHITE.</div>
+<div id="ty_2" class="t s2_2">•	</div>
+<div id="tz_2" class="t s2_2">Syngenta	South	Africa	does	not	accept	responsibility	for	the	</div>
+<div id="t10_2" class="t s2_2">malfunctioning	 of	</div>
+<div id="t11_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t12_2" class="t s2_2">in	 cases	 where	 other	</div>
+<div id="t13_2" class="t s2_2">seed	 treatment	 products	 that	 are	 not	 specified	 on	 the	 label,	</div>
+<div id="t14_2" class="t s2_2">are	used	together	with	</div>
+<div id="t15_2" class="t s1_2">CRUISER WHITE.</div>
+<div id="t16_2" class="t s2_2">5.2		MIXING	INSTRUCTIONS</div>
+<div id="t17_2" class="t s2_2">•	</div>
+<div id="t18_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t19_2" class="t s2_2">is	a	flowable	concentrate	which	must	first	</div>
+<div id="t1a_2" class="t s2_2">be	mixed	with	a	small	quantity	of	water.	Mix	thoroughly	with	</div>
+<div id="t1b_2" class="t s2_2">the	recommended	amount	of	water	before	adding	to	the	seed.	</div>
+<div id="t1c_2" class="t s2_2">The	mixture	must	be	used	within	24	hours	after	preparation.</div>
+<div id="t1d_2" class="t s2_2">5.3		SEED	TREATMENT</div>
+<div id="t1e_2" class="t s2_2">•	</div>
+<div id="t1f_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t1g_2" class="t s2_2">can	be	applied	with	most	large	seed	treat-</div>
+<div id="t1h_2" class="t s2_2">ment	apparatus,	provided	that	the	product	mixture	is	applied	</div>
+<div id="t1i_2" class="t s2_2">directly	to	the	seed	through	spray	nozzles,	or	by	rotary	disks,	</div>
+<div id="t1j_2" class="t s2_2">during	 the	 seed	 treatment	 process.	 	 It	 is	 important	 that	 any	</div>
+<div id="t1k_2" class="t s2_2">large	applicator	is	calibrated	using	</div>
+<div id="t1l_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t1m_2" class="t s2_2">,	as	the	</div>
+<div id="t1n_2" class="t s2_2">flow	rate	may	differ	from	other	products	used	for	seed	treat-</div>
+<div id="t1o_2" class="t s2_2">ments.</div>
+<div id="t1p_2" class="t s2_2">•	</div>
+<div id="t1q_2" class="t s2_2">Add	the	recommended	quantity	of	</div>
+<div id="t1r_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t1s_2" class="t s2_2">to	clean	</div>
+<div id="t1t_2" class="t s2_2">water	so	that	the	prescribed	amount	of	mixture	per	volume	of	</div>
+<div id="t1u_2" class="t s2_2">seed	is	not	exceeded.</div>
+<div id="t1v_2" class="t s4_2">EXAMPLE:</div>
+<div id="t1w_2" class="t s2_2">The	 recommended	 amount	 of	 mixture	 to	 treat	</div>
+<div id="t1x_2" class="t s2_2">100	kg	of	maize	seeds	is	1	500	m</div>
+<div id="t1y_2" class="t s5_2">l</div>
+<div id="t1z_2" class="t s2_2">.		Add	292	m</div>
+<div id="t20_2" class="t s5_2">l</div>
+<div id="t21_2" class="t s1_2">CRUISER </div>
+<div id="t22_2" class="t s1_2">WHITE</div>
+<div id="t23_2" class="t s2_2">to	1	208	m</div>
+<div id="t24_2" class="t s5_2">l</div>
+<div id="t25_2" class="t s2_2">water	(	=	1	500	m</div>
+<div id="t26_2" class="t s5_2">l</div>
+<div id="t27_2" class="t s2_2">product	mixture).</div>
+<div id="t28_2" class="t s2_2">•	</div>
+<div id="t29_2" class="t s2_2">Add	the	mixture	to	the	seed	while	mixing,	until	even	coverage	</div>
+<div id="t2a_2" class="t s2_2">is	achieved.		Mix	until	the	seed	is	evenly	coated,	appears	dry	</div>
+<div id="t2b_2" class="t s2_2">and	no	excess	mixture	remains	on	the	sides	or	in	the	bottom	</div>
+<div id="t2c_2" class="t s2_2">of	the	mixer.		Do	not	mix	for	longer	than	ne	cessary.</div>
+<div id="t2d_2" class="t s2_2">•	</div>
+<div id="t2e_2" class="t s2_2">It	 is	 preferable	 to	 treat	 the	 seed	 immediately	 before	 plant-</div>
+<div id="t2f_2" class="t s2_2">ing,	 and	 not	 to	 allow	 it	 to	 stand	 unnecessarily.	 In	 the	 period	</div>
+<div id="t2g_2" class="t s2_2">between	 treatment	 and	 planting,	 wheat	 and	 maize	 seed	 will	</div>
+<div id="t2h_2" class="t s2_2">be	 protected	 against	 damage	 by	 the	</div>
+<div id="t2i_2" class="t s1_2">lesser grain borer</div>
+<div id="t2j_2" class="t s2_2">(</div>
+<div id="t2k_2" class="t s6_2">Rhizopertha dominica</div>
+<div id="t2l_2" class="t s2_2">),	</div>
+<div id="t2m_2" class="t s1_2">confused flour beetle</div>
+<div id="t2n_2" class="t s2_2">(</div>
+<div id="t2o_2" class="t s6_2">Tribolium </div>
+<div id="t2p_2" class="t s6_2">confusum</div>
+<div id="t2q_2" class="t s2_2">),	</div>
+<div id="t2r_2" class="t s1_2">maize weevil</div>
+<div id="t2s_2" class="t s2_2">(</div>
+<div id="t2t_2" class="t s6_2">Sitophilus zeamais</div>
+<div id="t2u_2" class="t s2_2">),	</div>
+<div id="t2v_2" class="t s1_2">granary </div>
+<div id="t2w_2" class="t s1_2">weevil </div>
+<div id="t2x_2" class="t s2_2">(</div>
+<div id="t2y_2" class="t s6_2">S. granarius</div>
+<div id="t2z_2" class="t s2_2">)	and	</div>
+<div id="t30_2" class="t s1_2">rice weevil</div>
+<div id="t31_2" class="t s2_2">(</div>
+<div id="t32_2" class="t s6_2">S. oryzae).</div>
+<div id="t33_2" class="t s1_2">COMMENT: </div>
+<div id="t34_2" class="t s2_2">Clean	all	apparatus	thoroughly	after	treatment	and	</div>
+<div id="t35_2" class="t s2_2">application.</div>
+<div id="t36_2" class="t s1_2">CRUISER</div>
+<div id="t37_2" class="t s2_2">White/	2</div>
+<div id="t38_2" class="t s1_2">6. APPLICATION RATE</div>
+<div id="t39_2" class="t s1_2">CROP/PEST </div>
+<div id="t3a_2" class="t s1_2">COTTON</div>
+<div id="t3b_2" class="t s1_2">Cotton aphid</div>
+<div id="t3c_2" class="t s2_2">(</div>
+<div id="t3d_2" class="t s6_2">Aphis gossypii</div>
+<div id="t3e_2" class="t s2_2">)</div>
+<div id="t3f_2" class="t s1_2">Cotton leaf hopper</div>
+<div id="t3g_2" class="t s2_2">(</div>
+<div id="t3h_2" class="t s6_2">Jacobiella facialis)</div>
+<div id="t3i_2" class="t s1_2">Black cotton beetle</div>
+<div id="t3j_2" class="t s6_2">(Syagrus rugifrons)</div>
+<div id="t3k_2" class="t s1_2">GRAIN SORGHUM</div>
+<div id="t3l_2" class="t s1_2">Small false wireworms</div>
+<div id="t3m_2" class="t s2_2">(</div>
+<div id="t3n_2" class="t s6_2">Gonocephalum </div>
+<div id="t3o_2" class="t s2_2">spp.)</div>
+<div id="t3p_2" class="t s1_2">SUNFLOWER</div>
+<div id="t3q_2" class="t s1_2">Ground weevils</div>
+<div id="t3r_2" class="t s2_2">(</div>
+<div id="t3s_2" class="t s6_2">Protostrophus</div>
+<div id="t3t_2" class="t s2_2">spp.)</div>
+<div id="t3u_2" class="t s1_2">WHEAT</div>
+<div id="t3v_2" class="t s1_2">Russian Wheat Aphid</div>
+<div id="t3w_2" class="t s6_2">(Diuraphis noxia)</div>
+<div id="t3x_2" class="t s1_2">CROP/PEST</div>
+<div id="t3y_2" class="t s1_2">MAIZE</div>
+<div id="t3z_2" class="t s1_2">Black maize beetle</div>
+<div id="t40_2" class="t s6_2">(Heteronychus arator)</div>
+<div id="t41_2" class="t s1_2">False wireworms</div>
+<div id="t42_2" class="t s2_2">(</div>
+<div id="t43_2" class="t s6_2">Somaticus </div>
+<div id="t44_2" class="t s2_2">and	</div>
+<div id="t45_2" class="t s6_2">Gonocephalum </div>
+<div id="t46_2" class="t s2_2">spp.)</div>
+<div id="t47_2" class="t s1_2">Ground weevils</div>
+<div id="t48_2" class="t s2_2">(</div>
+<div id="t49_2" class="t s6_2">Protostrophus</div>
+<div id="t4a_2" class="t s2_2">spp.)	</div>
+<div id="t4b_2" class="t s1_2">Spotted maize beetle larvae </div>
+<div id="t4c_2" class="t s6_2">(Astylus</div>
+<div id="t4d_2" class="t s6_2">atromaculatus )</div>
+<div id="t4e_2" class="t s1_2">DOSAGE / 100 kg seed</div>
+<div id="t4f_2" class="t s2_2">510	m</div>
+<div id="t4g_2" class="t s5_2">l</div>
+<div id="t4h_2" class="t s2_2">plus</div>
+<div id="t4i_2" class="t s2_2">990	m</div>
+<div id="t4j_2" class="t s5_2">l</div>
+<div id="t4k_2" class="t s2_2">water	</div>
+<div id="t4l_2" class="t s2_2">292	m</div>
+<div id="t4m_2" class="t s5_2">l</div>
+<div id="t4n_2" class="t s2_2">plus	</div>
+<div id="t4o_2" class="t s2_2">1	200	m</div>
+<div id="t4p_2" class="t s5_2">l</div>
+<div id="t4q_2" class="t s2_2">water</div>
+<div id="t4r_2" class="t s2_2">583	m</div>
+<div id="t4s_2" class="t s5_2">l</div>
+<div id="t4t_2" class="t s2_2">plus</div>
+<div id="t4u_2" class="t s2_2">920	m</div>
+<div id="t4v_2" class="t s5_2">l</div>
+<div id="t4w_2" class="t s2_2">water	</div>
+<div id="t4x_2" class="t s2_2">200	m</div>
+<div id="t4y_2" class="t s5_2">l</div>
+<div id="t4z_2" class="t s2_2">plus</div>
+<div id="t50_2" class="t s2_2">1	300	m</div>
+<div id="t51_2" class="t s5_2">l</div>
+<div id="t52_2" class="t s2_2">water</div>
+<div id="t53_2" class="t s1_2">DOSAGE RATE</div>
+<div id="t54_2" class="t s2_2">0,5	mg	ai	/	kernel</div>
+<div id="t55_2" class="t s2_2">Add	water	in	the	ratio</div>
+<div id="t56_2" class="t s2_2">of	2	parts	of	water	</div>
+<div id="t57_2" class="t s2_2">for	one	part	of	</div>
+<div id="t58_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t59_2" class="t s1_2">REMARKS</div>
+<div id="t5a_2" class="t s2_2">During	high	pest	pressure	a	mild	infestation	of	cotton	aphid	may	still	occur	</div>
+<div id="t5b_2" class="t s2_2">despite	treatment	with	</div>
+<div id="t5c_2" class="t s1_2">CRUISER WHITE.</div>
+<div id="t5d_2" class="t s2_2">Initial	 leaf	 damage	 may	 occur	 since	 Black	 cotton	 beetles	 need	 to	 feed	 on	</div>
+<div id="t5e_2" class="t s2_2">treated	plants	in	order	to	be	killed.		</div>
+<div id="t5f_2" class="t s2_2">Seedling	 damage	 may	 occur	 during	 high	 pest	 pressure,	 despite	 the	 seed	</div>
+<div id="t5g_2" class="t s2_2">treatment	with	</div>
+<div id="t5h_2" class="t s1_2">CRUISER WHITE.</div>
+<div id="t5i_2" class="t s1_2">CRUISER WHITE </div>
+<div id="t5j_2" class="t s2_2">treated	seed	must	preferably	be	planted	no	deeper	than	</div>
+<div id="t5k_2" class="t s2_2">5	centi	metres.</div>
+<div id="t5l_2" class="t s2_2">Initial	leaf	damage	may	occur	since	ground	weevils	need	to	feed	on	treated	</div>
+<div id="t5m_2" class="t s2_2">plants	in	order	to	be	killed.		</div>
+<div id="t5n_2" class="t s2_2">Despite	</div>
+<div id="t5o_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t5p_2" class="t s2_2">treatment,	 a	 mild	 infestation	 of	 Russian	 wheat	</div>
+<div id="t5q_2" class="t s2_2">aphid	may	still	occur.</div>
+<div id="t5r_2" class="t s2_2">Treatment	of	wheat	seed	with	</div>
+<div id="t5s_2" class="t s1_2">CRUISER WHITE</div>
+<div id="t5t_2" class="t s2_2">does	not	necessarily	pro-</div>
+<div id="t5u_2" class="t s2_2">vide	 full	 control	 of	 Russian	 wheat	 aphid	 numbers.	 	 Some	 aphids	 may	 still	</div>
+<div id="t5v_2" class="t s2_2">occur	on	treated	plants	but	their	detrimental	effect	on	plant	growth	and	the	</div>
+<div id="t5w_2" class="t s2_2">consequential	reduction	in	yield	is	limited.</div>
+<div id="t5x_2" class="t s1_2">COMMENTS</div>
+<div id="t5y_2" class="t s2_2">Seedling	damage	may	occur	during	high	pest	pressure	despite	seed	treat-</div>
+<div id="t5z_2" class="t s2_2">ment	with	</div>
+<div id="t60_2" class="t s1_2">CRUISER WHITE.</div>
+<div id="t61_2" class="t s2_2">Seed	treated	with	</div>
+<div id="t62_2" class="t s1_2">CRUISER</div>
+<div id="t63_2" class="t s1_2">WHITE </div>
+<div id="t64_2" class="t s2_2">must	preferably	be	planted	between	3	</div>
+<div id="t65_2" class="t s2_2">and	5	centimetres	deep.	</div>
+<div id="t66_2" class="t s2_2">Use	the	tables	below	to	determine	the	correct	dosage	rates.</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg2Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg2"><img src="2/2.png" id="pdf2" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f2 = [['t1_2',605],['t5_2',400],['t6_2',897],['t8_2',396],['ta_2',1317],['tb_2',1317],['td_2',407],['tf_2',393],['th_2',1317],['tj_2',1304],['tr_2',394],['tu_2',396],['tw_2',1317],['tx_2',407],['t10_2',384],['t11_2',405],['t12_2',488],['t13_2',1317],['t15_2',407],['t18_2',396],['t1f_2',393],['t1j_2',1317],['t1l_2',396],['t1r_2',392],['t1w_2',1023],['t2e_2',1304],['t2f_2',1318],['t2g_2',1318],['t2h_2',849],['t2i_2',440],['t2k_2',485],['t2m_2',517],['t2r_2',319],['t2t_2',424],['t2y_2',260],['t30_2',249],['t32_2',227],['t38_2',544],['t3b_2',303],['t3d_2',315],['t3f_2',440],['t3h_2',393],['t3i_2',456],['t3j_2',407],['t3k_2',430],['t3l_2',529],['t3q_2',361],['t3v_2',499],['t3w_2',359],['t3z_2',443],['t40_2',469],['t41_2',397],['t47_2',361],['t4b_2',646],['t4d_2',335],['t4e_2',537],['t53_2',353],['t58_2',394],['t5c_2',407],['t5d_2',1630],['t5f_2',1630],['t5h_2',407],['t5i_2',396],['t5o_2',401],['t5p_2',1024],['t5s_2',396],['t5u_2',1630],['t60_2',407]];
+var c2 = 0;
+function fontAdjustments2(){;
+	if (c2<f2.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f2[c2][0],f2[c2][1]);
+		c2++;
+		if (c2%10 == 0) {
+			setTimeout(function(){fontAdjustments2()},0);
+		} else {
+			fontAdjustments2();
+		}
+	}
+};
+function load2(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments2,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 223;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_2");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(3,2,909,1286,0);
+</script>
+</body>
+</html>

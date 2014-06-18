@@ -1,0 +1,1133 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>GARDOMIL_GOLD___Eng_2009_04_30 Page2</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load2();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_2{left:371px;top:41px;}
+#t2_2{left:481px;top:41px;}
+#t3_2{left:84px;top:69px;}
+#t4_2{left:84px;top:83px;}
+#t5_2{left:66px;top:98px;}
+#t6_2{left:84px;top:98px;}
+#t7_2{left:84px;top:112px;}
+#t8_2{left:187px;top:112px;}
+#t9_2{left:297px;top:112px;}
+#ta_2{left:84px;top:127px;}
+#tb_2{left:84px;top:141px;}
+#tc_2{left:111px;top:141px;}
+#td_2{left:220px;top:141px;}
+#te_2{left:66px;top:156px;}
+#tf_2{left:84px;top:156px;}
+#tg_2{left:117px;top:156px;}
+#th_2{left:225px;top:156px;}
+#ti_2{left:84px;top:170px;}
+#tj_2{left:84px;top:185px;}
+#tk_2{left:84px;top:199px;}
+#tl_2{left:343px;top:199px;}
+#tm_2{left:84px;top:214px;}
+#tn_2{left:125px;top:214px;}
+#to_2{left:84px;top:228px;}
+#tp_2{left:84px;top:243px;}
+#tq_2{left:194px;top:243px;}
+#tr_2{left:84px;top:257px;}
+#ts_2{left:66px;top:272px;}
+#tt_2{left:84px;top:272px;}
+#tu_2{left:156px;top:272px;}
+#tv_2{left:265px;top:272px;}
+#tw_2{left:84px;top:286px;}
+#tx_2{left:84px;top:301px;}
+#ty_2{left:66px;top:315px;}
+#tz_2{left:84px;top:315px;}
+#t10_2{left:165px;top:315px;}
+#t11_2{left:280px;top:315px;}
+#t12_2{left:84px;top:330px;}
+#t13_2{left:84px;top:344px;}
+#t14_2{left:84px;top:359px;}
+#t15_2{left:66px;top:373px;}
+#t16_2{left:84px;top:373px;}
+#t17_2{left:219px;top:373px;}
+#t18_2{left:327px;top:373px;}
+#t19_2{left:84px;top:388px;}
+#t1a_2{left:84px;top:402px;}
+#t1b_2{left:84px;top:417px;}
+#t1c_2{left:84px;top:431px;}
+#t1d_2{left:66px;top:446px;}
+#t1e_2{left:84px;top:446px;}
+#t1f_2{left:84px;top:460px;}
+#t1g_2{left:84px;top:475px;}
+#t1h_2{left:84px;top:490px;}
+#t1i_2{left:84px;top:504px;}
+#t1j_2{left:84px;top:519px;}
+#t1k_2{left:66px;top:533px;}
+#t1l_2{left:84px;top:533px;}
+#t1m_2{left:163px;top:533px;}
+#t1n_2{left:278px;top:533px;}
+#t1o_2{left:84px;top:548px;}
+#t1p_2{left:84px;top:562px;}
+#t1q_2{left:84px;top:577px;}
+#t1r_2{left:84px;top:591px;}
+#t1s_2{left:66px;top:606px;}
+#t1t_2{left:84px;top:606px;}
+#t1u_2{left:84px;top:620px;}
+#t1v_2{left:171px;top:620px;}
+#t1w_2{left:277px;top:620px;}
+#t1x_2{left:84px;top:635px;}
+#t1y_2{left:84px;top:649px;}
+#t1z_2{left:66px;top:664px;}
+#t20_2{left:84px;top:664px;}
+#t21_2{left:84px;top:678px;}
+#t22_2{left:193px;top:678px;}
+#t23_2{left:84px;top:693px;}
+#t24_2{left:66px;top:707px;}
+#t25_2{left:84px;top:707px;}
+#t26_2{left:84px;top:722px;}
+#t27_2{left:84px;top:736px;}
+#t28_2{left:84px;top:751px;}
+#t29_2{left:66px;top:765px;}
+#t2a_2{left:84px;top:765px;}
+#t2b_2{left:155px;top:765px;}
+#t2c_2{left:220px;top:765px;}
+#t2d_2{left:288px;top:765px;}
+#t2e_2{left:397px;top:765px;}
+#t2f_2{left:84px;top:780px;}
+#t2g_2{left:66px;top:809px;}
+#t2h_2{left:66px;top:836px;}
+#t2i_2{left:84px;top:836px;}
+#t2j_2{left:84px;top:851px;}
+#t2k_2{left:84px;top:865px;}
+#t2l_2{left:84px;top:880px;}
+#t2m_2{left:84px;top:894px;}
+#t2n_2{left:84px;top:909px;}
+#t2o_2{left:66px;top:923px;}
+#t2p_2{left:84px;top:923px;}
+#t2q_2{left:84px;top:938px;}
+#t2r_2{left:66px;top:952px;}
+#t2s_2{left:84px;top:952px;}
+#t2t_2{left:84px;top:967px;}
+#t2u_2{left:84px;top:981px;}
+#t2v_2{left:84px;top:996px;}
+#t2w_2{left:66px;top:1010px;}
+#t2x_2{left:84px;top:1010px;}
+#t2y_2{left:84px;top:1025px;}
+#t2z_2{left:66px;top:1040px;}
+#t30_2{left:84px;top:1040px;}
+#t31_2{left:84px;top:1054px;}
+#t32_2{left:84px;top:1069px;}
+#t33_2{left:84px;top:1083px;}
+#t34_2{left:84px;top:1098px;}
+#t35_2{left:66px;top:1129px;}
+#t36_2{left:66px;top:1143px;}
+#t37_2{left:66px;top:1171px;}
+#t38_2{left:84px;top:1171px;}
+#t39_2{left:84px;top:1185px;}
+#t3a_2{left:84px;top:1200px;}
+#t3b_2{left:84px;top:1214px;}
+#t3c_2{left:84px;top:1229px;}
+#t3d_2{left:456px;top:70px;}
+#t3e_2{left:474px;top:70px;}
+#t3f_2{left:474px;top:84px;}
+#t3g_2{left:474px;top:99px;}
+#t3h_2{left:474px;top:113px;}
+#t3i_2{left:474px;top:128px;}
+#t3j_2{left:456px;top:157px;}
+#t3k_2{left:456px;top:171px;}
+#t3l_2{left:456px;top:186px;}
+#t3m_2{left:456px;top:215px;}
+#t3n_2{left:456px;top:244px;}
+#t3o_2{left:733px;top:244px;}
+#t3p_2{left:456px;top:258px;}
+#t3q_2{left:495px;top:258px;}
+#t3r_2{left:465px;top:296px;}
+#t3s_2{left:461px;top:325px;}
+#t3t_2{left:622px;top:325px;}
+#t3u_2{left:622px;top:340px;}
+#t3v_2{left:461px;top:354px;}
+#t3w_2{left:622px;top:354px;}
+#t3x_2{left:461px;top:369px;}
+#t3y_2{left:622px;top:369px;}
+#t3z_2{left:461px;top:383px;}
+#t40_2{left:622px;top:383px;}
+#t41_2{left:461px;top:398px;}
+#t42_2{left:622px;top:398px;}
+#t43_2{left:461px;top:412px;}
+#t44_2{left:622px;top:412px;}
+#t45_2{left:461px;top:427px;}
+#t46_2{left:622px;top:427px;}
+#t47_2{left:461px;top:441px;}
+#t48_2{left:622px;top:441px;}
+#t49_2{left:461px;top:456px;}
+#t4a_2{left:622px;top:456px;}
+#t4b_2{left:461px;top:470px;}
+#t4c_2{left:622px;top:470px;}
+#t4d_2{left:461px;top:485px;}
+#t4e_2{left:622px;top:485px;}
+#t4f_2{left:461px;top:499px;}
+#t4g_2{left:622px;top:499px;}
+#t4h_2{left:461px;top:514px;}
+#t4i_2{left:622px;top:514px;}
+#t4j_2{left:461px;top:528px;}
+#t4k_2{left:622px;top:528px;}
+#t4l_2{left:461px;top:543px;}
+#t4m_2{left:622px;top:543px;}
+#t4n_2{left:461px;top:557px;}
+#t4o_2{left:622px;top:557px;}
+#t4p_2{left:461px;top:572px;}
+#t4q_2{left:622px;top:572px;}
+#t4r_2{left:461px;top:586px;}
+#t4s_2{left:622px;top:586px;}
+#t4t_2{left:461px;top:601px;}
+#t4u_2{left:622px;top:601px;}
+#t4v_2{left:461px;top:615px;}
+#t4w_2{left:622px;top:615px;}
+#t4x_2{left:461px;top:630px;}
+#t4y_2{left:622px;top:630px;}
+#t4z_2{left:461px;top:644px;}
+#t50_2{left:622px;top:644px;}
+#t51_2{left:461px;top:659px;}
+#t52_2{left:622px;top:659px;}
+#t53_2{left:461px;top:673px;}
+#t54_2{left:622px;top:673px;}
+#t55_2{left:461px;top:688px;}
+#t56_2{left:622px;top:688px;}
+#t57_2{left:456px;top:717px;}
+#t58_2{left:509px;top:717px;}
+#t59_2{left:629px;top:717px;}
+#t5a_2{left:456px;top:732px;}
+#t5b_2{left:456px;top:746px;}
+#t5c_2{left:456px;top:761px;}
+#t5d_2{left:488px;top:761px;}
+#t5e_2{left:596px;top:761px;}
+#t5f_2{left:456px;top:775px;}
+#t5g_2{left:523px;top:775px;}
+#t5h_2{left:526px;top:775px;}
+#t5i_2{left:646px;top:775px;}
+#t5j_2{left:661px;top:775px;}
+#t5k_2{left:726px;top:775px;}
+#t5l_2{left:729px;top:775px;}
+#t5m_2{left:456px;top:790px;}
+#t5n_2{left:489px;top:790px;}
+#t5o_2{left:501px;top:790px;}
+#t5p_2{left:644px;top:790px;}
+#t5q_2{left:646px;top:790px;}
+#t5r_2{left:748px;top:790px;}
+#t5s_2{left:759px;top:790px;}
+#t5t_2{left:456px;top:804px;}
+#t5u_2{left:550px;top:804px;}
+#t5v_2{left:553px;top:804px;}
+#t5w_2{left:673px;top:804px;}
+#t5x_2{left:456px;top:819px;}
+#t5y_2{left:627px;top:819px;}
+#t5z_2{left:733px;top:819px;}
+#t60_2{left:461px;top:856px;}
+#t61_2{left:461px;top:885px;}
+#t62_2{left:622px;top:885px;}
+#t63_2{left:461px;top:900px;}
+#t64_2{left:622px;top:900px;}
+#t65_2{left:461px;top:914px;}
+#t66_2{left:622px;top:914px;}
+#t67_2{left:461px;top:929px;}
+#t68_2{left:622px;top:929px;}
+#t69_2{left:456px;top:967px;}
+#t6a_2{left:456px;top:981px;}
+#t6b_2{left:649px;top:981px;}
+#t6c_2{left:756px;top:981px;}
+#t6d_2{left:764px;top:981px;}
+#t6e_2{left:456px;top:996px;}
+#t6f_2{left:539px;top:996px;}
+#t6g_2{left:643px;top:996px;}
+#t6h_2{left:456px;top:1010px;}
+#t6i_2{left:456px;top:1041px;}
+#t6j_2{left:676px;top:1041px;}
+#t6k_2{left:456px;top:1070px;}
+#t6l_2{left:481px;top:1070px;}
+#t6m_2{left:456px;top:1099px;}
+#t6n_2{left:562px;top:1099px;}
+#t6o_2{left:671px;top:1099px;}
+#t6p_2{left:456px;top:1114px;}
+#t6q_2{left:456px;top:1128px;}
+#t6r_2{left:456px;top:1143px;}
+#t6s_2{left:456px;top:1157px;}
+#t6t_2{left:456px;top:1172px;}
+#t6u_2{left:456px;top:1201px;}
+#t6v_2{left:569px;top:1201px;}
+#t6w_2{left:456px;top:1215px;}
+#t6x_2{left:541px;top:1218px;}
+#t6y_2{left:554px;top:1215px;}
+#t6z_2{left:795px;top:1218px;}
+#t70_2{left:456px;top:1230px;}
+
+.s1_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: IJEFWR-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s3_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: HWUZIT-HelveticaNeueLTStd-It2;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: IJEFWR-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+.s4_2{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: IJEFWR-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: IJEFWR-HelveticaNeueLTStd-Bd2;
+	src: url("2/fonts/IJEFWR-HelveticaNeueLTStd-Bd.eot");
+	src: url("2/fonts/IJEFWR-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/IJEFWR-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: HWUZIT-HelveticaNeueLTStd-It2;
+	src: url("2/fonts/HWUZIT-HelveticaNeueLTStd-It.eot");
+	src: url("2/fonts/HWUZIT-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/HWUZIT-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: HWUZIT-HelveticaNeueLTStd-BdIt2;
+	src: url("2/fonts/HWUZIT-HelveticaNeueLTStd-BdIt.eot");
+	src: url("2/fonts/HWUZIT-HelveticaNeueLTStd-BdIt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/HWUZIT-HelveticaNeueLTStd-BdIt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: IJEFWR-HelveticaNeueLTStd-Lt2;
+	src: url("2/fonts/IJEFWR-HelveticaNeueLTStd-Lt.eot");
+	src: url("2/fonts/IJEFWR-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/IJEFWR-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_2" class="t s1_2">GARDOMIL GOLD </div>
+<div id="t2_2" class="t s2_2">/ 2</div>
+<div id="t3_2" class="t s2_2">North West Province and North Western Free State which </div>
+<div id="t4_2" class="t s2_2">contain 0 - 10 % clay.</div>
+<div id="t5_2" class="t s2_2">•	</div>
+<div id="t6_2" class="t s2_2">The above-mentioned waiting periods are valid only if the cor-</div>
+<div id="t7_2" class="t s2_2">rect dosage rate of </div>
+<div id="t8_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t9_2" class="t s2_2">according to soil type </div>
+<div id="ta_2" class="t s2_2">was applied and normal or above average rainfall occurred </div>
+<div id="tb_2" class="t s2_2">after </div>
+<div id="tc_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="td_2" class="t s2_2">application.</div>
+<div id="te_2" class="t s2_2">•	</div>
+<div id="tf_2" class="t s2_2">When </div>
+<div id="tg_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="th_2" class="t s2_2">is applied to soils, which expand on </div>
+<div id="ti_2" class="t s2_2">wetting and crack or crumble on drying out, such as turf soils, </div>
+<div id="tj_2" class="t s2_2">it may remain active in the soil for much longer than the above-</div>
+<div id="tk_2" class="t s2_2">mentioned waiting periods. For this reason </div>
+<div id="tl_2" class="t s1_2">GARDOMIL </div>
+<div id="tm_2" class="t s1_2">GOLD</div>
+<div id="tn_2" class="t s2_2">should not be used on such soils if sensitive crops </div>
+<div id="to_2" class="t s2_2">might be planted in the foreseeable future. On such soils </div>
+<div id="tp_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="tq_2" class="t s2_2">may also give poor control of the weeds </div>
+<div id="tr_2" class="t s2_2">when applied pre-emergence.</div>
+<div id="ts_2" class="t s2_2">•	</div>
+<div id="tt_2" class="t s2_2">Do not apply </div>
+<div id="tu_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="tv_2" class="t s2_2">onto poorly drained soils or </div>
+<div id="tw_2" class="t s2_2">soils with a compaction layer, since this can cause damage to </div>
+<div id="tx_2" class="t s2_2">triazine sensitive crops under waterlogged conditions.</div>
+<div id="ty_2" class="t s2_2">•	</div>
+<div id="tz_2" class="t s2_2">Do not apply </div>
+<div id="t10_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t11_2" class="t s2_2">to inbred parent plants </div>
+<div id="t12_2" class="t s2_2">of maize and sorghum hybrids or to experimental or newly </div>
+<div id="t13_2" class="t s2_2">released maize or sorghum cultivars without first consulting the </div>
+<div id="t14_2" class="t s2_2">Syngenta representative/agent or seed supplier.</div>
+<div id="t15_2" class="t s2_2">•	</div>
+<div id="t16_2" class="t s2_2">For optimal results with </div>
+<div id="t17_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t18_2" class="t s2_2">, approximately </div>
+<div id="t19_2" class="t s2_2">10 - 20 mm of rain or irrigation is required for activation of the </div>
+<div id="t1a_2" class="t s2_2">product. If there is no rain for more than two weeks, certain </div>
+<div id="t1b_2" class="t s2_2">weeds will germinate and consequently, control will be poor or </div>
+<div id="t1c_2" class="t s2_2">erratic.</div>
+<div id="t1d_2" class="t s2_2">•	</div>
+<div id="t1e_2" class="t s2_2">Due to the low adsorption capacity of sandy soils (0 - 15% </div>
+<div id="t1f_2" class="t s2_2">clay), the herbicide present can drop to sub lethal levels within </div>
+<div id="t1g_2" class="t s2_2">the upper 50 mm of the soil profile after soaking rains (&gt;25 </div>
+<div id="t1h_2" class="t s2_2">mm per day) with a subsequent reduction in weed control. </div>
+<div id="t1i_2" class="t s2_2">Continuous rains (&gt; 50 mm spread over 3 - 7 days) will also </div>
+<div id="t1j_2" class="t s2_2">lead to reduced weed control and possible crop damage.</div>
+<div id="t1k_2" class="t s2_2">•	</div>
+<div id="t1l_2" class="t s2_2">Do not apply </div>
+<div id="t1m_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t1n_2" class="t s2_2">under stress conditions, </div>
+<div id="t1o_2" class="t s2_2">e.g. waterlogged conditions, drought, extremely cold condi-</div>
+<div id="t1p_2" class="t s2_2">tions, excessive rain, poor fertilizer application, low pH etc. </div>
+<div id="t1q_2" class="t s2_2">Application under these conditions will result in poor weed </div>
+<div id="t1r_2" class="t s2_2">control and possibly crop damage.</div>
+<div id="t1s_2" class="t s2_2">•	</div>
+<div id="t1t_2" class="t s2_2">Fields that have been burned, must first be well cultivated </div>
+<div id="t1u_2" class="t s2_2">before applying </div>
+<div id="t1v_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t1w_2" class="t s2_2">. Ash on the soil surface </div>
+<div id="t1x_2" class="t s2_2">can lead to inactivation of the applied herbicides with subse-</div>
+<div id="t1y_2" class="t s2_2">quent poor control.</div>
+<div id="t1z_2" class="t s2_2">•	</div>
+<div id="t20_2" class="t s2_2">Due to the translocation of treated top soils and leaching of </div>
+<div id="t21_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t22_2" class="t s2_2">on sandy soils, sub optimal weed control </div>
+<div id="t23_2" class="t s2_2">may result under flood irrigation. </div>
+<div id="t24_2" class="t s2_2">•	</div>
+<div id="t25_2" class="t s2_2">Under abnormal climatic conditions, such as excessive rain </div>
+<div id="t26_2" class="t s2_2">followed by long periods of cloudy weather shortly after plant-</div>
+<div id="t27_2" class="t s2_2">ing, can cause crop damage when applications are made early </div>
+<div id="t28_2" class="t s2_2">post emergence (1 - 3 leaf stage of the crop).</div>
+<div id="t29_2" class="t s2_2">•	</div>
+<div id="t2a_2" class="t s2_2">DUAL GOLD </div>
+<div id="t2b_2" class="t s1_2">should not</div>
+<div id="t2c_2" class="t s2_2">be added to </div>
+<div id="t2d_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t2e_2" class="t s2_2">on </div>
+<div id="t2f_2" class="t s2_2">poorly drained soils.</div>
+<div id="t2g_2" class="t s1_2">Warning: Possible damage to triazine sensitive crops</div>
+<div id="t2h_2" class="t s2_2">•	</div>
+<div id="t2i_2" class="t s2_2">Where soils have been treated with lime to correct the soil pH, </div>
+<div id="t2j_2" class="t s2_2">the possibility of crop damage increases dramatically in fields </div>
+<div id="t2k_2" class="t s2_2">where triazines were previously applied. This is due to the </div>
+<div id="t2l_2" class="t s2_2">triazine molecules being replaced on the clay complex with </div>
+<div id="t2m_2" class="t s2_2">calcium cations and the triazine thus becoming more available </div>
+<div id="t2n_2" class="t s2_2">in the soil-water complex. </div>
+<div id="t2o_2" class="t s2_2">•	</div>
+<div id="t2p_2" class="t s2_2">Only maize should be planted in the season directly after soil </div>
+<div id="t2q_2" class="t s2_2">pH adjustment with lime.</div>
+<div id="t2r_2" class="t s2_2">•	</div>
+<div id="t2s_2" class="t s2_2">No triazine sensitive crops should be planted in the season </div>
+<div id="t2t_2" class="t s2_2">after the soil pH adjustment has been done with lime. This </div>
+<div id="t2u_2" class="t s2_2">applies even if triazines were used at crop rotation rates in </div>
+<div id="t2v_2" class="t s2_2">previous years.</div>
+<div id="t2w_2" class="t s2_2">•	</div>
+<div id="t2x_2" class="t s2_2">Triazine sensitive crops include all broadleaf crops e.g. diffe-</div>
+<div id="t2y_2" class="t s2_2">rent bean crops, sunflowers and all cereals e.g. wheat.</div>
+<div id="t2z_2" class="t s2_2">•	</div>
+<div id="t30_2" class="t s2_2">These warnings however do not guarantee that no damage </div>
+<div id="t31_2" class="t s2_2">would be experienced to even the following maize crop as </div>
+<div id="t32_2" class="t s2_2">large volumes of previously applied triazines might now be </div>
+<div id="t33_2" class="t s2_2">available depending on the volume of lime applied and the </div>
+<div id="t34_2" class="t s2_2">rainfall experienced. </div>
+<div id="t35_2" class="t s1_2">Warning: Possible increased efficacy, phytotoxicity and </div>
+<div id="t36_2" class="t s1_2">residual action </div>
+<div id="t37_2" class="t s2_2">•	</div>
+<div id="t38_2" class="t s2_2">Increasing the soil pH levels above 7 could produce conditions </div>
+<div id="t39_2" class="t s2_2">for increased efficacy and reduced selectivity. This increased </div>
+<div id="t3a_2" class="t s2_2">pH may also result in increased soil residual action by certain </div>
+<div id="t3b_2" class="t s2_2">herbicides influencing the choice of following crops especially </div>
+<div id="t3c_2" class="t s2_2">under irrigation.</div>
+<div id="t3d_2" class="t s2_2">•	</div>
+<div id="t3e_2" class="t s2_2">In situations where pH adjustments has been done, take care </div>
+<div id="t3f_2" class="t s2_2">when sulphonyl urea herbicides, triazolopyrimidine sulfonani-</div>
+<div id="t3g_2" class="t s2_2">lide herbicides and imidazolinone herbicides, which are all </div>
+<div id="t3h_2" class="t s2_2">sensitive to soil pH fluctuations, have been used or are about </div>
+<div id="t3i_2" class="t s2_2">to be used.</div>
+<div id="t3j_2" class="t s1_2">Contact your local SYNGENTA representative to discuss </div>
+<div id="t3k_2" class="t s1_2">crop rotation and crop protection programmes to follow </div>
+<div id="t3l_2" class="t s1_2">before embarking on any pH adjustment programme.</div>
+<div id="t3m_2" class="t s1_2">5. WEEDS CONTROLLED</div>
+<div id="t3n_2" class="t s2_2">The following weed species are normally controlled by</div>
+<div id="t3o_2" class="t s1_2">GARDOMIL </div>
+<div id="t3p_2" class="t s1_2">GOLD </div>
+<div id="t3q_2" class="t s2_2">at the dosage rates recommended below:</div>
+<div id="t3r_2" class="t s1_2">Broadleaf weeds </div>
+<div id="t3s_2" class="t s3_2">Acanthospermum australe </div>
+<div id="t3t_2" class="t s1_2">eight-seeded prostrate star-</div>
+<div id="t3u_2" class="t s1_2">bur </div>
+<div id="t3v_2" class="t s3_2">Acanthospermum glabratum </div>
+<div id="t3w_2" class="t s1_2">five-seeded prostrate starbur </div>
+<div id="t3x_2" class="t s3_2">Amaranthus hybridus </div>
+<div id="t3y_2" class="t s1_2">common pigweed </div>
+<div id="t3z_2" class="t s3_2">Amaranthus thunbergii </div>
+<div id="t40_2" class="t s1_2">red pigweed </div>
+<div id="t41_2" class="t s3_2">Bidens bipinnata </div>
+<div id="t42_2" class="t s1_2">Spanish blackjack </div>
+<div id="t43_2" class="t s3_2">Bidens pilosa </div>
+<div id="t44_2" class="t s1_2">blackjack </div>
+<div id="t45_2" class="t s3_2">Chenopodium album </div>
+<div id="t46_2" class="t s1_2">white goosefoot </div>
+<div id="t47_2" class="t s3_2">Chenopodium carinatum </div>
+<div id="t48_2" class="t s1_2">green goosefoot </div>
+<div id="t49_2" class="t s3_2">Cleome monophylla </div>
+<div id="t4a_2" class="t s1_2">spindlepod </div>
+<div id="t4b_2" class="t s3_2">Cleome rubella </div>
+<div id="t4c_2" class="t s1_2">pretty lady </div>
+<div id="t4d_2" class="t s3_2">* Commelina benghalensis </div>
+<div id="t4e_2" class="t s1_2">Bengal wandering Jew </div>
+<div id="t4f_2" class="t s3_2">*Cosmos bipinnatus </div>
+<div id="t4g_2" class="t s1_2">cosmos </div>
+<div id="t4h_2" class="t s3_2">Crotalaria sphaerocarpa </div>
+<div id="t4i_2" class="t s1_2">mealie Crotalaria </div>
+<div id="t4j_2" class="t s3_2">* Datura ferox </div>
+<div id="t4k_2" class="t s1_2">large thorn apple </div>
+<div id="t4l_2" class="t s3_2">* Datura stramonium </div>
+<div id="t4m_2" class="t s1_2">thorn apple </div>
+<div id="t4n_2" class="t s3_2">Galinsoga parviflora </div>
+<div id="t4o_2" class="t s1_2">gallant soldier </div>
+<div id="t4p_2" class="t s3_2">Gisekia pharnaceoides </div>
+<div id="t4q_2" class="t s1_2">Gisekia </div>
+<div id="t4r_2" class="t s3_2">* Hibiscus cannabinus </div>
+<div id="t4s_2" class="t s1_2">kenaf </div>
+<div id="t4t_2" class="t s3_2">Hibiscus trionum </div>
+<div id="t4u_2" class="t s1_2">bladderweed </div>
+<div id="t4v_2" class="t s3_2">Nicandra physaloides  </div>
+<div id="t4w_2" class="t s1_2">apple of Peru  </div>
+<div id="t4x_2" class="t s3_2">Physalis angulata </div>
+<div id="t4y_2" class="t s1_2">wild gooseberry </div>
+<div id="t4z_2" class="t s3_2">Portulaca oleracea  </div>
+<div id="t50_2" class="t s1_2">purslane  </div>
+<div id="t51_2" class="t s3_2">Richardia brasiliensis </div>
+<div id="t52_2" class="t s1_2">tropical Richardia</div>
+<div id="t53_2" class="t s3_2">Schkuhria pinnata </div>
+<div id="t54_2" class="t s1_2">dwarf marigold</div>
+<div id="t55_2" class="t s3_2">Tagetes minuta</div>
+<div id="t56_2" class="t s1_2">khaki weed </div>
+<div id="t57_2" class="t s2_2">* When </div>
+<div id="t58_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t59_2" class="t s2_2">is applied pre-emergence the </div>
+<div id="t5a_2" class="t s2_2">weeds marked above with an asterisk may not always be well </div>
+<div id="t5b_2" class="t s2_2">controlled. All the above-mentioned weeds are well controlled </div>
+<div id="t5c_2" class="t s2_2">when </div>
+<div id="t5d_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t5e_2" class="t s2_2">is applied post-emergence. In addition, </div>
+<div id="t5f_2" class="t s1_2">cocklebur</div>
+<div id="t5g_2" class="t s2_2">(</div>
+<div id="t5h_2" class="t s3_2">Xanthium strumarium</div>
+<div id="t5i_2" class="t s2_2">), </div>
+<div id="t5j_2" class="t s1_2">dubbeltjie</div>
+<div id="t5k_2" class="t s2_2">(</div>
+<div id="t5l_2" class="t s3_2">Tribulus ter-</div>
+<div id="t5m_2" class="t s3_2">restris</div>
+<div id="t5n_2" class="t s2_2">), </div>
+<div id="t5o_2" class="t s1_2">common morning glory</div>
+<div id="t5p_2" class="t s2_2">(</div>
+<div id="t5q_2" class="t s3_2">Ipomoea purpurea</div>
+<div id="t5r_2" class="t s2_2">),</div>
+<div id="t5s_2" class="t s1_2">striped </div>
+<div id="t5t_2" class="t s1_2">wild cucumber</div>
+<div id="t5u_2" class="t s2_2">(</div>
+<div id="t5v_2" class="t s3_2">Cucumis myriocarpus</div>
+<div id="t5w_2" class="t s2_2">) are also controlled by </div>
+<div id="t5x_2" class="t s2_2">post-emergence applications of </div>
+<div id="t5y_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t5z_2" class="t s2_2">.</div>
+<div id="t60_2" class="t s1_2">Grasses</div>
+<div id="t61_2" class="t s3_2">Chloris virgata </div>
+<div id="t62_2" class="t s1_2">feathertop chloris </div>
+<div id="t63_2" class="t s3_2">Eleusine coracona  </div>
+<div id="t64_2" class="t s1_2">goose grass </div>
+<div id="t65_2" class="t s3_2">Panicum schinzii </div>
+<div id="t66_2" class="t s1_2">sweet buffalo grass </div>
+<div id="t67_2" class="t s3_2">Setaria pallide-fusca</div>
+<div id="t68_2" class="t s1_2">red bristle grass </div>
+<div id="t69_2" class="t s2_2">Reliable control of the above-mentioned grasses is only obtained </div>
+<div id="t6a_2" class="t s2_2">with pre-emergence applications of </div>
+<div id="t6b_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t6c_2" class="t s2_2">. </div>
+<div id="t6d_2" class="t s1_2">Sweet </div>
+<div id="t6e_2" class="t s1_2">buffalo grass</div>
+<div id="t6f_2" class="t s3_2">(Panicum schinzii)</div>
+<div id="t6g_2" class="t s2_2">may not always be well con-</div>
+<div id="t6h_2" class="t s2_2">trolled.</div>
+<div id="t6i_2" class="t s1_2">6. DIRECTIONS FOR USE </div>
+<div id="t6j_2" class="t s2_2">Use only as directed</div>
+<div id="t6k_2" class="t s2_2">6.1 </div>
+<div id="t6l_2" class="t s2_2">COMPATIBILITY</div>
+<div id="t6m_2" class="t s2_2">The compatibility of </div>
+<div id="t6n_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t6o_2" class="t s2_2">with other products may </div>
+<div id="t6p_2" class="t s2_2">be influenced by the formulation of the products involved as well </div>
+<div id="t6q_2" class="t s2_2">as the quality of the water. Since the formulation of other pro ducts </div>
+<div id="t6r_2" class="t s2_2">may change without the knowledge of Syngenta and the quality </div>
+<div id="t6s_2" class="t s2_2">of water may vary from farm to farm, a physical compati bility test </div>
+<div id="t6t_2" class="t s2_2">should always be carried out prior to application. </div>
+<div id="t6u_2" class="t s1_2">GARDOMIL GOLD</div>
+<div id="t6v_2" class="t s2_2">is compatible with COMPLEMENT SUPER </div>
+<div id="t6w_2" class="t s2_2">(L8169), DUAL</div>
+<div id="t6x_2" class="t s4_2">®</div>
+<div id="t6y_2" class="t s2_2">GOLD (L3612), EPTC and GRAMOXONE</div>
+<div id="t6z_2" class="t s4_2">®</div>
+<div id="t70_2" class="t s2_2">(L1174) as recommended on this label.</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg2Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg2"><img src="2/2.png" id="pdf2" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f2 = [['t1_2',423],['t2_2',58],['t3_2',1304],['t4_2',467],['t6_2',1304],['t7_2',400],['t8_2',422],['t9_2',452],['ta_2',1304],['tc_2',423],['tg_2',420],['th_2',737],['ti_2',1304],['tj_2',1304],['tk_2',1001],['tn_2',1140],['to_2',1304],['tp_2',424],['tq_2',862],['tr_2',633],['tt_2',272],['tu_2',423],['tv_2',578],['tw_2',1304],['tx_2',1133],['tz_2',296],['t10_2',435],['t11_2',517],['t12_2',1304],['t13_2',1304],['t14_2',1012],['t16_2',517],['t17_2',431],['t18_2',331],['t19_2',1304],['t1a_2',1304],['t1b_2',1304],['t1e_2',1304],['t1f_2',1304],['t1g_2',1304],['t1h_2',1304],['t1i_2',1304],['t1j_2',1218],['t1l_2',292],['t1m_2',433],['t1n_2',527],['t1o_2',1304],['t1p_2',1304],['t1q_2',1304],['t1r_2',737],['t1t_2',1304],['t1u_2',328],['t1v_2',426],['t1w_2',530],['t1x_2',1304],['t1y_2',406],['t20_2',1304],['t21_2',423],['t22_2',866],['t23_2',680],['t25_2',1304],['t26_2',1304],['t27_2',1304],['t28_2',964],['t2a_2',269],['t2b_2',246],['t2c_2',257],['t2d_2',422],['t2f_2',422],['t2g_2',1240],['t2i_2',1304],['t2j_2',1304],['t2k_2',1304],['t2l_2',1304],['t2m_2',1304],['t2n_2',542],['t2p_2',1304],['t2q_2',524],['t2s_2',1304],['t2t_2',1304],['t2u_2',1304],['t2v_2',318],['t2x_2',1304],['t2y_2',1158],['t30_2',1304],['t31_2',1304],['t32_2',1304],['t33_2',1304],['t34_2',417],['t35_2',1373],['t36_2',345],['t38_2',1304],['t39_2',1304],['t3a_2',1304],['t3b_2',1304],['t3c_2',328],['t3e_2',1304],['t3f_2',1304],['t3g_2',1304],['t3h_2',1304],['t3i_2',241],['t3j_2',1373],['t3k_2',1373],['t3l_2',1245],['t3m_2',601],['t3n_2',1097],['t3q_2',888],['t3r_2',393],['t3s_2',572],['t3t_2',661],['t3v_2',621],['t3w_2',685],['t3x_2',463],['t3y_2',418],['t3z_2',494],['t40_2',290],['t41_2',365],['t42_2',425],['t43_2',292],['t45_2',458],['t46_2',378],['t47_2',540],['t48_2',386],['t49_2',435],['t4b_2',329],['t4c_2',247],['t4d_2',579],['t4e_2',532],['t4f_2',437],['t4h_2',522],['t4i_2',399],['t4j_2',299],['t4k_2',400],['t4l_2',448],['t4m_2',267],['t4n_2',431],['t4o_2',330],['t4p_2',492],['t4r_2',482],['t4t_2',368],['t4v_2',482],['t4w_2',328],['t4x_2',376],['t4y_2',375],['t4z_2',421],['t50_2',216],['t51_2',457],['t52_2',414],['t53_2',390],['t54_2',354],['t55_2',335],['t56_2',266],['t57_2',175],['t58_2',445],['t59_2',684],['t5a_2',1373],['t5b_2',1373],['t5d_2',420],['t5e_2',814],['t5h_2',482],['t5l_2',282],['t5o_2',553],['t5q_2',406],['t5t_2',351],['t5v_2',481],['t5w_2',507],['t5x_2',668],['t5y_2',423],['t61_2',311],['t62_2',415],['t63_2',414],['t64_2',288],['t65_2',363],['t66_2',460],['t67_2',444],['t68_2',381],['t69_2',1373],['t6a_2',753],['t6b_2',426],['t6e_2',311],['t6f_2',393],['t6g_2',628],['t6i_2',605],['t6j_2',432],['t6m_2',409],['t6n_2',422],['t6o_2',513],['t6p_2',1373],['t6q_2',1373],['t6r_2',1373],['t6s_2',1373],['t6t_2',1030],['t6u_2',429],['t6v_2',922],['t6w_2',336],['t6y_2',962],['t70_2',827]];
+var c2 = 0;
+function fontAdjustments2(){;
+	if (c2<f2.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f2[c2][0],f2[c2][1]);
+		c2++;
+		if (c2%10 == 0) {
+			setTimeout(function(){fontAdjustments2()},0);
+		} else {
+			fontAdjustments2();
+		}
+	}
+};
+function load2(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments2,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 253;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_2");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(5,2,909,1286,0);
+</script>
+</body>
+</html>

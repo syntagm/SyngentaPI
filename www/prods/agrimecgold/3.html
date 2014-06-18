@@ -1,0 +1,770 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>AGRIMEC_GOLD___ENG_2013_05_14_2 Page3</title>
+<link rel="stylesheet" type="text/css" href="assets/IDRViewer.css">
+<script type="text/javascript">
+var extLoaded = false;
+var intLoaded = false;
+function idrLoad() {
+	idrLoaded = true;
+	var heights = new Array(200,200,200,200,200,200,200);
+	IDRViewer.makeNavBar(7,3,909,1286,0,heights);
+}
+</script>
+<script src="assets/IDRViewer.js" type="text/javascript"></script>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<div id="left">
+<div id="leftNav">
+	<img id="btnThumbnails" onclick="IDRViewer.toggleOutlines(false)" alt="Thumbnails" src="assets/pgThumbnails.png">
+	<img id="btnOutlines" onclick="IDRViewer.toggleOutlines(true)" alt="Outlines" src="assets/pgOutlines.png">
+</div>
+<div id="leftContent">
+	<div id="thumbnailPanel"></div>
+	<div id="outlinePanel"></div>
+</div>
+</div>
+
+<div id="main">
+
+<div id="mainNav">
+	<div id="btnSideToggle" onclick="IDRViewer.toggleThumbnails();"><img src="assets/pgThumbs.png"></div>
+	
+	<img id="btnPrev" src="assets/pgPrev.png" alt="Previous Page" onclick="IDRViewer.prev()"/>
+	<select id="goBtn" onchange="IDRViewer.goToPage(0)">
+
+	</select>
+	<span id="pgCount"></span>
+	<img id="btnNext" src="assets/pgNext.png" alt="Next Page" onclick="IDRViewer.next()" />
+	
+	<img id="btnSelect" src="assets/pgSelect.png" alt="Select" onclick="IDRViewer.setSelectMode(0)" />
+	<img id="btnMove" src="assets/pgHand.png" alt="Pan"  onclick="IDRViewer.setSelectMode(1)" />
+
+	<img id="btnZoomOut" src="assets/pgZoomOut.png" alt="Zoom Out" onclick="IDRViewer.zoomOut()" />
+	<select id="zoomBtn" onchange="IDRViewer.zoomUpdate()">
+		<option value="0">100%</option>
+		<option value="1">100% (Reset)</option>
+		<option value="2">Fit Width</option>
+		<option value="3">Fit Height</option>
+		<option value="4">Fit Page</option>
+
+	</select>
+	<img id="btnZoomIn" src="assets/pgZoomIn.png" alt="Zoom In" onclick="IDRViewer.zoomIn()" />
+	<div id="btnFullscreen" onclick="IDRViewer.toggleFullScreen();"><img src="assets/pgFullScreen.png" /></div>
+</div>
+
+<div id="mainContent">
+
+<div id="contentContainer">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load3();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<160 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_3{left:419px;top:42px;}
+#t2_3{left:519px;top:42px;}
+#t3_3{left:161px;top:242px;}
+#t4_3{left:117px;top:271px;}
+#t5_3{left:117px;top:286px;}
+#t6_3{left:117px;top:301px;}
+#t7_3{left:117px;top:330px;}
+#t8_3{left:117px;top:345px;}
+#t9_3{left:342px;top:242px;}
+#ta_3{left:350px;top:279px;}
+#tb_3{left:381px;top:279px;}
+#tc_3{left:365px;top:293px;}
+#td_3{left:292px;top:308px;}
+#te_3{left:326px;top:308px;}
+#tf_3{left:335px;top:308px;}
+#tg_3{left:335px;top:323px;}
+#th_3{left:363px;top:323px;}
+#ti_3{left:373px;top:323px;}
+#tj_3{left:298px;top:337px;}
+#tk_3{left:367px;top:337px;}
+#tl_3{left:373px;top:337px;}
+#tm_3{left:345px;top:352px;}
+#tn_3{left:113px;top:379px;}
+#to_3{left:243px;top:379px;}
+#tp_3{left:344px;top:379px;}
+#tq_3{left:113px;top:393px;}
+#tr_3{left:113px;top:408px;}
+#ts_3{left:113px;top:423px;}
+#tt_3{left:284px;top:423px;}
+#tu_3{left:385px;top:423px;}
+#tv_3{left:113px;top:437px;}
+#tw_3{left:113px;top:467px;}
+#tx_3{left:148px;top:467px;}
+#ty_3{left:251px;top:467px;}
+#tz_3{left:113px;top:481px;}
+#t10_3{left:113px;top:511px;}
+#t11_3{left:113px;top:540px;}
+#t12_3{left:164px;top:540px;}
+#t13_3{left:113px;top:555px;}
+#t14_3{left:164px;top:555px;}
+#t15_3{left:113px;top:569px;}
+#t16_3{left:113px;top:599px;}
+#t17_3{left:325px;top:599px;}
+#t18_3{left:330px;top:599px;}
+#t19_3{left:113px;top:613px;}
+#t1a_3{left:368px;top:613px;}
+#t1b_3{left:377px;top:613px;}
+#t1c_3{left:113px;top:628px;}
+#t1d_3{left:113px;top:643px;}
+#t1e_3{left:124px;top:643px;}
+#t1f_3{left:132px;top:643px;}
+#t1g_3{left:233px;top:643px;}
+#t1h_3{left:113px;top:657px;}
+#t1i_3{left:113px;top:672px;}
+#t1j_3{left:124px;top:672px;}
+#t1k_3{left:134px;top:672px;}
+#t1l_3{left:238px;top:672px;}
+#t1m_3{left:442px;top:672px;}
+#t1n_3{left:113px;top:687px;}
+#t1o_3{left:214px;top:687px;}
+#t1p_3{left:113px;top:716px;}
+#t1q_3{left:153px;top:716px;}
+#t1r_3{left:113px;top:731px;}
+#t1s_3{left:113px;top:760px;}
+#t1t_3{left:263px;top:760px;}
+#t1u_3{left:367px;top:760px;}
+#t1v_3{left:113px;top:775px;}
+#t1w_3{left:113px;top:789px;}
+#t1x_3{left:113px;top:804px;}
+#t1y_3{left:117px;top:833px;}
+#t1z_3{left:117px;top:847px;}
+#t20_3{left:117px;top:862px;}
+#t21_3{left:117px;top:891px;}
+#t22_3{left:117px;top:906px;}
+#t23_3{left:323px;top:847px;}
+#t24_3{left:390px;top:847px;}
+#t25_3{left:395px;top:847px;}
+#t26_3{left:364px;top:862px;}
+#t27_3{left:314px;top:877px;}
+#t28_3{left:113px;top:936px;}
+#t29_3{left:243px;top:936px;}
+#t2a_3{left:344px;top:936px;}
+#t2b_3{left:113px;top:951px;}
+#t2c_3{left:113px;top:965px;}
+#t2d_3{left:233px;top:965px;}
+#t2e_3{left:334px;top:965px;}
+#t2f_3{left:113px;top:980px;}
+#t2g_3{left:113px;top:995px;}
+#t2h_3{left:113px;top:1022px;}
+#t2i_3{left:215px;top:1022px;}
+#t2j_3{left:220px;top:1022px;}
+#t2k_3{left:241px;top:1022px;}
+#t2l_3{left:343px;top:1022px;}
+#t2m_3{left:113px;top:1037px;}
+#t2n_3{left:267px;top:1037px;}
+#t2o_3{left:272px;top:1037px;}
+#t2p_3{left:113px;top:1065px;}
+#t2q_3{left:235px;top:1065px;}
+#t2r_3{left:425px;top:1065px;}
+#t2s_3{left:431px;top:1065px;}
+#t2t_3{left:113px;top:1079px;}
+#t2u_3{left:145px;top:1079px;}
+#t2v_3{left:245px;top:1079px;}
+#t2w_3{left:333px;top:1079px;}
+#t2x_3{left:338px;top:1079px;}
+#t2y_3{left:410px;top:1079px;}
+#t2z_3{left:418px;top:1079px;}
+#t30_3{left:113px;top:1094px;}
+#t31_3{left:113px;top:1109px;}
+#t32_3{left:338px;top:1109px;}
+#t33_3{left:347px;top:1109px;}
+#t34_3{left:113px;top:1136px;}
+#t35_3{left:224px;top:1136px;}
+#t36_3{left:327px;top:1136px;}
+#t37_3{left:333px;top:1136px;}
+#t38_3{left:113px;top:1151px;}
+#t39_3{left:113px;top:1179px;}
+#t3a_3{left:331px;top:1179px;}
+#t3b_3{left:430px;top:1179px;}
+#t3c_3{left:113px;top:1193px;}
+#t3d_3{left:113px;top:1208px;}
+#t3e_3{left:266px;top:1208px;}
+#t3f_3{left:272px;top:1208px;}
+#t3g_3{left:113px;top:1223px;}
+#t3h_3{left:205px;top:1223px;}
+#t3i_3{left:211px;top:1223px;}
+#t3j_3{left:231px;top:1223px;}
+#t3k_3{left:332px;top:1223px;}
+#t3l_3{left:507px;top:315px;}
+#t3m_3{left:507px;top:330px;}
+#t3n_3{left:507px;top:344px;}
+#t3o_3{left:507px;top:374px;}
+#t3p_3{left:507px;top:388px;}
+#t3q_3{left:507px;top:418px;}
+#t3r_3{left:507px;top:432px;}
+#t3s_3{left:507px;top:462px;}
+#t3t_3{left:507px;top:476px;}
+#t3u_3{left:507px;top:506px;}
+#t3v_3{left:507px;top:520px;}
+#t3w_3{left:507px;top:550px;}
+#t3x_3{left:507px;top:564px;}
+#t3y_3{left:507px;top:594px;}
+#t3z_3{left:507px;top:608px;}
+#t40_3{left:507px;top:638px;}
+#t41_3{left:507px;top:652px;}
+#t42_3{left:725px;top:330px;}
+#t43_3{left:785px;top:330px;}
+#t44_3{left:754px;top:344px;}
+#t45_3{left:695px;top:359px;}
+#t46_3{left:729px;top:359px;}
+#t47_3{left:738px;top:359px;}
+#t48_3{left:678px;top:374px;}
+#t49_3{left:680px;top:388px;}
+#t4a_3{left:797px;top:388px;}
+#t4b_3{left:807px;top:388px;}
+#t4c_3{left:551px;top:79px;}
+#t4d_3{left:507px;top:108px;}
+#t4e_3{left:507px;top:123px;}
+#t4f_3{left:507px;top:138px;}
+#t4g_3{left:732px;top:79px;}
+#t4h_3{left:730px;top:116px;}
+#t4i_3{left:764px;top:116px;}
+#t4j_3{left:770px;top:116px;}
+#t4k_3{left:503px;top:169px;}
+#t4l_3{left:633px;top:169px;}
+#t4m_3{left:733px;top:169px;}
+#t4n_3{left:503px;top:183px;}
+#t4o_3{left:503px;top:198px;}
+#t4p_3{left:503px;top:227px;}
+#t4q_3{left:538px;top:227px;}
+#t4r_3{left:640px;top:227px;}
+#t4s_3{left:503px;top:242px;}
+#t4t_3{left:590px;top:242px;}
+#t4u_3{left:596px;top:242px;}
+#t4v_3{left:503px;top:257px;}
+#t4w_3{left:503px;top:271px;}
+#t4x_3{left:608px;top:271px;}
+#t4y_3{left:503px;top:286px;}
+#t4z_3{left:648px;top:286px;}
+#t50_3{left:653px;top:286px;}
+#t51_3{left:674px;top:286px;}
+#t52_3{left:775px;top:286px;}
+#t53_3{left:503px;top:685px;}
+#t54_3{left:593px;top:685px;}
+#t55_3{left:632px;top:685px;}
+#t56_3{left:742px;top:685px;}
+#t57_3{left:503px;top:700px;}
+#t58_3{left:503px;top:714px;}
+#t59_3{left:503px;top:745px;}
+#t5a_3{left:542px;top:745px;}
+#t5b_3{left:503px;top:777px;}
+#t5c_3{left:563px;top:777px;}
+#t5d_3{left:503px;top:808px;}
+#t5e_3{left:572px;top:808px;}
+#t5f_3{left:503px;top:822px;}
+#t5g_3{left:620px;top:822px;}
+#t5h_3{left:626px;top:822px;}
+#t5i_3{left:503px;top:853px;}
+#t5j_3{left:547px;top:853px;}
+#t5k_3{left:579px;top:853px;}
+#t5l_3{left:679px;top:853px;}
+#t5m_3{left:503px;top:868px;}
+#t5n_3{left:503px;top:883px;}
+#t5o_3{left:503px;top:897px;}
+#t5p_3{left:585px;top:897px;}
+#t5q_3{left:729px;top:897px;}
+#t5r_3{left:503px;top:912px;}
+#t5s_3{left:503px;top:927px;}
+#t5t_3{left:503px;top:958px;}
+#t5u_3{left:614px;top:958px;}
+#t5v_3{left:503px;top:972px;}
+#t5w_3{left:503px;top:1003px;}
+#t5x_3{left:607px;top:1003px;}
+#t5y_3{left:503px;top:1018px;}
+#t5z_3{left:503px;top:1033px;}
+#t60_3{left:589px;top:1033px;}
+#t61_3{left:692px;top:1033px;}
+#t62_3{left:503px;top:1047px;}
+#t63_3{left:503px;top:1062px;}
+#t64_3{left:503px;top:1077px;}
+#t65_3{left:503px;top:1107px;}
+#t66_3{left:539px;top:1107px;}
+#t67_3{left:646px;top:1107px;}
+#t68_3{left:503px;top:1122px;}
+#t69_3{left:503px;top:1136px;}
+#t6a_3{left:503px;top:1151px;}
+#t6b_3{left:507px;top:1183px;}
+#t6c_3{left:507px;top:1198px;}
+#t6d_3{left:507px;top:1213px;}
+#t6e_3{left:717px;top:1198px;}
+#t6f_3{left:777px;top:1198px;}
+#t6g_3{left:782px;top:1198px;}
+#t6h_3{left:108px;top:70px;}
+#t6i_3{left:168px;top:70px;}
+#t6j_3{left:269px;top:70px;}
+#t6k_3{left:108px;top:85px;}
+#t6l_3{left:314px;top:85px;}
+#t6m_3{left:418px;top:85px;}
+#t6n_3{left:108px;top:99px;}
+#t6o_3{left:108px;top:114px;}
+#t6p_3{left:108px;top:129px;}
+#t6q_3{left:108px;top:143px;}
+#t6r_3{left:108px;top:158px;}
+#t6s_3{left:397px;top:158px;}
+#t6t_3{left:108px;top:173px;}
+#t6u_3{left:147px;top:173px;}
+#t6v_3{left:108px;top:187px;}
+#t6w_3{left:108px;top:213px;}
+#t6x_3{left:139px;top:213px;}
+
+.s1_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-HelveticaNeueLTStd-Bd3;
+	color: rgb(0,0,0);
+}
+
+.s3_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-HelveticaNeueLTStd-It3;
+	color: rgb(0,0,0);
+}
+
+.s2_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-HelveticaNeueLTStd-Lt3;
+	color: rgb(0,0,0);
+}
+
+.s4_3{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-MT-Extra3;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: TCMJFT-HelveticaNeueLTStd-It3;
+	src: url("3/fonts/TCMJFT-HelveticaNeueLTStd-It.eot");
+	src: url("3/fonts/TCMJFT-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/TCMJFT-HelveticaNeueLTStd-It.woff") format("woff");
+}
+
+@font-face {
+	font-family: TCMJFT-HelveticaNeueLTStd-Bd3;
+	src: url("3/fonts/TCMJFT-HelveticaNeueLTStd-Bd.eot");
+	src: url("3/fonts/TCMJFT-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/TCMJFT-HelveticaNeueLTStd-Bd.woff") format("woff");
+}
+
+@font-face {
+	font-family: TCMJFT-MT-Extra3;
+	src: url("3/fonts/TCMJFT-MT-Extra.eot");
+	src: url("3/fonts/TCMJFT-MT-Extra.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/TCMJFT-MT-Extra.woff") format("woff");
+}
+
+@font-face {
+	font-family: TCMJFT-HelveticaNeueLTStd-Lt3;
+	src: url("3/fonts/TCMJFT-HelveticaNeueLTStd-Lt.eot");
+	src: url("3/fonts/TCMJFT-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("3/fonts/TCMJFT-HelveticaNeueLTStd-Lt.woff") format("woff");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t2_3" class="t s2_3">/ 3</div>
+<div id="t3_3" class="t s1_3">CROP/PEST</div>
+<div id="t4_3" class="t s1_3">APPLES &amp; PEARS</div>
+<div id="t5_3" class="t s1_3">Red Spider Mite</div>
+<div id="t6_3" class="t s3_3">(Tetranychus urticae)</div>
+<div id="t7_3" class="t s1_3">European Red Mite</div>
+<div id="t8_3" class="t s3_3">(Panonychus ulmi)</div>
+<div id="t9_3" class="t s1_3">DOSAGE</div>
+<div id="ta_3" class="t s2_3">7.5 m</div>
+<div id="tb_3" class="t s4_3">l</div>
+<div id="tc_3" class="t s2_3">+ </div>
+<div id="td_3" class="t s2_3">250 m</div>
+<div id="te_3" class="t s4_3">l</div>
+<div id="tf_3" class="t s2_3">light mineral spray oil </div>
+<div id="tg_3" class="t s2_3">/100 </div>
+<div id="th_3" class="t s4_3">l</div>
+<div id="ti_3" class="t s2_3">water</div>
+<div id="tj_3" class="t s2_3">(160 - 320 m</div>
+<div id="tk_3" class="t s4_3">l</div>
+<div id="tl_3" class="t s2_3">/ha + 0.25% </div>
+<div id="tm_3" class="t s2_3">spray oil)</div>
+<div id="tn_3" class="t s2_3">To avoid illegal residues </div>
+<div id="to_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="tp_3" class="t s2_3">must be mixed with </div>
+<div id="tq_3" class="t s2_3">non-ionic activator type spray oil. Do not use any other type of </div>
+<div id="tr_3" class="t s2_3">adjuvants. When used alone or when other products are applied </div>
+<div id="ts_3" class="t s2_3">sequentially, the combination of </div>
+<div id="tt_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="tu_3" class="t s2_3">with mineral </div>
+<div id="tv_3" class="t s2_3">spray oil can injure the fruit of certain APPLE varieties.</div>
+<div id="tw_3" class="t s2_3">Apply </div>
+<div id="tx_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="ty_3" class="t s2_3">when the red spider mite population </div>
+<div id="tz_3" class="t s2_3">reaches the economic threshold level. Repeat when necessary.</div>
+<div id="t10_3" class="t s1_3">Economic Threshold Level for Apples and Pears:</div>
+<div id="t11_3" class="t s1_3">Pears: </div>
+<div id="t12_3" class="t s2_3">1 female/leaf throughout the season.</div>
+<div id="t13_3" class="t s1_3">Apples: </div>
+<div id="t14_3" class="t s2_3">2 females/leaf up to the end of March and thereafter 1 </div>
+<div id="t15_3" class="t s2_3">female/leaf.</div>
+<div id="t16_3" class="t s2_3">Apply as a high volume (2 150 - 4 300 </div>
+<div id="t17_3" class="t s4_3">l</div>
+<div id="t18_3" class="t s2_3">/ha) high pressure, full </div>
+<div id="t19_3" class="t s2_3">cover spray but avoid run-off. If less than 2 150 </div>
+<div id="t1a_3" class="t s4_3">l</div>
+<div id="t1b_3" class="t s2_3">spray mixture </div>
+<div id="t1c_3" class="t s2_3">per hectare is applied, i.e. low volume, use a minimum of 160 </div>
+<div id="t1d_3" class="t s2_3">m</div>
+<div id="t1e_3" class="t s4_3">l</div>
+<div id="t1f_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t1g_3" class="t s2_3">plus 0. 25 % spray oil per hectare in suf-</div>
+<div id="t1h_3" class="t s2_3">ficient water to obtain thorough coverage. Never exceed 320 </div>
+<div id="t1i_3" class="t s2_3">m</div>
+<div id="t1j_3" class="t s4_3">l</div>
+<div id="t1k_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t1l_3" class="t s2_3">per hectare per application or 640 m</div>
+<div id="t1m_3" class="t s4_3">l</div>
+<div id="t1n_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t1o_3" class="t s2_3">per hectare in one growing season.</div>
+<div id="t1p_3" class="t s1_3">Apples</div>
+<div id="t1q_3" class="t s2_3">: Apply only to orchards where the IPM programme is </div>
+<div id="t1r_3" class="t s2_3">not maintaining effective control of mites.</div>
+<div id="t1s_3" class="t s2_3">Applying a combination of </div>
+<div id="t1t_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t1u_3" class="t s2_3">and mineral oil </div>
+<div id="t1v_3" class="t s2_3">fewer than 14 days before or after applying Captan® or other </div>
+<div id="t1w_3" class="t s2_3">sulfur-containing products can result in phytotoxicity and crop </div>
+<div id="t1x_3" class="t s2_3">loss.</div>
+<div id="t1y_3" class="t s1_3">AVOCADOS</div>
+<div id="t1z_3" class="t s1_3">Greenhouse Thrips</div>
+<div id="t20_3" class="t s3_3">(Heliothrips haemorrhoidalis)</div>
+<div id="t21_3" class="t s1_3">Red-banded Thrips</div>
+<div id="t22_3" class="t s3_3">(Selenothrips rubrocinctus)</div>
+<div id="t23_3" class="t s2_3">160 - 320 m</div>
+<div id="t24_3" class="t s4_3">l</div>
+<div id="t25_3" class="t s2_3">/ha </div>
+<div id="t26_3" class="t s2_3">+ </div>
+<div id="t27_3" class="t s2_3">1 - 4 % v/v spray oil</div>
+<div id="t28_3" class="t s2_3">To avoid illegal residues </div>
+<div id="t29_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t2a_3" class="t s2_3">must be mixed with </div>
+<div id="t2b_3" class="t s2_3">1.0% to 4.0% v/v of non-ionic activator type spray oil.</div>
+<div id="t2c_3" class="t s2_3">For best results, apply </div>
+<div id="t2d_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t2e_3" class="t s2_3">when immature thrips </div>
+<div id="t2f_3" class="t s2_3">are first observed but before numbers exceed 5 immature thrips </div>
+<div id="t2g_3" class="t s2_3">per leaf/fruit.</div>
+<div id="t2h_3" class="t s2_3">Apply 160 - 240 m</div>
+<div id="t2i_3" class="t s4_3">l</div>
+<div id="t2j_3" class="t s2_3">/ha </div>
+<div id="t2k_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t2l_3" class="t s2_3">for low to moderate </div>
+<div id="t2m_3" class="t s2_3">infestations and 240 - 320 m</div>
+<div id="t2n_3" class="t s4_3">l</div>
+<div id="t2o_3" class="t s2_3">/ha for severe infestations.</div>
+<div id="t2p_3" class="t s1_3">Ground Application: </div>
+<div id="t2q_3" class="t s2_3">If spray volume is more than 4000 </div>
+<div id="t2r_3" class="t s4_3">l</div>
+<div id="t2s_3" class="t s2_3">/ha </div>
+<div id="t2t_3" class="t s2_3">apply </div>
+<div id="t2u_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t2v_3" class="t s2_3">at a rate of 40 m</div>
+<div id="t2w_3" class="t s4_3">l</div>
+<div id="t2x_3" class="t s2_3">/ha per 1000 </div>
+<div id="t2y_3" class="t s4_3">l</div>
+<div id="t2z_3" class="t s2_3">water </div>
+<div id="t30_3" class="t s2_3">plus 1.0% - 4.0% oil (not a dormant oil) approved for use on </div>
+<div id="t31_3" class="t s2_3">avocados. Do not apply in less than 1000 </div>
+<div id="t32_3" class="t s4_3">l</div>
+<div id="t33_3" class="t s2_3">water.</div>
+<div id="t34_3" class="t s1_3">Aerial Application: </div>
+<div id="t35_3" class="t s2_3">Apply with 30 - 40 </div>
+<div id="t36_3" class="t s4_3">l</div>
+<div id="t37_3" class="t s2_3">/ha water. For control </div>
+<div id="t38_3" class="t s2_3">of thrips, however, a ground application is more effective.</div>
+<div id="t39_3" class="t s2_3">Do not make more than 2 applications of </div>
+<div id="t3a_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t3b_3" class="t s2_3">per </div>
+<div id="t3c_3" class="t s2_3">season and wait at least 30 days before repeating application. </div>
+<div id="t3d_3" class="t s2_3">Do not use more than 320 m</div>
+<div id="t3e_3" class="t s4_3">l</div>
+<div id="t3f_3" class="t s2_3">/ha for an application. Do not use </div>
+<div id="t3g_3" class="t s2_3">more than 640 m</div>
+<div id="t3h_3" class="t s4_3">l</div>
+<div id="t3i_3" class="t s2_3">/ha </div>
+<div id="t3j_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t3k_3" class="t s2_3">per growing season.</div>
+<div id="t3l_3" class="t s1_3">CITRUS</div>
+<div id="t3m_3" class="t s1_3">Citrus thrips</div>
+<div id="t3n_3" class="t s3_3">(Scirtothrips aurantii)</div>
+<div id="t3o_3" class="t s1_3">Citrus Psylla</div>
+<div id="t3p_3" class="t s3_3">(Trioza erytreae)</div>
+<div id="t3q_3" class="t s1_3">Broad Mite</div>
+<div id="t3r_3" class="t s3_3">(Polyhagotarsonemus latus)</div>
+<div id="t3s_3" class="t s1_3">Bud Mite</div>
+<div id="t3t_3" class="t s3_3">(Aceria sheldoni)</div>
+<div id="t3u_3" class="t s1_3">Leafminer</div>
+<div id="t3v_3" class="t s3_3">(Phyllocnistis citrella)</div>
+<div id="t3w_3" class="t s1_3">Rust Mite</div>
+<div id="t3x_3" class="t s3_3">(Phyllocoptruta oleivora)</div>
+<div id="t3y_3" class="t s1_3">Red Spider Mite</div>
+<div id="t3z_3" class="t s3_3">(T. urticae)</div>
+<div id="t40_3" class="t s1_3">Lowveld Mite</div>
+<div id="t41_3" class="t s3_3">(Eutetranychus orientalis)</div>
+<div id="t42_3" class="t s2_3">2.2 - 4.3 m</div>
+<div id="t43_3" class="t s4_3">l</div>
+<div id="t44_3" class="t s2_3">+ </div>
+<div id="t45_3" class="t s2_3">300 m</div>
+<div id="t46_3" class="t s4_3">l</div>
+<div id="t47_3" class="t s2_3">light or medium </div>
+<div id="t48_3" class="t s2_3">grade narrow distillation range </div>
+<div id="t49_3" class="t s2_3">mineral spray oil /100 </div>
+<div id="t4a_3" class="t s4_3">l </div>
+<div id="t4b_3" class="t s2_3">water</div>
+<div id="t4c_3" class="t s1_3">CROP/PEST</div>
+<div id="t4d_3" class="t s1_3">CELERY</div>
+<div id="t4e_3" class="t s1_3">Red Spider Mite</div>
+<div id="t4f_3" class="t s3_3">(Tetranychus urticae)</div>
+<div id="t4g_3" class="t s1_3">DOSAGE</div>
+<div id="t4h_3" class="t s2_3">260 m</div>
+<div id="t4i_3" class="t s4_3">l</div>
+<div id="t4j_3" class="t s2_3">/ha</div>
+<div id="t4k_3" class="t s2_3">To avoid illegal residues </div>
+<div id="t4l_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t4m_3" class="t s2_3">must be mixed with </div>
+<div id="t4n_3" class="t s2_3">non-ionic activator type spray oil. Do not use any other type of </div>
+<div id="t4o_3" class="t s2_3">adjuvants.</div>
+<div id="t4p_3" class="t s2_3">Apply </div>
+<div id="t4q_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t4r_3" class="t s2_3">with first sign of mites. Do not apply </div>
+<div id="t4s_3" class="t s2_3">in less than 200 </div>
+<div id="t4t_3" class="t s4_3">l</div>
+<div id="t4u_3" class="t s2_3">/ha water. Wait 7 days before repeating appli-</div>
+<div id="t4v_3" class="t s2_3">cation and do not make more than 2 sequential applications </div>
+<div id="t4w_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t4x_3" class="t s2_3">per season. After transplanting celery, do </div>
+<div id="t4y_3" class="t s2_3">not apply more than 750 m</div>
+<div id="t4z_3" class="t s4_3">l</div>
+<div id="t50_3" class="t s2_3">/ha </div>
+<div id="t51_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t52_3" class="t s2_3">per season.</div>
+<div id="t53_3" class="t s1_3">Citrus Psylla: </div>
+<div id="t54_3" class="t s2_3">Apply </div>
+<div id="t55_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t56_3" class="t s2_3">to protect newly </div>
+<div id="t57_3" class="t s2_3">expanding foliage flush and will control only adults and nymphs </div>
+<div id="t58_3" class="t s2_3">present at the time of application.</div>
+<div id="t59_3" class="t s1_3">Mites: </div>
+<div id="t5a_3" class="t s2_3">Apply with the first sign of mites.</div>
+<div id="t5b_3" class="t s1_3">Bud Mite: </div>
+<div id="t5c_3" class="t s2_3">For best results, time the spray at “bud swell.”</div>
+<div id="t5d_3" class="t s1_3">Leafminer: </div>
+<div id="t5e_3" class="t s2_3">Apply to protect new growth. Ground or aerial </div>
+<div id="t5f_3" class="t s2_3">application at 30 - 40 </div>
+<div id="t5g_3" class="t s4_3">l</div>
+<div id="t5h_3" class="t s2_3">/ha water is permitted.</div>
+<div id="t5i_3" class="t s1_3">Thrips:</div>
+<div id="t5j_3" class="t s2_3">Apply </div>
+<div id="t5k_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t5l_3" class="t s2_3">at first sign of thrips presence. </div>
+<div id="t5m_3" class="t s2_3">Use higher dose rate where climatic conditions are favourable </div>
+<div id="t5n_3" class="t s2_3">for thrips infestation. Apply as a film wet light cover spray but </div>
+<div id="t5o_3" class="t s2_3">avoid run-off. </div>
+<div id="t5p_3" class="t s2_3">Repeat when necessary. </div>
+<div id="t5q_3" class="t s2_3">No more than three </div>
+<div id="t5r_3" class="t s2_3">applications or two consecutive applications should be applied </div>
+<div id="t5s_3" class="t s2_3">per season.</div>
+<div id="t5t_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t5u_3" class="t s2_3">should be alternated with other thrips </div>
+<div id="t5v_3" class="t s2_3">re medies to retard development of resistance.</div>
+<div id="t5w_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t5x_3" class="t s2_3">is most effective when ingested and maxi-</div>
+<div id="t5y_3" class="t s2_3">mum efficacy may only occur three to four days after treatment. </div>
+<div id="t5z_3" class="t s2_3">For this reason </div>
+<div id="t60_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t61_3" class="t s2_3">should not be used for the </div>
+<div id="t62_3" class="t s2_3">control of high numbers of citrus thrips where a knockdown </div>
+<div id="t63_3" class="t s2_3">treatment is required. Applications should therefore be made at </div>
+<div id="t64_3" class="t s2_3">first sign of thrips presence.</div>
+<div id="t65_3" class="t s2_3">Apply </div>
+<div id="t66_3" class="t s1_3">AGRIMEC GOLD </div>
+<div id="t67_3" class="t s2_3">with a minimum of 0.20% oil (not </div>
+<div id="t68_3" class="t s2_3">dormant oil) in the spray mixture. Do not apply more than 3 </div>
+<div id="t69_3" class="t s2_3">applications in any growing season and wait at least 30 days </div>
+<div id="t6a_3" class="t s2_3">before repeating application.</div>
+<div id="t6b_3" class="t s1_3">COTTON</div>
+<div id="t6c_3" class="t s1_3">Red Spider Mite</div>
+<div id="t6d_3" class="t s3_3">(Tetranychus urticae)</div>
+<div id="t6e_3" class="t s2_3">65 - 130 m</div>
+<div id="t6f_3" class="t s4_3">l</div>
+<div id="t6g_3" class="t s2_3">/ha</div>
+<div id="t6h_3" class="t s2_3">mixed with </div>
+<div id="t6i_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t6j_3" class="t s2_3">the required volume of that product </div>
+<div id="t6k_3" class="t s2_3">must be premixed in similar fashion). </div>
+<div id="t6l_3" class="t s1_3">AGRIMEC GOLD</div>
+<div id="t6m_3" class="t s2_3">and oil </div>
+<div id="t6n_3" class="t s2_3">must be pre-mixed before adding to spray tank. Agitate the water </div>
+<div id="t6o_3" class="t s2_3">in the spray tank and add the premixed product(s) to the tank. Fill </div>
+<div id="t6p_3" class="t s2_3">spray tank with water while maintaining agitation to ensure tho-</div>
+<div id="t6q_3" class="t s2_3">rough mixing. Maintain agitation during spraying. Use the prepared </div>
+<div id="t6r_3" class="t s2_3">mixture immediately. Do not allow to stand overnight. </div>
+<div id="t6s_3" class="t s1_3">AGRIMEC </div>
+<div id="t6t_3" class="t s1_3">GOLD</div>
+<div id="t6u_3" class="t s2_3">can be mixed with waters of different pH values and hard-</div>
+<div id="t6v_3" class="t s2_3">ness normally encountered in agricultural conditions.</div>
+<div id="t6w_3" class="t s1_3">6.4 </div>
+<div id="t6x_3" class="t s1_3">APPLICATION RATES</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg3Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg3"><img src="3/3.png" id="pdf3" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f3 = [['t1_3',387],['t2_3',58],['t4_3',419],['t5_3',376],['t6_3',454],['t7_3',449],['t8_3',397],['ta_3',123],['td_3',137],['tf_3',442],['tj_3',278],['tl_3',265],['tm_3',186],['tn_3',502],['to_3',388],['tp_3',416],['tq_3',1337],['tr_3',1337],['ts_3',667],['tt_3',387],['tu_3',252],['tv_3',1139],['tx_3',392],['ty_3',786],['tz_3',1336],['t10_3',1139],['t12_3',776],['t14_3',1134],['t16_3',828],['t18_3',471],['t19_3',1002],['t1b_3',284],['t1c_3',1337],['t1f_3',387],['t1g_3',858],['t1h_3',1337],['t1k_3',394],['t1l_3',816],['t1n_3',387],['t1o_3',748],['t1q_3',1177],['t1r_3',866],['t1s_3',573],['t1t_3',395],['t1u_3',321],['t1v_3',1337],['t1w_3',1337],['t1z_3',444],['t20_3',620],['t21_3',449],['t22_3',586],['t23_3',266],['t27_3',427],['t28_3',502],['t29_3',388],['t2a_3',416],['t2b_3',1138],['t2c_3',466],['t2d_3',386],['t2e_3',456],['t2f_3',1337],['t2g_3',263],['t2h_3',405],['t2k_3',389],['t2l_3',420],['t2m_3',613],['t2o_3',556],['t2p_3',469],['t2q_3',742],['t2u_3',386],['t2v_3',349],['t2x_3',273],['t30_3',1337],['t31_3',882],['t34_3',426],['t35_3',396],['t37_3',460],['t38_3',1212],['t39_3',855],['t3a_3',386],['t3c_3',1337],['t3d_3',611],['t3f_3',704],['t3g_3',368],['t3j_3',387],['t3k_3',432],['t3m_3',289],['t3n_3',449],['t3o_3',292],['t3p_3',346],['t3q_3',258],['t3r_3',599],['t3s_3',210],['t3t_3',360],['t3v_3',452],['t3w_3',224],['t3x_3',524],['t3y_3',376],['t3z_3',229],['t40_3',311],['t41_3',545],['t42_3',239],['t45_3',137],['t47_3',328],['t48_3',636],['t49_3',454],['t4e_3',376],['t4f_3',454],['t4h_3',137],['t4k_3',502],['t4l_3',388],['t4m_3',416],['t4n_3',1337],['t4q_3',391],['t4r_3',788],['t4s_3',333],['t4u_3',967],['t4v_3',1337],['t4w_3',397],['t4x_3',915],['t4y_3',579],['t51_3',387],['t52_3',248],['t53_3',326],['t55_3',408],['t56_3',380],['t57_3',1337],['t58_3',709],['t5a_3',688],['t5b_3',224],['t5c_3',976],['t5e_3',1061],['t5f_3',453],['t5h_3',476],['t5k_3',386],['t5l_3',632],['t5m_3',1337],['t5n_3',1337],['t5o_3',285],['t5p_3',534],['t5q_3',433],['t5r_3',1337],['t5s_3',248],['t5t_3',409],['t5u_3',893],['t5v_3',973],['t5w_3',393],['t5x_3',923],['t5y_3',1337],['t5z_3',323],['t60_3',392],['t61_3',582],['t62_3',1337],['t63_3',1337],['t64_3',585],['t66_3',399],['t67_3',766],['t68_3',1337],['t69_3',1337],['t6a_3',601],['t6c_3',376],['t6d_3',454],['t6e_3',239],['t6h_3',226],['t6i_3',386],['t6j_3',744],['t6k_3',803],['t6l_3',394],['t6m_3',146],['t6n_3',1385],['t6o_3',1385],['t6p_3',1385],['t6q_3',1385],['t6r_3',1136],['t6u_3',1230],['t6v_3',1107],['t6x_3',507]];
+var c3 = 0;
+function fontAdjustments3(){;
+	if (c3<f3.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f3[c3][0],f3[c3][1]);
+		c3++;
+		if (c3%10 == 0) {
+			setTimeout(function(){fontAdjustments3()},0);
+		} else {
+			fontAdjustments3();
+		}
+	}
+};
+function load3(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments3,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 250;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_3");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+	if (extLoaded) { idrLoad(); } else { intLoaded = true; }
+</script>
+</body>
+</html>

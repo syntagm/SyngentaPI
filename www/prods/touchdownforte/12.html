@@ -1,0 +1,1161 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>TOUCHDOWN_Forte_HITECH___ENG_2011_06_27 Page12</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load12();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_12{left:66px;top:72px;}
+#t2_12{left:91px;top:72px;}
+#t3_12{left:66px;top:424px;}
+#t4_12{left:105px;top:424px;}
+#t5_12{left:277px;top:424px;}
+#t6_12{left:293px;top:424px;}
+#t7_12{left:105px;top:439px;}
+#t8_12{left:66px;top:462px;}
+#t9_12{left:84px;top:462px;}
+#ta_12{left:254px;top:462px;}
+#tb_12{left:84px;top:477px;}
+#tc_12{left:84px;top:491px;}
+#td_12{left:84px;top:506px;}
+#te_12{left:84px;top:520px;}
+#tf_12{left:66px;top:535px;}
+#tg_12{left:84px;top:535px;}
+#th_12{left:298px;top:535px;}
+#ti_12{left:326px;top:535px;}
+#tj_12{left:84px;top:549px;}
+#tk_12{left:66px;top:564px;}
+#tl_12{left:84px;top:564px;}
+#tm_12{left:244px;top:564px;}
+#tn_12{left:84px;top:578px;}
+#to_12{left:84px;top:593px;}
+#tp_12{left:66px;top:607px;}
+#tq_12{left:84px;top:607px;}
+#tr_12{left:254px;top:607px;}
+#ts_12{left:84px;top:622px;}
+#tt_12{left:66px;top:636px;}
+#tu_12{left:84px;top:636px;}
+#tv_12{left:84px;top:651px;}
+#tw_12{left:84px;top:665px;}
+#tx_12{left:84px;top:680px;}
+#ty_12{left:100px;top:680px;}
+#tz_12{left:269px;top:680px;}
+#t10_12{left:84px;top:694px;}
+#t11_12{left:66px;top:709px;}
+#t12_12{left:84px;top:709px;}
+#t13_12{left:84px;top:723px;}
+#t14_12{left:84px;top:738px;}
+#t15_12{left:144px;top:738px;}
+#t16_12{left:320px;top:738px;}
+#t17_12{left:84px;top:752px;}
+#t18_12{left:84px;top:767px;}
+#t19_12{left:66px;top:1047px;}
+#t1a_12{left:66px;top:1070px;}
+#t1b_12{left:92px;top:1070px;}
+#t1c_12{left:92px;top:1085px;}
+#t1d_12{left:92px;top:1099px;}
+#t1e_12{left:66px;top:1114px;}
+#t1f_12{left:92px;top:1114px;}
+#t1g_12{left:92px;top:1128px;}
+#t1h_12{left:92px;top:1143px;}
+#t1i_12{left:92px;top:1157px;}
+#t1j_12{left:92px;top:1172px;}
+#t1k_12{left:92px;top:1186px;}
+#t1l_12{left:92px;top:1201px;}
+#t1m_12{left:92px;top:1215px;}
+#t1n_12{left:92px;top:1230px;}
+#t1o_12{left:93px;top:814px;}
+#t1p_12{left:72px;top:852px;}
+#t1q_12{left:72px;top:866px;}
+#t1r_12{left:72px;top:881px;}
+#t1s_12{left:72px;top:895px;}
+#t1t_12{left:72px;top:910px;}
+#t1u_12{left:173px;top:808px;}
+#t1v_12{left:178px;top:822px;}
+#t1w_12{left:167px;top:850px;}
+#t1x_12{left:188px;top:850px;}
+#t1y_12{left:193px;top:850px;}
+#t1z_12{left:167px;top:879px;}
+#t20_12{left:188px;top:879px;}
+#t21_12{left:193px;top:879px;}
+#t22_12{left:167px;top:916px;}
+#t23_12{left:188px;top:916px;}
+#t24_12{left:193px;top:916px;}
+#t25_12{left:294px;top:797px;}
+#t26_12{left:240px;top:811px;}
+#t27_12{left:272px;top:826px;}
+#t28_12{left:227px;top:849px;}
+#t29_12{left:227px;top:878px;}
+#t2a_12{left:227px;top:892px;}
+#t2b_12{left:227px;top:916px;}
+#t2c_12{left:227px;top:930px;}
+#t2d_12{left:227px;top:945px;}
+#t2e_12{left:227px;top:959px;}
+#t2f_12{left:227px;top:974px;}
+#t2g_12{left:308px;top:974px;}
+#t2h_12{left:328px;top:974px;}
+#t2i_12{left:227px;top:988px;}
+#t2j_12{left:227px;top:1003px;}
+#t2k_12{left:331px;top:1003px;}
+#t2l_12{left:227px;top:1017px;}
+#t2m_12{left:338px;top:42px;}
+#t2n_12{left:510px;top:42px;}
+#t2o_12{left:70px;top:109px;}
+#t2p_12{left:74px;top:146px;}
+#t2q_12{left:74px;top:161px;}
+#t2r_12{left:149px;top:101px;}
+#t2s_12{left:150px;top:115px;}
+#t2t_12{left:154px;top:144px;}
+#t2u_12{left:165px;top:144px;}
+#t2v_12{left:174px;top:144px;}
+#t2w_12{left:196px;top:144px;}
+#t2x_12{left:206px;top:144px;}
+#t2y_12{left:295px;top:107px;}
+#t2z_12{left:245px;top:145px;}
+#t30_12{left:245px;top:159px;}
+#t31_12{left:287px;top:159px;}
+#t32_12{left:312px;top:159px;}
+#t33_12{left:363px;top:159px;}
+#t34_12{left:245px;top:174px;}
+#t35_12{left:336px;top:174px;}
+#t36_12{left:345px;top:174px;}
+#t37_12{left:245px;top:188px;}
+#t38_12{left:245px;top:203px;}
+#t39_12{left:245px;top:217px;}
+#t3a_12{left:245px;top:232px;}
+#t3b_12{left:255px;top:232px;}
+#t3c_12{left:261px;top:232px;}
+#t3d_12{left:245px;top:246px;}
+#t3e_12{left:245px;top:261px;}
+#t3f_12{left:250px;top:261px;}
+#t3g_12{left:245px;top:275px;}
+#t3h_12{left:380px;top:275px;}
+#t3i_12{left:386px;top:275px;}
+#t3j_12{left:245px;top:290px;}
+#t3k_12{left:245px;top:304px;}
+#t3l_12{left:289px;top:304px;}
+#t3m_12{left:295px;top:304px;}
+#t3n_12{left:245px;top:319px;}
+#t3o_12{left:384px;top:319px;}
+#t3p_12{left:389px;top:319px;}
+#t3q_12{left:245px;top:333px;}
+#t3r_12{left:245px;top:362px;}
+#t3s_12{left:245px;top:377px;}
+#t3t_12{left:401px;top:377px;}
+#t3u_12{left:245px;top:391px;}
+#t3v_12{left:456px;top:72px;}
+#t3w_12{left:482px;top:72px;}
+#t3x_12{left:482px;top:86px;}
+#t3y_12{left:482px;top:101px;}
+#t3z_12{left:632px;top:101px;}
+#t40_12{left:482px;top:115px;}
+#t41_12{left:482px;top:130px;}
+#t42_12{left:482px;top:144px;}
+#t43_12{left:456px;top:160px;}
+#t44_12{left:482px;top:160px;}
+#t45_12{left:656px;top:160px;}
+#t46_12{left:482px;top:174px;}
+#t47_12{left:482px;top:189px;}
+#t48_12{left:456px;top:220px;}
+#t49_12{left:456px;top:251px;}
+#t4a_12{left:482px;top:251px;}
+#t4b_12{left:658px;top:251px;}
+#t4c_12{left:482px;top:266px;}
+#t4d_12{left:482px;top:280px;}
+#t4e_12{left:456px;top:296px;}
+#t4f_12{left:482px;top:296px;}
+#t4g_12{left:482px;top:311px;}
+#t4h_12{left:456px;top:326px;}
+#t4i_12{left:482px;top:326px;}
+#t4j_12{left:625px;top:326px;}
+#t4k_12{left:482px;top:341px;}
+#t4l_12{left:482px;top:355px;}
+#t4m_12{left:777px;top:355px;}
+#t4n_12{left:783px;top:355px;}
+#t4o_12{left:482px;top:370px;}
+#t4p_12{left:456px;top:385px;}
+#t4q_12{left:482px;top:385px;}
+#t4r_12{left:482px;top:400px;}
+#t4s_12{left:482px;top:414px;}
+#t4t_12{left:601px;top:414px;}
+#t4u_12{left:482px;top:429px;}
+#t4v_12{left:594px;top:429px;}
+#t4w_12{left:765px;top:429px;}
+#t4x_12{left:482px;top:444px;}
+#t4y_12{left:681px;top:444px;}
+#t4z_12{left:482px;top:458px;}
+#t50_12{left:482px;top:473px;}
+#t51_12{left:662px;top:473px;}
+#t52_12{left:482px;top:487px;}
+#t53_12{left:456px;top:518px;}
+#t54_12{left:456px;top:550px;}
+#t55_12{left:482px;top:550px;}
+#t56_12{left:655px;top:550px;}
+#t57_12{left:482px;top:564px;}
+#t58_12{left:792px;top:567px;}
+#t59_12{left:796px;top:564px;}
+#t5a_12{left:482px;top:579px;}
+#t5b_12{left:525px;top:582px;}
+#t5c_12{left:533px;top:579px;}
+#t5d_12{left:456px;top:594px;}
+#t5e_12{left:482px;top:594px;}
+#t5f_12{left:673px;top:594px;}
+#t5g_12{left:482px;top:609px;}
+#t5h_12{left:532px;top:609px;}
+#t5i_12{left:554px;top:609px;}
+#t5j_12{left:582px;top:609px;}
+#t5k_12{left:482px;top:623px;}
+#t5l_12{left:650px;top:623px;}
+#t5m_12{left:657px;top:623px;}
+#t5n_12{left:482px;top:638px;}
+#t5o_12{left:482px;top:652px;}
+#t5p_12{left:482px;top:667px;}
+#t5q_12{left:456px;top:682px;}
+#t5r_12{left:482px;top:682px;}
+#t5s_12{left:482px;top:697px;}
+#t5t_12{left:482px;top:712px;}
+#t5u_12{left:456px;top:727px;}
+#t5v_12{left:482px;top:727px;}
+#t5w_12{left:482px;top:742px;}
+#t5x_12{left:617px;top:742px;}
+#t5y_12{left:726px;top:742px;}
+#t5z_12{left:482px;top:756px;}
+#t60_12{left:482px;top:771px;}
+#t61_12{left:482px;top:785px;}
+#t62_12{left:456px;top:801px;}
+#t63_12{left:482px;top:801px;}
+#t64_12{left:482px;top:815px;}
+#t65_12{left:456px;top:831px;}
+#t66_12{left:482px;top:831px;}
+#t67_12{left:482px;top:846px;}
+#t68_12{left:456px;top:861px;}
+#t69_12{left:482px;top:861px;}
+#t6a_12{left:482px;top:876px;}
+#t6b_12{left:503px;top:876px;}
+#t6c_12{left:509px;top:876px;}
+#t6d_12{left:482px;top:890px;}
+#t6e_12{left:661px;top:890px;}
+#t6f_12{left:666px;top:890px;}
+#t6g_12{left:482px;top:905px;}
+#t6h_12{left:456px;top:920px;}
+#t6i_12{left:482px;top:920px;}
+#t6j_12{left:482px;top:935px;}
+#t6k_12{left:482px;top:949px;}
+#t6l_12{left:482px;top:964px;}
+#t6m_12{left:456px;top:980px;}
+#t6n_12{left:482px;top:980px;}
+#t6o_12{left:657px;top:980px;}
+#t6p_12{left:482px;top:994px;}
+#t6q_12{left:482px;top:1009px;}
+#t6r_12{left:482px;top:1023px;}
+#t6s_12{left:456px;top:1039px;}
+#t6t_12{left:482px;top:1039px;}
+#t6u_12{left:653px;top:1039px;}
+#t6v_12{left:482px;top:1053px;}
+#t6w_12{left:482px;top:1068px;}
+#t6x_12{left:456px;top:1083px;}
+#t6y_12{left:482px;top:1083px;}
+#t6z_12{left:662px;top:1083px;}
+#t70_12{left:482px;top:1098px;}
+#t71_12{left:482px;top:1112px;}
+#t72_12{left:482px;top:1127px;}
+#t73_12{left:482px;top:1141px;}
+#t74_12{left:482px;top:1156px;}
+#t75_12{left:482px;top:1170px;}
+#t76_12{left:482px;top:1185px;}
+#t77_12{left:544px;top:1185px;}
+#t78_12{left:456px;top:1201px;}
+#t79_12{left:482px;top:1201px;}
+#t7a_12{left:482px;top:1215px;}
+#t7b_12{left:663px;top:1215px;}
+#t7c_12{left:482px;top:1230px;}
+
+.s1_12{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Lt12;
+	color: rgb(0,0,0);
+}
+
+.s3_12{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: RKGHIZ-Mt-ExtraPlain12;
+	color: rgb(0,0,0);
+}
+
+.s2_12{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Bd12;
+	color: rgb(0,0,0);
+}
+
+.s5_12{
+	FONT-SIZE: 21px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Lt12;
+	color: rgb(0,0,0);
+}
+
+.s4_12{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-It12;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: RKGHIZ-Mt-ExtraPlain12;
+	src: url("12/fonts/RKGHIZ-Mt-ExtraPlain.eot");
+	src: url("12/fonts/RKGHIZ-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("12/fonts/RKGHIZ-Mt-ExtraPlain.otf") format("opentype");
+}
+
+@font-face {
+	font-family: RKGHIZ-HelveticaNeueLTStd-It12;
+	src: url("12/fonts/RKGHIZ-HelveticaNeueLTStd-It.eot");
+	src: url("12/fonts/RKGHIZ-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("12/fonts/RKGHIZ-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: RKGHIZ-HelveticaNeueLTStd-Lt12;
+	src: url("12/fonts/RKGHIZ-HelveticaNeueLTStd-Lt.eot");
+	src: url("12/fonts/RKGHIZ-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("12/fonts/RKGHIZ-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: RKGHIZ-HelveticaNeueLTStd-Bd12;
+	src: url("12/fonts/RKGHIZ-HelveticaNeueLTStd-Bd.eot");
+	src: url("12/fonts/RKGHIZ-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("12/fonts/RKGHIZ-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_12" class="t s1_12">4.3</div>
+<div id="t2_12" class="t s2_12">Unwanted weeds:</div>
+<div id="t3_12" class="t s1_12">4.4  </div>
+<div id="t4_12" class="t s2_12">Genetically modified crops </div>
+<div id="t5_12" class="t s2_12">- </div>
+<div id="t6_12" class="t s2_12">Glyphosate tolerant </div>
+<div id="t7_12" class="t s2_12">cotton, soybeans and maize</div>
+<div id="t8_12" class="t s1_12">1. </div>
+<div id="t9_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="ta_12" class="t s1_12">can be applied on glyphosate </div>
+<div id="tb_12" class="t s1_12">tolerant cotton, soybean- and maize plants. Any individual </div>
+<div id="tc_12" class="t s1_12">plant that does not contain the glyphosate tolerant gene will </div>
+<div id="td_12" class="t s1_12">die when sprayed with glyphosate based products e.g. </div>
+<div id="te_12" class="t s2_12">TOUCHDOWN Forte HITECH.</div>
+<div id="tf_12" class="t s1_12">2. </div>
+<div id="tg_12" class="t s1_12">Special care should be taken to apply it </div>
+<div id="th_12" class="t s2_12">only</div>
+<div id="ti_12" class="t s1_12">over glyphosate </div>
+<div id="tj_12" class="t s1_12">tolerant crops or cultivars within the crop. </div>
+<div id="tk_12" class="t s1_12">3. </div>
+<div id="tl_12" class="t s1_12">Avoid drift or the application of </div>
+<div id="tm_12" class="t s2_12">TOUCHDOWN Forte HITECH </div>
+<div id="tn_12" class="t s1_12">on conventional crops (non-glyphosate-tolerant crops) as this </div>
+<div id="to_12" class="t s1_12">will result in severe crop injury, reduced yields and crop losses.</div>
+<div id="tp_12" class="t s1_12">4. </div>
+<div id="tq_12" class="t s2_12">TOUCHDOWN Forte HITECH </div>
+<div id="tr_12" class="t s1_12">may not be applied by means </div>
+<div id="ts_12" class="t s1_12">of aerial application to glyphosate tolerant crops.</div>
+<div id="tt_12" class="t s1_12">5. </div>
+<div id="tu_12" class="t s1_12">As Syngenta does not control the quality of glyphosate tolerant </div>
+<div id="tv_12" class="t s1_12">seed production no responsibility can be taken if certain indi-</div>
+<div id="tw_12" class="t s1_12">viduals from glyphosate tolerant seed population are controlled </div>
+<div id="tx_12" class="t s1_12">by </div>
+<div id="ty_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="tz_12" class="t s1_12">due to the fact that they do </div>
+<div id="t10_12" class="t s1_12">not contain the glyphosate tolerant gene. </div>
+<div id="t11_12" class="t s1_12">6. </div>
+<div id="t12_12" class="t s1_12">Take into account when planning to plant a glyphosate tole-</div>
+<div id="t13_12" class="t s1_12">rant crop the control of the volunteer plants in the following </div>
+<div id="t14_12" class="t s1_12">season as </div>
+<div id="t15_12" class="t s2_12">TOUCHDOWN Forte HITECH </div>
+<div id="t16_12" class="t s1_12">does not control </div>
+<div id="t17_12" class="t s1_12">any volunteer glyphosate tolerant plants from the previous </div>
+<div id="t18_12" class="t s1_12">season.</div>
+<div id="t19_12" class="t s2_12">General:</div>
+<div id="t1a_12" class="t s1_12">1. </div>
+<div id="t1b_12" class="t s1_12">Care should be taken of the general warnings and use direc-</div>
+<div id="t1c_12" class="t s1_12">tions on this label as it also applies to glyphosate tolerant </div>
+<div id="t1d_12" class="t s1_12">crops.</div>
+<div id="t1e_12" class="t s1_12">2. </div>
+<div id="t1f_12" class="t s1_12">The weed spectrum in cotton, soybean and maize fields can </div>
+<div id="t1g_12" class="t s1_12">differ due to the following variables e.g. region, moisture and </div>
+<div id="t1h_12" class="t s1_12">light as well as soil type resulting in a weed population with </div>
+<div id="t1i_12" class="t s1_12">different weeds and in several different growth stages. The </div>
+<div id="t1j_12" class="t s1_12">table above indicates rates that should control most weed </div>
+<div id="t1k_12" class="t s1_12">populations within the size parameters set in the tables on </div>
+<div id="t1l_12" class="t s1_12">this label. For other weeds, refer to the other tables on this </div>
+<div id="t1m_12" class="t s1_12">label. Other provisions on this label should be adhered to e.g. </div>
+<div id="t1n_12" class="t s1_12">relating to growth stages.</div>
+<div id="t1o_12" class="t s2_12">CROP</div>
+<div id="t1p_12" class="t s2_12">Glyphosate </div>
+<div id="t1q_12" class="t s2_12">tolerant</div>
+<div id="t1r_12" class="t s2_12">cotton, </div>
+<div id="t1s_12" class="t s2_12">soybeans </div>
+<div id="t1t_12" class="t s2_12">and maize</div>
+<div id="t1u_12" class="t s2_12">RATE</div>
+<div id="t1v_12" class="t s2_12">/ ha</div>
+<div id="t1w_12" class="t s1_12">1,5 </div>
+<div id="t1x_12" class="t s3_12">l</div>
+<div id="t1y_12" class="t s1_12">/ha</div>
+<div id="t1z_12" class="t s1_12">1,8 </div>
+<div id="t20_12" class="t s3_12">l</div>
+<div id="t21_12" class="t s1_12">/ha</div>
+<div id="t22_12" class="t s1_12">2,2 </div>
+<div id="t23_12" class="t s3_12">l</div>
+<div id="t24_12" class="t s1_12">/ha</div>
+<div id="t25_12" class="t s2_12">WEEDS</div>
+<div id="t26_12" class="t s1_12">(Refer to the tables above for </div>
+<div id="t27_12" class="t s1_12">individual weeds)</div>
+<div id="t28_12" class="t s1_12">Before weeds are 100 mm high</div>
+<div id="t29_12" class="t s1_12">When weeds are 100 - 200 mm </div>
+<div id="t2a_12" class="t s1_12">high </div>
+<div id="t2b_12" class="t s1_12">The following weeds are con-</div>
+<div id="t2c_12" class="t s1_12">trolled inconsistently and would </div>
+<div id="t2d_12" class="t s1_12">require a follow on spray: </div>
+<div id="t2e_12" class="t s4_12">Commelina bengalensis,</div>
+<div id="t2f_12" class="t s4_12">Chenopodium </div>
+<div id="t2g_12" class="t s1_12">spp</div>
+<div id="t2h_12" class="t s4_12">,</div>
+<div id="t2i_12" class="t s4_12">Cyperus esculentus</div>
+<div id="t2j_12" class="t s4_12">Ipomeae purpurea </div>
+<div id="t2k_12" class="t s1_12">and </div>
+<div id="t2l_12" class="t s4_12">Portulaca oleracea</div>
+<div id="t2m_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t2n_12" class="t s1_12">/ 12</div>
+<div id="t2o_12" class="t s2_12">SITUATION</div>
+<div id="t2p_12" class="t s2_12">Unwanted </div>
+<div id="t2q_12" class="t s2_12">weeds</div>
+<div id="t2r_12" class="t s2_12">TOUCHDOWN </div>
+<div id="t2s_12" class="t s2_12">Forte HITECH</div>
+<div id="t2t_12" class="t s1_12">2 </div>
+<div id="t2u_12" class="t s3_12">l</div>
+<div id="t2v_12" class="t s1_12">- 4 </div>
+<div id="t2w_12" class="t s3_12">l</div>
+<div id="t2x_12" class="t s1_12">/ ha</div>
+<div id="t2y_12" class="t s2_12">REMARKS</div>
+<div id="t2z_12" class="t s2_12">Aerial application:</div>
+<div id="t30_12" class="t s1_12">Apply </div>
+<div id="t31_12" class="t s1_12">on </div>
+<div id="t32_12" class="t s1_12">actively </div>
+<div id="t33_12" class="t s1_12">growing </div>
+<div id="t34_12" class="t s1_12">plants in 30 - 50 </div>
+<div id="t35_12" class="t s3_12">l</div>
+<div id="t36_12" class="t s1_12">water/ha.</div>
+<div id="t37_12" class="t s1_12">Dosage rate will depend on </div>
+<div id="t38_12" class="t s1_12">plant size and density.</div>
+<div id="t39_12" class="t s1_12">Plants 500 - 900 mm; apply </div>
+<div id="t3a_12" class="t s1_12">2 </div>
+<div id="t3b_12" class="t s3_12">l</div>
+<div id="t3c_12" class="t s1_12">/ha.</div>
+<div id="t3d_12" class="t s1_12">Plants 1,0 - 1,9 m; apply 2,6 </div>
+<div id="t3e_12" class="t s3_12">l</div>
+<div id="t3f_12" class="t s1_12">/ha.</div>
+<div id="t3g_12" class="t s1_12">Plants &gt; 2,0 m; apply 3,3 </div>
+<div id="t3h_12" class="t s3_12">l</div>
+<div id="t3i_12" class="t s1_12">/ha.</div>
+<div id="t3j_12" class="t s1_12">On very dense plant growth </div>
+<div id="t3k_12" class="t s1_12">apply 4 </div>
+<div id="t3l_12" class="t s3_12">l</div>
+<div id="t3m_12" class="t s1_12">/ha.</div>
+<div id="t3n_12" class="t s1_12">Do not apply more than 2 </div>
+<div id="t3o_12" class="t s3_12">l</div>
+<div id="t3p_12" class="t s1_12">/ha </div>
+<div id="t3q_12" class="t s1_12">in ecologically sensitive areas.</div>
+<div id="t3r_12" class="t s2_12">Ground application:</div>
+<div id="t3s_12" class="t s1_12">Apply as above in 100 - 600 </div>
+<div id="t3t_12" class="t s3_12">l</div>
+<div id="t3u_12" class="t s1_12">water/ha.</div>
+<div id="t3v_12" class="t s1_12">3. </div>
+<div id="t3w_12" class="t s1_12">Applications should be made very early in the growth stage </div>
+<div id="t3x_12" class="t s1_12">of the weeds but before the 6 leaf stage of the weeds. In this </div>
+<div id="t3y_12" class="t s1_12">case only one application of </div>
+<div id="t3z_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t40_12" class="t s1_12">would be necessary to control an existing population. This </div>
+<div id="t41_12" class="t s1_12">would also minimize weed competition in very critical stages </div>
+<div id="t42_12" class="t s1_12">of the cotton, soybeans and maize.</div>
+<div id="t43_12" class="t s1_12">4. </div>
+<div id="t44_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t45_12" class="t s1_12">has no residual weed con-</div>
+<div id="t46_12" class="t s1_12">trol and repeated follow on applications could be necessary </div>
+<div id="t47_12" class="t s1_12">to control weeds germinating after application.</div>
+<div id="t48_12" class="t s2_12">Glyphosate tolerant soybeans:</div>
+<div id="t49_12" class="t s1_12">5. </div>
+<div id="t4a_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t4b_12" class="t s1_12">can be applied to glypho-</div>
+<div id="t4c_12" class="t s1_12">sate tolerant soybeans post-emergent from soon after emer-</div>
+<div id="t4d_12" class="t s1_12">gence up to the end of flowering.</div>
+<div id="t4e_12" class="t s1_12">6. </div>
+<div id="t4f_12" class="t s1_12">A minimum of 14 days should be allowed between applica-</div>
+<div id="t4g_12" class="t s1_12">tion and harvesting.</div>
+<div id="t4h_12" class="t s1_12">7. </div>
+<div id="t4i_12" class="t s1_12">Up to 3 applications of </div>
+<div id="t4j_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t4k_12" class="t s1_12">could be made on glyphosate tolerant soyabeans without </div>
+<div id="t4l_12" class="t s1_12">any damage to the crop. Do not spray more than 7,2 </div>
+<div id="t4m_12" class="t s3_12">l</div>
+<div id="t4n_12" class="t s1_12">/ha </div>
+<div id="t4o_12" class="t s1_12">(3600 g ae/ha) cumulatively in one particular season. </div>
+<div id="t4p_12" class="t s1_12">8. </div>
+<div id="t4q_12" class="t s1_12">The use of residual herbicides would be recommended at </div>
+<div id="t4r_12" class="t s1_12">all times as soybeans do not tolerate any weed competition. </div>
+<div id="t4s_12" class="t s1_12">METAGAN GOLD or </div>
+<div id="t4t_12" class="t s1_12">BATELEUR GOLD (L6136) should be </div>
+<div id="t4u_12" class="t s1_12">used at planting and </div>
+<div id="t4v_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t4w_12" class="t s1_12">should </div>
+<div id="t4x_12" class="t s1_12">only be used later in the season to </div>
+<div id="t4y_12" class="t s1_12">control new flushes of </div>
+<div id="t4z_12" class="t s1_12">weeds. METAGAN GOLD can be applied in combination with </div>
+<div id="t50_12" class="t s2_12">TOUCHDOWN Forte HITECH </div>
+<div id="t51_12" class="t s1_12">to provide residual grass </div>
+<div id="t52_12" class="t s1_12">control.</div>
+<div id="t53_12" class="t s2_12">Glyphosate tolerant maize:</div>
+<div id="t54_12" class="t s1_12">9. </div>
+<div id="t55_12" class="t s2_12">TOUCHDOWN Forte HITECH </div>
+<div id="t56_12" class="t s1_12">may be applied post-emer-</div>
+<div id="t57_12" class="t s1_12">gence in glyphosate tolerant maize (e.g. Roundup Ready</div>
+<div id="t58_12" class="t s5_12">®</div>
+<div id="t59_12" class="t s1_12">, </div>
+<div id="t5a_12" class="t s1_12">Agrisure</div>
+<div id="t5b_12" class="t s5_12">®</div>
+<div id="t5c_12" class="t s1_12">GT) for the control of the weeds listed.</div>
+<div id="t5d_12" class="t s1_12">10. </div>
+<div id="t5e_12" class="t s1_12">On glyphosate tolerant maize, </div>
+<div id="t5f_12" class="t s2_12">TOUCHDOWN Forte </div>
+<div id="t5g_12" class="t s2_12">HITECH </div>
+<div id="t5h_12" class="t s1_12">can </div>
+<div id="t5i_12" class="t s2_12">only</div>
+<div id="t5j_12" class="t s1_12">be applied from soon after emergence up </div>
+<div id="t5k_12" class="t s1_12">to the V8 leaf stage of the maize</div>
+<div id="t5l_12" class="t s2_12">.</div>
+<div id="t5m_12" class="t s1_12">This stage is reached when </div>
+<div id="t5n_12" class="t s1_12">the first plants in the field have 8 leaves with closed collars </div>
+<div id="t5o_12" class="t s1_12">around the main stem. (The actual number of leaves may be </div>
+<div id="t5p_12" class="t s1_12">more).</div>
+<div id="t5q_12" class="t s1_12">11. </div>
+<div id="t5r_12" class="t s1_12">Do not make broadcast applications if mechanical crop dam-</div>
+<div id="t5s_12" class="t s1_12">age due to the passing of the sprayer will or has occurred or </div>
+<div id="t5t_12" class="t s1_12">if hail damage has occurred.</div>
+<div id="t5u_12" class="t s1_12">12. </div>
+<div id="t5v_12" class="t s1_12">Where sequential applications are necessary to control spe-</div>
+<div id="t5w_12" class="t s1_12">cific weed species (e.g. </div>
+<div id="t5x_12" class="t s4_12">Cyperus esculentus</div>
+<div id="t5y_12" class="t s1_12">), the second </div>
+<div id="t5z_12" class="t s1_12">application should not occur within 10 days of the first appli-</div>
+<div id="t60_12" class="t s1_12">cation in order to allow the weeds to become active growing </div>
+<div id="t61_12" class="t s1_12">again. </div>
+<div id="t62_12" class="t s1_12">13. </div>
+<div id="t63_12" class="t s1_12">If the maize is beyond the V8 stage, a directed application </div>
+<div id="t64_12" class="t s1_12">must be done. </div>
+<div id="t65_12" class="t s1_12">14. </div>
+<div id="t66_12" class="t s1_12">Care must be taken not to spray the reproductive parts of the </div>
+<div id="t67_12" class="t s1_12">maize plant.</div>
+<div id="t68_12" class="t s1_12">15. </div>
+<div id="t69_12" class="t s1_12">On glyphosate tolerant maize up to 2 applications of up to </div>
+<div id="t6a_12" class="t s1_12">2,2 </div>
+<div id="t6b_12" class="t s3_12">l</div>
+<div id="t6c_12" class="t s1_12">/ha at a time can be made without any damage to the </div>
+<div id="t6d_12" class="t s1_12">crop. Do not spray more than 4,4 </div>
+<div id="t6e_12" class="t s3_12">l</div>
+<div id="t6f_12" class="t s1_12">/ha (2160 g ae/ha) cumu-</div>
+<div id="t6g_12" class="t s1_12">latively in one particular season.</div>
+<div id="t6h_12" class="t s1_12">16. </div>
+<div id="t6i_12" class="t s1_12">The use of residual herbicides would be recommended at </div>
+<div id="t6j_12" class="t s1_12">all times as maize does not tolerate any weed competition. </div>
+<div id="t6k_12" class="t s1_12">CALLISTO, DUAL GOLD or PRIMAGRAM GOLD (L7308) </div>
+<div id="t6l_12" class="t s1_12">should be used at planting.</div>
+<div id="t6m_12" class="t s1_12">17. </div>
+<div id="t6n_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t6o_12" class="t s1_12">must only be used later in </div>
+<div id="t6p_12" class="t s1_12">the season after initial application of residual herbicides at </div>
+<div id="t6q_12" class="t s1_12">planting to control new flushes of weeds or difficult to control </div>
+<div id="t6r_12" class="t s1_12">weeds. </div>
+<div id="t6s_12" class="t s1_12">18. </div>
+<div id="t6t_12" class="t s2_12">TOUCHDOWN Forte HITECH </div>
+<div id="t6u_12" class="t s1_12">can be applied in tankmixes </div>
+<div id="t6v_12" class="t s1_12">with CALLISTO and METAGAN GOLD or GARDOPRIM </div>
+<div id="t6w_12" class="t s1_12">PLUS GOLD to provide residual control.</div>
+<div id="t6x_12" class="t s1_12">19. </div>
+<div id="t6y_12" class="t s2_12">TOUCHDOWN Forte HITECH</div>
+<div id="t6z_12" class="t s1_12">may not be applied with </div>
+<div id="t70_12" class="t s1_12">atrazine containing products e.g. GESAPRIM 90WG or </div>
+<div id="t71_12" class="t s1_12">GESAPRIM SUPER or PRIMAGRAM GOLD or with any adju-</div>
+<div id="t72_12" class="t s1_12">vants as on the CALLISTO label. The post emergence rec-</div>
+<div id="t73_12" class="t s1_12">ommendation of CALLISTO in table 6.1.2 on the CALLISTO </div>
+<div id="t74_12" class="t s1_12">label should then be changed to replace GESAPRIM 90WG </div>
+<div id="t75_12" class="t s1_12">(L4764) or GESAPRIM SUPER (L3914) or PRIMAGRAM </div>
+<div id="t76_12" class="t s1_12">GOLD with </div>
+<div id="t77_12" class="t s2_12">TOUCHDOWN Forte HITECH. </div>
+<div id="t78_12" class="t s1_12">20. </div>
+<div id="t79_12" class="t s2_12">No tank mixture with TOUCHDOWN Forte HITECH </div>
+<div id="t7a_12" class="t s2_12">should contain any adjuvant. </div>
+<div id="t7b_12" class="t s1_12">See the comment “adju-</div>
+<div id="t7c_12" class="t s1_12">vants” under “Compatibility” in this label.</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg12Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg12"><img src="12/12.png" id="pdf12" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f12 = [['t2_12',417],['t3_12',82],['t4_12',640],['t6_12',467],['t7_12',657],['t9_12',668],['ta_12',621],['tb_12',1304],['tc_12',1304],['td_12',1303],['te_12',684],['tg_12',841],['ti_12',335],['tj_12',877],['tl_12',629],['tm_12',663],['tn_12',1304],['to_12',1304],['tq_12',668],['tr_12',622],['ts_12',1027],['tu_12',1304],['tv_12',1304],['tw_12',1304],['ty_12',665],['tz_12',563],['t10_12',867],['t12_12',1304],['t13_12',1304],['t14_12',222],['t15_12',686],['t16_12',359],['t17_12',1304],['t1b_12',1269],['t1c_12',1269],['t1f_12',1269],['t1g_12',1269],['t1h_12',1269],['t1i_12',1269],['t1j_12',1269],['t1k_12',1269],['t1l_12',1269],['t1m_12',1269],['t1n_12',538],['t1t_12',240],['t1v_12',90],['t26_12',615],['t27_12',358],['t28_12',669],['t29_12',718],['t2b_12',718],['t2c_12',718],['t2d_12',533],['t2e_12',533],['t2i_12',429],['t2j_12',400],['t2l_12',406],['t2m_12',670],['t2n_12',85],['t2s_12',322],['t2v_12',60],['t2x_12',82],['t2z_12',420],['t34_12',348],['t37_12',644],['t38_12',471],['t39_12',644],['t3d_12',645],['t3g_12',528],['t3j_12',644],['t3k_12',162],['t3n_12',541],['t3q_12',629],['t3r_12',460],['t3s_12',607],['t3w_12',1269],['t3x_12',1269],['t3y_12',586],['t3z_12',668],['t40_12',1269],['t41_12',1269],['t42_12',747],['t44_12',677],['t45_12',574],['t46_12',1269],['t47_12',980],['t48_12',710],['t4a_12',682],['t4b_12',566],['t4c_12',1269],['t4d_12',702],['t4f_12',1269],['t4g_12',415],['t4i_12',539],['t4j_12',700],['t4k_12',1269],['t4l_12',1162],['t4o_12',1111],['t4q_12',1269],['t4r_12',1269],['t4s_12',439],['t4t_12',795],['t4u_12',431],['t4v_12',669],['t4x_12',756],['t4y_12',475],['t4z_12',1269],['t50_12',692],['t51_12',551],['t53_12',626],['t55_12',673],['t56_12',580],['t57_12',1238],['t5c_12',813],['t5e_12',723],['t5f_12',505],['t5j_12',870],['t5k_12',671],['t5m_12',571],['t5n_12',1269],['t5o_12',1269],['t5r_12',1269],['t5s_12',1269],['t5t_12',600],['t5v_12',1269],['t5w_12',516],['t5x_12',437],['t5y_12',292],['t5z_12',1269],['t60_12',1269],['t63_12',1269],['t64_12',308],['t66_12',1269],['t67_12',254],['t69_12',1269],['t6c_12',1163],['t6d_12',700],['t6f_12',534],['t6g_12',670],['t6i_12',1269],['t6j_12',1269],['t6k_12',1269],['t6l_12',575],['t6n_12',680],['t6o_12',569],['t6p_12',1269],['t6q_12',1269],['t6t_12',668],['t6u_12',587],['t6v_12',1269],['t6w_12',846],['t6y_12',692],['t6z_12',551],['t70_12',1269],['t71_12',1269],['t72_12',1269],['t73_12',1269],['t74_12',1269],['t75_12',1269],['t76_12',233],['t77_12',684],['t79_12',1269],['t7a_12',699],['t7b_12',545],['t7c_12',853]];
+var c12 = 0;
+function fontAdjustments12(){;
+	if (c12<f12.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f12[c12][0],f12[c12][1]);
+		c12++;
+		if (c12%10 == 0) {
+			setTimeout(function(){fontAdjustments12()},0);
+		} else {
+			fontAdjustments12();
+		}
+	}
+};
+function load12(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments12,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 265;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_12");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(13,12,909,1286,0);
+</script>
+</body>
+</html>

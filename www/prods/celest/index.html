@@ -1,0 +1,1046 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>CELEST_XL___Eng_2013_03_07 Page1</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load1();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_1{left:110px;top:393px;}
+#t2_1{left:110px;top:422px;}
+#t3_1{left:110px;top:437px;}
+#t4_1{left:110px;top:451px;}
+#t5_1{left:110px;top:466px;}
+#t6_1{left:110px;top:481px;}
+#t7_1{left:110px;top:495px;}
+#t8_1{left:127px;top:495px;}
+#t9_1{left:127px;top:510px;}
+#ta_1{left:110px;top:525px;}
+#tb_1{left:118px;top:554px;}
+#tc_1{left:118px;top:569px;}
+#td_1{left:118px;top:583px;}
+#te_1{left:118px;top:598px;}
+#tf_1{left:118px;top:613px;}
+#tg_1{left:118px;top:627px;}
+#th_1{left:118px;top:642px;}
+#ti_1{left:118px;top:657px;}
+#tj_1{left:118px;top:671px;}
+#tk_1{left:118px;top:686px;}
+#tl_1{left:118px;top:701px;}
+#tm_1{left:118px;top:715px;}
+#tn_1{left:118px;top:730px;}
+#to_1{left:118px;top:745px;}
+#tp_1{left:118px;top:759px;}
+#tq_1{left:110px;top:797px;}
+#tr_1{left:110px;top:827px;}
+#ts_1{left:110px;top:846px;}
+#tt_1{left:110px;top:865px;}
+#tu_1{left:127px;top:865px;}
+#tv_1{left:127px;top:879px;}
+#tw_1{left:110px;top:898px;}
+#tx_1{left:127px;top:898px;}
+#ty_1{left:127px;top:913px;}
+#tz_1{left:127px;top:928px;}
+#t10_1{left:110px;top:947px;}
+#t11_1{left:127px;top:947px;}
+#t12_1{left:127px;top:961px;}
+#t13_1{left:110px;top:980px;}
+#t14_1{left:127px;top:980px;}
+#t15_1{left:127px;top:995px;}
+#t16_1{left:110px;top:1014px;}
+#t17_1{left:127px;top:1014px;}
+#t18_1{left:127px;top:1029px;}
+#t19_1{left:110px;top:1048px;}
+#t1a_1{left:127px;top:1048px;}
+#t1b_1{left:127px;top:1062px;}
+#t1c_1{left:110px;top:1096px;}
+#t1d_1{left:110px;top:1125px;}
+#t1e_1{left:265px;top:1125px;}
+#t1f_1{left:335px;top:1125px;}
+#t1g_1{left:110px;top:1140px;}
+#t1h_1{left:110px;top:1155px;}
+#t1i_1{left:223px;top:1155px;}
+#t1j_1{left:296px;top:1155px;}
+#t1k_1{left:110px;top:1169px;}
+#t1l_1{left:110px;top:1184px;}
+#t1m_1{left:110px;top:1199px;}
+#t1n_1{left:110px;top:1213px;}
+#t1o_1{left:186px;top:1213px;}
+#t1p_1{left:260px;top:1213px;}
+#t1q_1{left:110px;top:1228px;}
+#t1r_1{left:500px;top:393px;}
+#t1s_1{left:500px;top:422px;}
+#t1t_1{left:517px;top:422px;}
+#t1u_1{left:517px;top:437px;}
+#t1v_1{left:517px;top:451px;}
+#t1w_1{left:500px;top:466px;}
+#t1x_1{left:517px;top:466px;}
+#t1y_1{left:517px;top:481px;}
+#t1z_1{left:517px;top:495px;}
+#t20_1{left:500px;top:510px;}
+#t21_1{left:517px;top:510px;}
+#t22_1{left:517px;top:525px;}
+#t23_1{left:500px;top:539px;}
+#t24_1{left:517px;top:539px;}
+#t25_1{left:517px;top:554px;}
+#t26_1{left:517px;top:569px;}
+#t27_1{left:517px;top:583px;}
+#t28_1{left:517px;top:598px;}
+#t29_1{left:500px;top:613px;}
+#t2a_1{left:517px;top:613px;}
+#t2b_1{left:517px;top:627px;}
+#t2c_1{left:517px;top:642px;}
+#t2d_1{left:500px;top:676px;}
+#t2e_1{left:500px;top:705px;}
+#t2f_1{left:577px;top:705px;}
+#t2g_1{left:500px;top:720px;}
+#t2h_1{left:500px;top:734px;}
+#t2i_1{left:500px;top:749px;}
+#t2j_1{left:576px;top:749px;}
+#t2k_1{left:500px;top:764px;}
+#t2l_1{left:500px;top:778px;}
+#t2m_1{left:500px;top:793px;}
+#t2n_1{left:677px;top:793px;}
+#t2o_1{left:747px;top:793px;}
+#t2p_1{left:500px;top:808px;}
+#t2q_1{left:500px;top:841px;}
+#t2r_1{left:711px;top:841px;}
+#t2s_1{left:500px;top:871px;}
+#t2t_1{left:526px;top:871px;}
+#t2u_1{left:500px;top:900px;}
+#t2v_1{left:517px;top:900px;}
+#t2w_1{left:591px;top:900px;}
+#t2x_1{left:517px;top:915px;}
+#t2y_1{left:500px;top:929px;}
+#t2z_1{left:517px;top:929px;}
+#t30_1{left:587px;top:929px;}
+#t31_1{left:517px;top:944px;}
+#t32_1{left:517px;top:959px;}
+#t33_1{left:500px;top:990px;}
+#t34_1{left:526px;top:990px;}
+#t35_1{left:500px;top:1020px;}
+#t36_1{left:500px;top:1049px;}
+#t37_1{left:517px;top:1049px;}
+#t38_1{left:592px;top:1049px;}
+#t39_1{left:517px;top:1064px;}
+#t3a_1{left:517px;top:1078px;}
+#t3b_1{left:500px;top:1093px;}
+#t3c_1{left:517px;top:1093px;}
+#t3d_1{left:517px;top:1108px;}
+#t3e_1{left:500px;top:1122px;}
+#t3f_1{left:517px;top:1122px;}
+#t3g_1{left:517px;top:1137px;}
+#t3h_1{left:686px;top:1137px;}
+#t3i_1{left:753px;top:1137px;}
+#t3j_1{left:517px;top:1152px;}
+#t3k_1{left:500px;top:1183px;}
+#t3l_1{left:500px;top:1212px;}
+#t3m_1{left:500px;top:1227px;}
+#t3n_1{left:118px;top:305px;}
+#t3o_1{left:118px;top:310px;}
+#t3p_1{left:118px;top:316px;}
+#t3q_1{left:118px;top:184px;}
+#t3r_1{left:230px;top:184px;}
+#t3s_1{left:265px;top:184px;}
+#t3t_1{left:286px;top:183px;}
+#t3u_1{left:118px;top:204px;}
+#t3v_1{left:118px;top:215px;}
+#t3w_1{left:176px;top:215px;}
+#t3x_1{left:118px;top:226px;}
+#t3y_1{left:170px;top:226px;}
+#t3z_1{left:238px;top:226px;}
+#t40_1{left:337px;top:226px;}
+#t41_1{left:358px;top:226px;}
+#t42_1{left:118px;top:237px;}
+#t43_1{left:178px;top:237px;}
+#t44_1{left:118px;top:248px;}
+#t45_1{left:175px;top:248px;}
+#t46_1{left:233px;top:248px;}
+#t47_1{left:336px;top:248px;}
+#t48_1{left:358px;top:248px;}
+#t49_1{left:118px;top:278px;}
+#t4a_1{left:314px;top:160px;}
+#t4b_1{left:349px;top:160px;}
+#t4c_1{left:378px;top:160px;}
+#t4d_1{left:504px;top:160px;}
+#t4e_1{left:543px;top:160px;}
+#t4f_1{left:383px;top:176px;}
+#t4g_1{left:383px;top:188px;}
+#t4h_1{left:383px;top:201px;}
+#t4i_1{left:383px;top:214px;}
+#t4j_1{left:383px;top:226px;}
+#t4k_1{left:383px;top:248px;}
+#t4l_1{left:383px;top:260px;}
+#t4m_1{left:383px;top:273px;}
+#t4n_1{left:383px;top:286px;}
+#t4o_1{left:383px;top:299px;}
+#t4p_1{left:628px;top:248px;}
+#t4q_1{left:628px;top:258px;}
+#t4r_1{left:628px;top:268px;}
+#t4s_1{left:628px;top:278px;}
+#t4t_1{left:628px;top:288px;}
+#t4u_1{left:628px;top:298px;}
+#t4v_1{left:628px;top:178px;}
+#t4w_1{left:628px;top:188px;}
+#t4x_1{left:628px;top:198px;}
+#t4y_1{left:628px;top:219px;}
+#t4z_1{left:383px;top:320px;}
+#t50_1{left:578px;top:320px;}
+#t51_1{left:277px;top:26px;}
+
+.s7_1{
+	FONT-SIZE: 36px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Bd1;
+	color: rgb(0,0,0);
+}
+
+.s1_1{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Bd1;
+	color: rgb(0,0,0);
+}
+
+.s9_1{
+	FONT-SIZE: 30px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Bd1;
+	color: rgb(0,0,0);
+}
+
+.s3_1{
+	FONT-SIZE: 20px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Roman1;
+	color: rgb(0,0,0);
+}
+
+.s11_1{
+	FONT-SIZE: 33px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Bd1;
+	color: rgb(0,0,0);
+}
+
+.s6_1{
+	FONT-SIZE: 36px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Lt1;
+	color: rgb(0,0,0);
+}
+
+.s4_1{
+	FONT-SIZE: 36px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-BdCn1;
+	color: rgb(0,0,0);
+}
+
+.s2_1{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Lt1;
+	color: rgb(0,0,0);
+}
+
+.s5_1{
+	FONT-SIZE: 39px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-BdCn1;
+	color: rgb(0,0,0);
+}
+
+.s10_1{
+	FONT-SIZE: 33px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Lt1;
+	color: rgb(0,0,0);
+}
+
+.s8_1{
+	FONT-SIZE: 36px;
+	FONT-FAMILY: OQXCCD-MT-Extra1;
+	color: rgb(0,0,0);
+}
+
+.s12_1{
+	FONT-SIZE: 46px;
+	FONT-FAMILY: OQXCCD-HelveticaNeueLTStd-Bd1;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: OQXCCD-HelveticaNeueLTStd-Roman1;
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-Roman.eot");
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-Roman.eot?#iefix") format("embedded-opentype"),
+		url("index/fonts/OQXCCD-HelveticaNeueLTStd-Roman.otf") format("opentype");
+}
+
+@font-face {
+	font-family: OQXCCD-HelveticaNeueLTStd-BdCn1;
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-BdCn.eot");
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-BdCn.eot?#iefix") format("embedded-opentype"),
+		url("index/fonts/OQXCCD-HelveticaNeueLTStd-BdCn.otf") format("opentype");
+}
+
+@font-face {
+	font-family: OQXCCD-HelveticaNeueLTStd-Bd1;
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-Bd.eot");
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("index/fonts/OQXCCD-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: OQXCCD-MT-Extra1;
+	src: url("index/fonts/OQXCCD-MT-Extra.eot");
+	src: url("index/fonts/OQXCCD-MT-Extra.eot?#iefix") format("embedded-opentype"),
+		url("index/fonts/OQXCCD-MT-Extra.otf") format("opentype");
+}
+
+@font-face {
+	font-family: OQXCCD-HelveticaNeueLTStd-Lt1;
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-Lt.eot");
+	src: url("index/fonts/OQXCCD-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("index/fonts/OQXCCD-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_1" class="t s1_1">1. WARNINGS</div>
+<div id="t2_1" class="t s2_1">•	 Harmful	if	swallowed.</div>
+<div id="t3_1" class="t s2_1">•	 Toxic	to	fish	and	other	aquatic	organisms.</div>
+<div id="t4_1" class="t s2_1">•	 Store	in	a	cool	dry	place.</div>
+<div id="t5_1" class="t s2_1">•	 Store	away	from	food	and	feed.</div>
+<div id="t6_1" class="t s2_1">•	 Avoid	storage	above	35	°C.</div>
+<div id="t7_1" class="t s2_1">•	</div>
+<div id="t8_1" class="t s2_1">Keep	 out	 of	 reach	 of	 children,	 uninformed	 persons	 and	 ani-</div>
+<div id="t9_1" class="t s2_1">mals.</div>
+<div id="ta_1" class="t s2_1">•	 Do	not	use	treated	seed	for	human	or	animal	consumption.</div>
+<div id="tb_1" class="t s2_1">Although	 this	 remedy	 has	 been	 extensively	 tested	 under	 a	</div>
+<div id="tc_1" class="t s2_1">large	 variety	 of	 conditions,	 the	 registration	 holder	 does	 not	</div>
+<div id="td_1" class="t s2_1">guarantee	 that	 it	 will	 be	 effective	 under	 all	 conditions.	 	 The	</div>
+<div id="te_1" class="t s2_1">activity	and	effect	thereof	may	be	affected	by	factors	such	as	</div>
+<div id="tf_1" class="t s2_1">abnormal	soil,	climatic	and	storage	conditions,	quality	of	dilu-</div>
+<div id="tg_1" class="t s2_1">tion	 water,	 compatibility	 with	 other	 substances	 not	 indicated	</div>
+<div id="th_1" class="t s2_1">on	the	label	and	the	occurrence	of	resistance	of	the	pathogens	</div>
+<div id="ti_1" class="t s2_1">against	the	remedy,	as	well	as	by	the	method,	time	and	accu-</div>
+<div id="tj_1" class="t s2_1">racy	 of	 application.	 The	 registration	 holder	 furthermore	 does	</div>
+<div id="tk_1" class="t s2_1">not	accept	responsibility	for	damage	to	crops,	vegetation,	the	</div>
+<div id="tl_1" class="t s2_1">environment	or	harm	to	man	or	animal,	or	for	lack	of	perfor-</div>
+<div id="tm_1" class="t s2_1">mance	of	the	remedy	concerned	due	to	failure	by	the	user	to	</div>
+<div id="tn_1" class="t s2_1">follow	the	label	instructions,	or	to	the	occurrence	of	conditions	</div>
+<div id="to_1" class="t s2_1">which	could	not	have	been	foreseen	in	terms	of	the	registra-</div>
+<div id="tp_1" class="t s2_1">tion.		Consult	the	supplier	in	the	event	of	any	uncertainty.</div>
+<div id="tq_1" class="t s1_1">2. PRECAUTIONS</div>
+<div id="tr_1" class="t s2_1">•	 Avoid	contact	with	skin,	eyes	or	clothing.</div>
+<div id="ts_1" class="t s2_1">•	 Wash	contaminated	clothing	after	use.</div>
+<div id="tt_1" class="t s2_1">•	</div>
+<div id="tu_1" class="t s2_1">Do	not	eat,	drink	or	smoke	whilst	mixing	or	applying	the	pro-</div>
+<div id="tv_1" class="t s2_1">duct	or	before	washing	hands	and	face.</div>
+<div id="tw_1" class="t s2_1">•	</div>
+<div id="tx_1" class="t s2_1">While	handling	the	concentrate,	during	treatment	of	the	seed,	</div>
+<div id="ty_1" class="t s2_1">and	while	handling	treated	seed,	wear	overalls,	face	shield,	hat	</div>
+<div id="tz_1" class="t s2_1">or	cap,	gloves	and	solid	footwear.</div>
+<div id="t10_1" class="t s2_1">•	</div>
+<div id="t11_1" class="t s2_1">Clean	applicator	after	use.		Dispose	of	rinsate	where	it	will	not	</div>
+<div id="t12_1" class="t s2_1">contaminate	crops,	pastures,	rivers,	dams	and	boreholes.</div>
+<div id="t13_1" class="t s2_1">•	</div>
+<div id="t14_1" class="t s2_1">Prevent	contamination	of	food,	feed,	drinking	water	and	eating	</div>
+<div id="t15_1" class="t s2_1">utensils.</div>
+<div id="t16_1" class="t s2_1">•	</div>
+<div id="t17_1" class="t s2_1">Destroy	empty	container	and	do	not	use	it	for	any	other	pur-</div>
+<div id="t18_1" class="t s2_1">pose.</div>
+<div id="t19_1" class="t s2_1">•	</div>
+<div id="t1a_1" class="t s2_1">When	treated	seed	are	stored	in	seed	bags,	mark	bags	clearly	</div>
+<div id="t1b_1" class="t s2_1">and	never	use	for	any	other	purpose.</div>
+<div id="t1c_1" class="t s1_1">3. RESISTANCE MANAGEMENT</div>
+<div id="t1d_1" class="t s2_1">For	resistance	management,	</div>
+<div id="t1e_1" class="t s1_1">CELEST XL </div>
+<div id="t1f_1" class="t s2_1">is	a	group	code	4	and	</div>
+<div id="t1g_1" class="t s2_1">12	 fungicide.	 	 Any	 fungus	 population	 may	 contain	 individuals	</div>
+<div id="t1h_1" class="t s2_1">naturally	 resistant	 to	</div>
+<div id="t1i_1" class="t s1_1">CELEST XL </div>
+<div id="t1j_1" class="t s2_1">and	 other	 group	 code	 4	 and	</div>
+<div id="t1k_1" class="t s2_1">12	 fungicides.	 The	 resistant	 individuals	 can	 eventually	 dominate	</div>
+<div id="t1l_1" class="t s2_1">the	 fungus	 population	 if	 these	 fungicides	 are	 used	 repeatedly	</div>
+<div id="t1m_1" class="t s2_1">and	 exclusively	 in	 programs.	 	 These	 resistant	 fungi	 may	 not	 be	</div>
+<div id="t1n_1" class="t s2_1">controlled	 by	</div>
+<div id="t1o_1" class="t s1_1">CELEST XL </div>
+<div id="t1p_1" class="t s2_1">or	 any	 other	 group	 code	 4	 and	 12	</div>
+<div id="t1q_1" class="t s2_1">fungicides.</div>
+<div id="t1r_1" class="t s2_1">To	delay	fungicide	resistance:</div>
+<div id="t1s_1" class="t s2_1">•	</div>
+<div id="t1t_1" class="t s2_1">Avoid	exclusive	repeated	use	of	fungicides	from	the	same	fun-</div>
+<div id="t1u_1" class="t s2_1">gicide	group	code.		Alternate	or	tank	mix	with	products	from	</div>
+<div id="t1v_1" class="t s2_1">different	fungicide	group	codes.</div>
+<div id="t1w_1" class="t s2_1">•	</div>
+<div id="t1x_1" class="t s2_1">Refer	 to	 individual	 product	 labels	 when	 alternating	 products	</div>
+<div id="t1y_1" class="t s2_1">or	when	using	tank	mixtures	with	products	in	fungicide	group	</div>
+<div id="t1z_1" class="t s2_1">codes	7,	27,	28,	29,	30	or	M.	</div>
+<div id="t20_1" class="t s2_1">•	</div>
+<div id="t21_1" class="t s2_1">Integrate	other	control	methods	(chemical,	cultural,	biological)	</div>
+<div id="t22_1" class="t s2_1">into	disease	control	programs.</div>
+<div id="t23_1" class="t s2_1">•	</div>
+<div id="t24_1" class="t s2_1">Development	 of	 resistance	 to	 fungicides	 by	 seed	 and	 soil-</div>
+<div id="t25_1" class="t s2_1">borne	 pathogens	 has	 been	 documented.	 Consult	 your	 agri-</div>
+<div id="t26_1" class="t s2_1">cultural	advisor	or	Syngenta	representative	immediately	should	</div>
+<div id="t27_1" class="t s2_1">resistance	be	suspected	and	for	guidance	and	strategies	for	</div>
+<div id="t28_1" class="t s2_1">disease	management.</div>
+<div id="t29_1" class="t s2_1">•	</div>
+<div id="t2a_1" class="t s2_1">For	specific	information	on	resistance	management,	contact	the	</div>
+<div id="t2b_1" class="t s2_1">registration	holder	of	this	product	(Syngenta	South	Africa)	or	visit	</div>
+<div id="t2c_1" class="t s2_1">the	FRAC	website	at	http://www.frac.info/frac/index.html</div>
+<div id="t2d_1" class="t s1_1">4. PRODUCT PROPERTIES</div>
+<div id="t2e_1" class="t s1_1">CELEST XL </div>
+<div id="t2f_1" class="t s2_1">contains	 fludioxonil	 which	 is	 a	 broad	 spectrum	</div>
+<div id="t2g_1" class="t s2_1">contact	 fungicide	 with	 residual	 activity.	 Fludioxonil	 has	 limited	</div>
+<div id="t2h_1" class="t s2_1">uptake	 by	 the	 seed	 and	 little	 translocation	 within	 the	 seedling.	</div>
+<div id="t2i_1" class="t s1_1">CELEST XL </div>
+<div id="t2j_1" class="t s2_1">also	 contains	 mefenoxam,	 a	 systemic	 fungicide,	</div>
+<div id="t2k_1" class="t s2_1">with	 protective	 and	 curative	 properties.	 Mefenoxam	 is	 systemi-</div>
+<div id="t2l_1" class="t s2_1">cally	translocated	to	all	parts	of	the	seedling	during	germination.	</div>
+<div id="t2m_1" class="t s2_1">When	applied	as	recommended,	</div>
+<div id="t2n_1" class="t s1_1">CELEST XL </div>
+<div id="t2o_1" class="t s2_1">controls	seed	and	</div>
+<div id="t2p_1" class="t s2_1">soil-borne	diseases	of	various	crops.</div>
+<div id="t2q_1" class="t s1_1">5. DIRECTIONS FOR USE </div>
+<div id="t2r_1" class="t s2_1">Use	only	as	directed</div>
+<div id="t2s_1" class="t s1_1">5.1 </div>
+<div id="t2t_1" class="t s1_1">COMPATIBILITY</div>
+<div id="t2u_1" class="t s2_1">•	</div>
+<div id="t2v_1" class="t s1_1">CELEST XL </div>
+<div id="t2w_1" class="t s2_1">is	 not	 compatible	 with	 solvent-based	 formula-</div>
+<div id="t2x_1" class="t s2_1">tions.</div>
+<div id="t2y_1" class="t s2_1">•	</div>
+<div id="t2z_1" class="t s1_1">CELEST XL </div>
+<div id="t30_1" class="t s2_1">is	compatible	with	film	coating	products	and	with	</div>
+<div id="t31_1" class="t s2_1">FS/WS	formulations	of	other	seed	treatment	compounds	with	</div>
+<div id="t32_1" class="t s2_1">neutral	reaction.</div>
+<div id="t33_1" class="t s1_1">5.2 </div>
+<div id="t34_1" class="t s1_1">APPLICATION INFORMATION</div>
+<div id="t35_1" class="t s1_1">5.2.1 Mechanical seed dressing equipment:</div>
+<div id="t36_1" class="t s2_1">•	</div>
+<div id="t37_1" class="t s1_1">CELEST XL </div>
+<div id="t38_1" class="t s2_1">can	 be	 applied	 on	 any	 continuous	 flow	 seed	</div>
+<div id="t39_1" class="t s2_1">treatment	 equipment	 if	 the	 formulation	 is	 sprayed	 onto	 the	</div>
+<div id="t3a_1" class="t s2_1">seed	through	spinning	discs	in	a	liquid	mist	chamber.</div>
+<div id="t3b_1" class="t s2_1">•	</div>
+<div id="t3c_1" class="t s2_1">Rotating	drums	or	fluidised	bed	systems	for	film	coating	pro-</div>
+<div id="t3d_1" class="t s2_1">cedures	are	also	recommended.</div>
+<div id="t3e_1" class="t s2_1">•	</div>
+<div id="t3f_1" class="t s2_1">It	is	essential	that	any	continuous	flow	seed	treatment	equip-</div>
+<div id="t3g_1" class="t s2_1">ment	should	be	calibrated	with	</div>
+<div id="t3h_1" class="t s1_1">CELEST XL</div>
+<div id="t3i_1" class="t s2_1">,	as	flow	charac-</div>
+<div id="t3j_1" class="t s2_1">teristics	may	not	be	the	same	as	for	other	seed	treatments.</div>
+<div id="t3k_1" class="t s1_1">5.2.2 Preparation of the slurry:</div>
+<div id="t3l_1" class="t s2_1">When	used	diluted,	the	following	procedures	should	be	followed	</div>
+<div id="t3m_1" class="t s2_1">for	preparing	the	slurry:</div>
+<div id="t3n_1" class="t s3_1">Product names marked ® or ™ , the ALLIANCE FRAME</div>
+<div id="t3o_1" class="t s3_1">the SYNGENTA Logo and the PURPOSE ICON </div>
+<div id="t3p_1" class="t s3_1">are Trademarks of a Syngenta Group Company</div>
+<div id="t3q_1" class="t s4_1">SAADBEHANDELINGSGROEP </div>
+<div id="t3r_1" class="t s4_1">4 & 12 </div>
+<div id="t3s_1" class="t s4_1">SEED </div>
+<div id="t3t_1" class="t s5_1">TREATMENT GROUP </div>
+<div id="t3u_1" class="t s6_1">Aktiewe	bestanddele	/	Active	ingredients:</div>
+<div id="t3v_1" class="t s7_1">Fludioksonil </div>
+<div id="t3w_1" class="t s7_1">(fenielpirrool) / </div>
+<div id="t3x_1" class="t s7_1">Fludioxonil </div>
+<div id="t3y_1" class="t s7_1">(phenylpyrrole) </div>
+<div id="t3z_1" class="t s6_1">......................................</div>
+<div id="t40_1" class="t s7_1">25 g/</div>
+<div id="t41_1" class="t s8_1">l</div>
+<div id="t42_1" class="t s7_1">Mefenoxam </div>
+<div id="t43_1" class="t s7_1">(fenielamiede) / </div>
+<div id="t44_1" class="t s7_1">Mefenoxam </div>
+<div id="t45_1" class="t s7_1">(pheylamide) </div>
+<div id="t46_1" class="t s6_1">..............................…......</div>
+<div id="t47_1" class="t s7_1">10 g/</div>
+<div id="t48_1" class="t s8_1">l</div>
+<div id="t49_1" class="t s9_1">UN Not classified / Nie geklassifiseerd</div>
+<div id="t4a_1" class="t s10_1">Reg.	No.	</div>
+<div id="t4b_1" class="t s11_1">L6353 </div>
+<div id="t4c_1" class="t s10_1">Act	/	Wet		No.	36	of	/	van	1947				</div>
+<div id="t4d_1" class="t s11_1">W130349 </div>
+<div id="t4e_1" class="t s10_1">(Botswana)</div>
+<div id="t4f_1" class="t s12_1">‘n Vloeibare konsentraat saadbehande-</div>
+<div id="t4g_1" class="t s12_1">ling swamdoder met kontak en siste-</div>
+<div id="t4h_1" class="t s12_1">miese eienskappe vir die beheer van </div>
+<div id="t4i_1" class="t s12_1">saadverrotting en saailingverwelksiekte </div>
+<div id="t4j_1" class="t s12_1">in gewasse soos aangedui.</div>
+<div id="t4k_1" class="t s12_1">A flowable concentrate seed treatment </div>
+<div id="t4l_1" class="t s12_1">fungicide with contact and systemic </div>
+<div id="t4m_1" class="t s12_1">properties for control of seed decay </div>
+<div id="t4n_1" class="t s12_1">and seedling damping-off in crops as </div>
+<div id="t4o_1" class="t s12_1">indicated.</div>
+<div id="t4p_1" class="t s10_1">Registration	holder	/	Registrasiehouer:</div>
+<div id="t4q_1" class="t s11_1">Syngenta SA (Pty) Ltd. / (Edms) Bpk.</div>
+<div id="t4r_1" class="t s10_1">(Co./Mpy	Reg.	No.	1998/013761/07)</div>
+<div id="t4s_1" class="t s10_1">Private	Bag	/	Privaatsak	X	60</div>
+<div id="t4t_1" class="t s10_1">HALFWAY	HOUSE,	1685	RSA.		</div>
+<div id="t4u_1" class="t s10_1">Tel.	(011)	541-4000</div>
+<div id="t4v_1" class="t s11_1">EMERGENCY TEL. / NOOD TEL. </div>
+<div id="t4w_1" class="t s11_1">++27 (0) 8312 33 911 </div>
+<div id="t4x_1" class="t s11_1">(Bateleur 911)</div>
+<div id="t4y_1" class="t s11_1">© SYNGENTA, AG</div>
+<div id="t4z_1" class="t s11_1">Batch No </div>
+<div id="t50_1" class="t s11_1">Date of Manufacture</div>
+<div id="t51_1" class="t s1_1">BEFORE USING THIS PRODUCT READ ENTIRE LABEL CAREFULLY</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg1Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg1"><img src="index/1.png" id="pdf1" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f1 = [['t1_1',339],['t2_1',518],['t3_1',958],['t4_1',599],['t5_1',742],['t6_1',655],['t8_1',1304],['ta_1',1324],['tb_1',1317],['tc_1',1318],['td_1',1317],['tg_1',1317],['tj_1',1317],['tq_1',425],['tr_1',935],['ts_1',883],['t1c_1',755],['t1e_1',267],['t1g_1',1387],['t1h_1',447],['t1i_1',272],['t1j_1',640],['t1k_1',1387],['t1l_1',1387],['t1m_1',1387],['t1n_1',294],['t1o_1',274],['t1p_1',787],['t1x_1',1317],['t24_1',1304],['t25_1',1304],['t2d_1',641],['t2e_1',280],['t2f_1',1077],['t2g_1',1387],['t2h_1',1387],['t2i_1',278],['t2j_1',1082],['t2k_1',1373],['t2n_1',267],['t2q_1',605],['t2v_1',274],['t2w_1',1006],['t2z_1',265],['t34_1',694],['t35_1',1043],['t37_1',276],['t38_1',1016],['t39_1',1317],['t3h_1',268],['t3k_1',739],['t3n_1',510],['t3o_1',427],['t3p_1',422],['t3r_1',93],['t3t_1',305],['t3w_1',256],['t40_1',86],['t43_1',269],['t47_1',87],['t49_1',561],['t4f_1',906],['t4g_1',906],['t4h_1',906],['t4i_1',906],['t4j_1',601],['t4k_1',906],['t4l_1',907],['t4m_1',906],['t4n_1',906],['t4q_1',574],['t4v_1',516],['t4w_1',325],['t4x_1',221],['t4y_1',290],['t4z_1',149],['t50_1',331],['t51_1',1583]];
+var c1 = 0;
+function fontAdjustments1(){;
+	if (c1<f1.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f1[c1][0],f1[c1][1]);
+		c1++;
+		if (c1%10 == 0) {
+			setTimeout(function(){fontAdjustments1()},0);
+		} else {
+			fontAdjustments1();
+		}
+	}
+};
+function load1(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments1,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 182;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_1");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(3,1,909,1286,0);
+</script>
+</body>
+</html>

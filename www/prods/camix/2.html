@@ -1,0 +1,996 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>CAMIX___Eng___25_09_2007 Page2</title>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" /></input>
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" /></input>
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); "></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+</script>
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load2();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_2{left:456px;top:69px;}
+#t2_2{left:456px;top:83px;}
+#t3_2{left:456px;top:98px;}
+#t4_2{left:456px;top:112px;}
+#t5_2{left:630px;top:112px;}
+#t6_2{left:676px;top:112px;}
+#t7_2{left:456px;top:127px;}
+#t8_2{left:456px;top:156px;}
+#t9_2{left:557px;top:156px;}
+#ta_2{left:602px;top:156px;}
+#tb_2{left:456px;top:170px;}
+#tc_2{left:456px;top:185px;}
+#td_2{left:456px;top:199px;}
+#te_2{left:456px;top:214px;}
+#tf_2{left:456px;top:243px;}
+#tg_2{left:456px;top:272px;}
+#th_2{left:500px;top:272px;}
+#ti_2{left:456px;top:301px;}
+#tj_2{left:456px;top:315px;}
+#tk_2{left:456px;top:330px;}
+#tl_2{left:512px;top:330px;}
+#tm_2{left:521px;top:330px;}
+#tn_2{left:456px;top:359px;}
+#to_2{left:456px;top:373px;}
+#tp_2{left:456px;top:402px;}
+#tq_2{left:644px;top:402px;}
+#tr_2{left:689px;top:402px;}
+#ts_2{left:456px;top:417px;}
+#tt_2{left:456px;top:446px;}
+#tu_2{left:456px;top:460px;}
+#tv_2{left:456px;top:475px;}
+#tw_2{left:456px;top:504px;}
+#tx_2{left:456px;top:519px;}
+#ty_2{left:456px;top:533px;}
+#tz_2{left:456px;top:548px;}
+#t10_2{left:456px;top:577px;}
+#t11_2{left:478px;top:577px;}
+#t12_2{left:478px;top:591px;}
+#t13_2{left:456px;top:620px;}
+#t14_2{left:456px;top:649px;}
+#t15_2{left:568px;top:649px;}
+#t16_2{left:613px;top:649px;}
+#t17_2{left:456px;top:664px;}
+#t18_2{left:456px;top:678px;}
+#t19_2{left:456px;top:693px;}
+#t1a_2{left:456px;top:722px;}
+#t1b_2{left:456px;top:736px;}
+#t1c_2{left:456px;top:751px;}
+#t1d_2{left:456px;top:765px;}
+#t1e_2{left:456px;top:794px;}
+#t1f_2{left:456px;top:823px;}
+#t1g_2{left:474px;top:823px;}
+#t1h_2{left:517px;top:823px;}
+#t1i_2{left:651px;top:823px;}
+#t1j_2{left:656px;top:823px;}
+#t1k_2{left:474px;top:838px;}
+#t1l_2{left:520px;top:838px;}
+#t1m_2{left:474px;top:852px;}
+#t1n_2{left:474px;top:867px;}
+#t1o_2{left:474px;top:881px;}
+#t1p_2{left:456px;top:905px;}
+#t1q_2{left:474px;top:905px;}
+#t1r_2{left:574px;top:905px;}
+#t1s_2{left:474px;top:920px;}
+#t1t_2{left:490px;top:922px;}
+#t1u_2{left:497px;top:920px;}
+#t1v_2{left:456px;top:944px;}
+#t1w_2{left:474px;top:944px;}
+#t1x_2{left:545px;top:944px;}
+#t1y_2{left:474px;top:958px;}
+#t1z_2{left:474px;top:973px;}
+#t20_2{left:456px;top:997px;}
+#t21_2{left:474px;top:997px;}
+#t22_2{left:548px;top:997px;}
+#t23_2{left:474px;top:1012px;}
+#t24_2{left:474px;top:1026px;}
+#t25_2{left:474px;top:1041px;}
+#t26_2{left:456px;top:1070px;}
+#t27_2{left:456px;top:1099px;}
+#t28_2{left:474px;top:1099px;}
+#t29_2{left:474px;top:1113px;}
+#t2a_2{left:474px;top:1128px;}
+#t2b_2{left:474px;top:1142px;}
+#t2c_2{left:474px;top:1157px;}
+#t2d_2{left:456px;top:1171px;}
+#t2e_2{left:474px;top:1171px;}
+#t2f_2{left:474px;top:1186px;}
+#t2g_2{left:456px;top:1200px;}
+#t2h_2{left:474px;top:1200px;}
+#t2i_2{left:474px;top:1215px;}
+#t2j_2{left:474px;top:1229px;}
+#t2k_2{left:404px;top:41px;}
+#t2l_2{left:448px;top:41px;}
+#t2m_2{left:66px;top:257px;}
+#t2n_2{left:84px;top:257px;}
+#t2o_2{left:122px;top:257px;}
+#t2p_2{left:166px;top:257px;}
+#t2q_2{left:84px;top:272px;}
+#t2r_2{left:84px;top:286px;}
+#t2s_2{left:66px;top:315px;}
+#t2t_2{left:84px;top:315px;}
+#t2u_2{left:84px;top:330px;}
+#t2v_2{left:84px;top:344px;}
+#t2w_2{left:84px;top:359px;}
+#t2x_2{left:137px;top:359px;}
+#t2y_2{left:177px;top:359px;}
+#t2z_2{left:66px;top:388px;}
+#t30_2{left:66px;top:417px;}
+#t31_2{left:84px;top:417px;}
+#t32_2{left:84px;top:431px;}
+#t33_2{left:84px;top:446px;}
+#t34_2{left:84px;top:460px;}
+#t35_2{left:84px;top:475px;}
+#t36_2{left:84px;top:490px;}
+#t37_2{left:66px;top:504px;}
+#t38_2{left:84px;top:504px;}
+#t39_2{left:84px;top:519px;}
+#t3a_2{left:84px;top:533px;}
+#t3b_2{left:84px;top:548px;}
+#t3c_2{left:84px;top:562px;}
+#t3d_2{left:66px;top:577px;}
+#t3e_2{left:84px;top:577px;}
+#t3f_2{left:84px;top:591px;}
+#t3g_2{left:66px;top:606px;}
+#t3h_2{left:84px;top:606px;}
+#t3i_2{left:84px;top:620px;}
+#t3j_2{left:84px;top:635px;}
+#t3k_2{left:84px;top:649px;}
+#t3l_2{left:84px;top:664px;}
+#t3m_2{left:66px;top:693px;}
+#t3n_2{left:66px;top:707px;}
+#t3o_2{left:66px;top:722px;}
+#t3p_2{left:66px;top:751px;}
+#t3q_2{left:66px;top:780px;}
+#t3r_2{left:66px;top:809px;}
+#t3s_2{left:84px;top:809px;}
+#t3t_2{left:84px;top:823px;}
+#t3u_2{left:66px;top:838px;}
+#t3v_2{left:84px;top:838px;}
+#t3w_2{left:275px;top:838px;}
+#t3x_2{left:368px;top:838px;}
+#t3y_2{left:84px;top:852px;}
+#t3z_2{left:66px;top:867px;}
+#t40_2{left:84px;top:867px;}
+#t41_2{left:84px;top:881px;}
+#t42_2{left:84px;top:896px;}
+#t43_2{left:66px;top:910px;}
+#t44_2{left:84px;top:910px;}
+#t45_2{left:144px;top:910px;}
+#t46_2{left:188px;top:910px;}
+#t47_2{left:84px;top:925px;}
+#t48_2{left:66px;top:939px;}
+#t49_2{left:84px;top:939px;}
+#t4a_2{left:179px;top:939px;}
+#t4b_2{left:224px;top:939px;}
+#t4c_2{left:84px;top:954px;}
+#t4d_2{left:84px;top:968px;}
+#t4e_2{left:66px;top:983px;}
+#t4f_2{left:84px;top:983px;}
+#t4g_2{left:130px;top:983px;}
+#t4h_2{left:84px;top:997px;}
+#t4i_2{left:66px;top:1031px;}
+#t4j_2{left:286px;top:1031px;}
+#t4k_2{left:66px;top:1064px;}
+#t4l_2{left:66px;top:1093px;}
+#t4m_2{left:115px;top:1093px;}
+#t4n_2{left:66px;top:1108px;}
+#t4o_2{left:66px;top:1143px;}
+#t4p_2{left:66px;top:1172px;}
+#t4q_2{left:66px;top:1201px;}
+#t4r_2{left:66px;top:1230px;}
+#t4s_2{left:114px;top:79px;}
+#t4t_2{left:114px;top:108px;}
+#t4u_2{left:114px;top:137px;}
+#t4v_2{left:114px;top:166px;}
+#t4w_2{left:114px;top:181px;}
+#t4x_2{left:114px;top:210px;}
+#t4y_2{left:334px;top:79px;}
+#t4z_2{left:334px;top:108px;}
+#t50_2{left:334px;top:137px;}
+#t51_2{left:334px;top:166px;}
+#t52_2{left:330px;top:210px;}
+#t53_2{left:78px;top:79px;}
+#t54_2{left:78px;top:108px;}
+#t55_2{left:78px;top:137px;}
+#t56_2{left:78px;top:166px;}
+#t57_2{left:78px;top:209px;}
+
+.s1_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: GZICUV-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+.s3_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: GZICUV-Mt-ExtraPlain2;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: GZICUV-HelveticaNeueLTStd-Bd2;
+	color: rgb(0,0,0);
+}
+
+.s4_2{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: GZICUV-HelveticaNeueLTStd-Lt2;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: GZICUV-HelveticaNeueLTStd-Lt2;
+	src: url("2/fonts/GZICUV-HelveticaNeueLTStd-Lt.eot");
+	src: url("2/fonts/GZICUV-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/GZICUV-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: GZICUV-HelveticaNeueLTStd-Bd2;
+	src: url("2/fonts/GZICUV-HelveticaNeueLTStd-Bd.eot");
+	src: url("2/fonts/GZICUV-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/GZICUV-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+@font-face {
+	font-family: GZICUV-Mt-ExtraPlain2;
+	src: url("2/fonts/GZICUV-Mt-ExtraPlain.eot");
+	src: url("2/fonts/GZICUV-Mt-ExtraPlain.eot?#iefix") format("embedded-opentype"),
+		url("2/fonts/GZICUV-Mt-ExtraPlain.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_2" class="t s1_2">tator.	 Agitation	 must	 be	 continued	 throughout	 the	 mixing	 and	</div>
+<div id="t2_2" class="t s1_2">spraying	operation.	Resuspend	the	spray	mixture	if	agitation	was	</div>
+<div id="t3_2" class="t s1_2">suspended	 for	 longer	 than	 5	 min.	 	 When	 the	 spray	 or	 premix	</div>
+<div id="t4_2" class="t s1_2">tank	 is	 half	 full	 with	 water,	 add	</div>
+<div id="t5_2" class="t s2_2">CAMIX </div>
+<div id="t6_2" class="t s1_2">slowly	 and	 agitate	 until	</div>
+<div id="t7_2" class="t s1_2">completely	dispersed.	</div>
+<div id="t8_2" class="t s1_2">If	tank	mixed,	add	</div>
+<div id="t9_2" class="t s2_2">CAMIX </div>
+<div id="ta_2" class="t s1_2">first	to	the	water.	Then	add	the	other	</div>
+<div id="tb_2" class="t s1_2">suspension	 concentrate	 GESAPRIM	 SUPER	 and	 only	 thereafter	</div>
+<div id="tc_2" class="t s1_2">the	emulsifiable	concentrate	KARATE	ZEON.	Lastly	add	the	adju-</div>
+<div id="td_2" class="t s1_2">vant	 and	 then	 continue	 to	 fill	 the	 tank	 to	 the	 required	 level	 with	</div>
+<div id="te_2" class="t s1_2">water	whilst	agitating.</div>
+<div id="tf_2" class="t s2_2">5.4 Ground application:</div>
+<div id="tg_2" class="t s2_2">CAMIX </div>
+<div id="th_2" class="t s1_2">must	be	applied	the	same	day	as	mixing.</div>
+<div id="ti_2" class="t s1_2">Apply	 by	 means	 of	 a	 tractor	 mounted	 boom	 sprayer	 which	 is	</div>
+<div id="tj_2" class="t s1_2">correctly	 calibrated	 with	 continuous	 agitation	 to	 deliver	 at	 least	</div>
+<div id="tk_2" class="t s1_2">200	-	300	</div>
+<div id="tl_2" class="t s3_2">l</div>
+<div id="tm_2" class="t s1_2">spray	mixture/ha.	Avoid	overlapping	of	spray	swaths.</div>
+<div id="tn_2" class="t s1_2">Flat	fan	hydraulic	nozzles	(110º)	are	recommended	for	optimum	</div>
+<div id="to_2" class="t s1_2">coverage.</div>
+<div id="tp_2" class="t s1_2">No	pre-emergence	applications	of	</div>
+<div id="tq_2" class="t s2_2">CAMIX</div>
+<div id="tr_2" class="t s1_2">should	be	done	with	</div>
+<div id="ts_2" class="t s1_2">sleeve	boom	sprayers.	</div>
+<div id="tt_2" class="t s1_2">If	 these	 precautions	 are	 not	 adhered	 to	 the	 registration	 holder	</div>
+<div id="tu_2" class="t s1_2">cannot	be	held	responsible	for	any	non	performance	or	damages	</div>
+<div id="tv_2" class="t s1_2">suffered.	</div>
+<div id="tw_2" class="t s1_2">Rain	 or	 irrigation	 of	 10	 -	 20	 mm	 is	 needed	 after	 application	 to	</div>
+<div id="tx_2" class="t s1_2">leach	the	chemical	into	the	germinating	zone.	If	this	precipitation	</div>
+<div id="ty_2" class="t s1_2">does	not	happen	within	14	days	of	application,	reduced	efficacy	</div>
+<div id="tz_2" class="t s1_2">can	be	expected.</div>
+<div id="t10_2" class="t s2_2">5.5 </div>
+<div id="t11_2" class="t s2_2">Aerial application (maize – only pre-emergence applica-</div>
+<div id="t12_2" class="t s2_2">tions)</div>
+<div id="t13_2" class="t s2_2">Avoid chemical drift at all times</div>
+<div id="t14_2" class="t s1_2">Aerial	 application	 of	</div>
+<div id="t15_2" class="t s2_2">CAMIX</div>
+<div id="t16_2" class="t s1_2">may	 only	 be	 done	 by	 a	 registered	</div>
+<div id="t17_2" class="t s1_2">aerial	application	operator	using	a	correctly	calibrated,	regi	stered	</div>
+<div id="t18_2" class="t s1_2">aircraft	 according	 to	 the	 instructions	 of	 SANS	 10118	 (Aerial	</div>
+<div id="t19_2" class="t s1_2">Application	of	Agricultural	Remedies).	</div>
+<div id="t1a_2" class="t s1_2">It	is	important	to	ensure	that	the	spray	mixture	is	distributed	evenly	</div>
+<div id="t1b_2" class="t s1_2">over	 the	 target	 area	 and	 that	 the	 loss	 of	 spray	 material	 during	</div>
+<div id="t1c_2" class="t s1_2">application	is	restricted	to	a	minimum.	Drift	should	be	avoided	at	</div>
+<div id="t1d_2" class="t s1_2">all	times.	It	is	therefore	essential	that	the	following	criteria	are	met:</div>
+<div id="t1e_2" class="t s2_2">5.5.1 Application parameters:</div>
+<div id="t1f_2" class="t s1_2">•	</div>
+<div id="t1g_2" class="t s2_2">Volume</div>
+<div id="t1h_2" class="t s1_2">:	 A	 volume	 of	 25	 -	 30	</div>
+<div id="t1i_2" class="t s3_2">l</div>
+<div id="t1j_2" class="t s1_2">/ha	 is	 recommended.	 	 As	</div>
+<div id="t1k_2" class="t s2_2">CAMIX </div>
+<div id="t1l_2" class="t s1_2">has	 not	 been	 evaluated	 at	 a	 reduced	 volume	 rate,	</div>
+<div id="t1m_2" class="t s1_2">the	 registration	 holder	 cannot	 guarantee	 efficacy	 or	 be	 held	</div>
+<div id="t1n_2" class="t s1_2">responsible	 for	 any	 adverse	 effects	 if	 the	 product	 is	 applied	</div>
+<div id="t1o_2" class="t s1_2">aerially	at	a	lower	volume	rate	than	recommended	above.	</div>
+<div id="t1p_2" class="t s1_2">•	</div>
+<div id="t1q_2" class="t s2_2">Droplet coverage</div>
+<div id="t1r_2" class="t s1_2">:	A	droplet	coverage	of	20	-	30	droplets	per	</div>
+<div id="t1s_2" class="t s1_2">cm</div>
+<div id="t1t_2" class="t s4_2">2</div>
+<div id="t1u_2" class="t s1_2">must	be	recovered	at	the	target.</div>
+<div id="t1v_2" class="t s1_2">•	</div>
+<div id="t1w_2" class="t s2_2">Droplet size</div>
+<div id="t1x_2" class="t s1_2">:	A	droplet	spectrum	with	a	VMD	of	350	-	400	</div>
+<div id="t1y_2" class="t s1_2">microns	is	recommended.	Ensure	that	the	production	of	fine	</div>
+<div id="t1z_2" class="t s1_2">droplets	(less	than	150	microns)	is	restricted	to	a	minimum.</div>
+<div id="t20_2" class="t s1_2">•	</div>
+<div id="t21_2" class="t s2_2">Flying height</div>
+<div id="t22_2" class="t s1_2">:	The	height	of	the	spray	boom	should	be	main-</div>
+<div id="t23_2" class="t s1_2">tained	at	3	-	4	metres	above	the	target.	Do	not	spray	when	</div>
+<div id="t24_2" class="t s1_2">aircraft	is	in	a	climb,	at	the	top	or	during	a	dive,	or	when	bank-</div>
+<div id="t25_2" class="t s1_2">ing.</div>
+<div id="t26_2" class="t s2_2">5.5.2 Equipment:</div>
+<div id="t27_2" class="t s1_2">•	</div>
+<div id="t28_2" class="t s1_2">Use	suitable	atomising	equipment	(hydraulic	nozzles	or	rotary	</div>
+<div id="t29_2" class="t s1_2">atomisers)	that	will	produce	the	desired	droplet	size	and	cover-</div>
+<div id="t2a_2" class="t s1_2">age	but	which	will	ensure	the	minimum	loss	of	product	either	</div>
+<div id="t2b_2" class="t s1_2">through	endodrift	(within	target	field)	or	exodrift	(outside	target	</div>
+<div id="t2c_2" class="t s1_2">field).		</div>
+<div id="t2d_2" class="t s1_2">•	</div>
+<div id="t2e_2" class="t s1_2">The	 operator	 must	 use	 a	 set	 up	 that	 will	 produce	 a	 droplet	</div>
+<div id="t2f_2" class="t s1_2">spectrum	with	the	lowest	possible	relative	span.</div>
+<div id="t2g_2" class="t s1_2">•	</div>
+<div id="t2h_2" class="t s1_2">All	 nozzles	 /	 atomisers	 should	 be	 positioned	 within	 the	 inner	</div>
+<div id="t2i_2" class="t s1_2">60%	to	75%	of	the	wingspan	to	prevent	droplets	from	entering	</div>
+<div id="t2j_2" class="t s1_2">the	wingtip	vortices.</div>
+<div id="t2k_2" class="t s2_2">CAMIX </div>
+<div id="t2l_2" class="t s1_2">/	2</div>
+<div id="t2m_2" class="t s1_2">•	</div>
+<div id="t2n_2" class="t s1_2">Where	</div>
+<div id="t2o_2" class="t s2_2">CAMIX</div>
+<div id="t2p_2" class="t s1_2">and	GESAPRIM	SUPER	are	tankmixed,	follow	</div>
+<div id="t2q_2" class="t s1_2">the	 crop	 rotational	 indications	 as	 on	 the	 GESAPRIM	 SUPER	</div>
+<div id="t2r_2" class="t s1_2">label.	</div>
+<div id="t2s_2" class="t s1_2">•	</div>
+<div id="t2t_2" class="t s1_2">All	 rotational	 crops	 should	 be	 planted	 only	 after	 thorough	</div>
+<div id="t2u_2" class="t s1_2">cultivation.	Since	the	product	is	metabolised	by	microbial	acti-</div>
+<div id="t2v_2" class="t s1_2">vity,	periods	of	low	microbial	activity	might	extend	the	residual	</div>
+<div id="t2w_2" class="t s1_2">activity	of	</div>
+<div id="t2x_2" class="t s2_2">CAMIX</div>
+<div id="t2y_2" class="t s1_2">.	</div>
+<div id="t2z_2" class="t s2_2">Warning: Possible damage to triazine sensitive crops</div>
+<div id="t30_2" class="t s1_2">•	</div>
+<div id="t31_2" class="t s1_2">Where	soils	have	been	treated	with	lime	to	correct	the	soil	pH,	</div>
+<div id="t32_2" class="t s1_2">the	possibility	of	crop	damage	increases	dramatically	in	fields	</div>
+<div id="t33_2" class="t s1_2">where	 triazines	 were	 previously	 applied.	 This	 is	 due	 to	 the	</div>
+<div id="t34_2" class="t s1_2">triazine	 molecules	 being	 replaced	 on	 the	 clay	 complex	 with	</div>
+<div id="t35_2" class="t s1_2">calcium	cations	and	the	triazine	thus	becoming	more	available	</div>
+<div id="t36_2" class="t s1_2">in	the	soil-water	complex.	</div>
+<div id="t37_2" class="t s1_2">•	</div>
+<div id="t38_2" class="t s1_2">Only	maize	should	be	planted	in	the	season	directly	after	soil	</div>
+<div id="t39_2" class="t s1_2">pH	adjustment	with	lime.	No	triazine	sensitive	crops	should	be	</div>
+<div id="t3a_2" class="t s1_2">planted	in	the	season	after	the	soil	pH	adjustment	has	been	</div>
+<div id="t3b_2" class="t s1_2">done	with	lime.	This	applies	even	if	triazines	were	used	at	crop	</div>
+<div id="t3c_2" class="t s1_2">rotation	rates	in	previous	years.</div>
+<div id="t3d_2" class="t s1_2">•	</div>
+<div id="t3e_2" class="t s1_2">Triazine	 sensitive	 crops	 include	 all	 broadleaf	 crops	 and	 all	</div>
+<div id="t3f_2" class="t s1_2">cereals.	</div>
+<div id="t3g_2" class="t s1_2">•	</div>
+<div id="t3h_2" class="t s1_2">These	 warnings	 however	 do	 not	 guarantee	 that	 no	 damage	</div>
+<div id="t3i_2" class="t s1_2">would	 be	 experienced	 to	 even	 the	 following	 maize	 crop	 as	</div>
+<div id="t3j_2" class="t s1_2">large	 volumes	 of	 previously	 applied	 triazines	 might	 now	 be	</div>
+<div id="t3k_2" class="t s1_2">available	 depending	 on	 the	 volume	 of	 lime	 applied	 and	 the	</div>
+<div id="t3l_2" class="t s1_2">rainfall	experienced.				</div>
+<div id="t3m_2" class="t s2_2">Contact your local SYNGENTA representative to discuss </div>
+<div id="t3n_2" class="t s2_2">crop rotation and crop protection programmes to follow </div>
+<div id="t3o_2" class="t s2_2">before embarking on any pH adjustment programme.</div>
+<div id="t3p_2" class="t s2_2">4.3 Factors affecting weed control:</div>
+<div id="t3q_2" class="t s2_2">4.3.1 Pre-emergence application:</div>
+<div id="t3r_2" class="t s1_2">•	</div>
+<div id="t3s_2" class="t s1_2">A	well	prepared	seedbed,	free	of	clods	and	weeds	is	a	require-</div>
+<div id="t3t_2" class="t s1_2">ment	for	good	pre-emergence	weed	control.</div>
+<div id="t3u_2" class="t s1_2">•	</div>
+<div id="t3v_2" class="t s1_2">Prolonged	dry	soil	conditions	after	a	</div>
+<div id="t3w_2" class="t s2_2">pre-emergence</div>
+<div id="t3x_2" class="t s1_2">applica-</div>
+<div id="t3y_2" class="t s1_2">tion	may	result	in	reduced	control	of	germinating	weeds.</div>
+<div id="t3z_2" class="t s1_2">•	</div>
+<div id="t40_2" class="t s1_2">In	 soils	 with	 high	 organic	 matter	 or	 plant	 matter	 residues	 on	</div>
+<div id="t41_2" class="t s1_2">the	soil	surface	e.g.	burnt	trash	or	“stoppels”	reduced	resi	dual	</div>
+<div id="t42_2" class="t s1_2">action	may	be	seen.	</div>
+<div id="t43_2" class="t s1_2">•	</div>
+<div id="t44_2" class="t s1_2">Do	not	use	</div>
+<div id="t45_2" class="t s2_2">CAMIX </div>
+<div id="t46_2" class="t s1_2">under	stress	conditions	e.g.	water	logging,	</div>
+<div id="t47_2" class="t s1_2">severe	cold,	excessive	rain,	poor	fertilising,	low	pH,	etc.</div>
+<div id="t48_2" class="t s1_2">•	</div>
+<div id="t49_2" class="t s1_2">Tank	 mixtures	 of	</div>
+<div id="t4a_2" class="t s2_2">CAMIX </div>
+<div id="t4b_2" class="t s1_2">with	 organophosphates	 e.g.	 chlor-</div>
+<div id="t4c_2" class="t s1_2">pyriphos	 should	 be	 avoided	 as	 damage	 to	 the	 maize	 might	</div>
+<div id="t4d_2" class="t s1_2">occur.	</div>
+<div id="t4e_2" class="t s1_2">•	</div>
+<div id="t4f_2" class="t s2_2">CAMIX</div>
+<div id="t4g_2" class="t s1_2">should	 not	 be	 applied	 in	 cropping	 systems	 where	</div>
+<div id="t4h_2" class="t s1_2">flood	irrigation	is	used.</div>
+<div id="t4i_2" class="t s2_2">5. DIRECTIONS FOR USE:  </div>
+<div id="t4j_2" class="t s1_2">Use	only	as	indicated.</div>
+<div id="t4k_2" class="t s2_2">5.1 Compatibility:</div>
+<div id="t4l_2" class="t s2_2">CAMIX</div>
+<div id="t4m_2" class="t s1_2">is	 compatible	 with	 GESAPRIM	 SUPER	 (L3914)	 and	</div>
+<div id="t4n_2" class="t s1_2">KARATE	ZEON	(L6330).</div>
+<div id="t4o_2" class="t s2_2">5.2 Dilution water:</div>
+<div id="t4p_2" class="t s1_2">Use	only	clean	water	and	buffer	with	a	registered	buffer.</div>
+<div id="t4q_2" class="t s2_2">5.3 Mixing instructions:</div>
+<div id="t4r_2" class="t s1_2">Fill	 the	 spray	 or	 pre-mix	 tank	 with	 clean	 water	 and	 engage	 agi-</div>
+<div id="t4s_2" class="t s1_2">Wheat	and	barley</div>
+<div id="t4t_2" class="t s1_2">Grain	sorghum</div>
+<div id="t4u_2" class="t s1_2">Potatoes</div>
+<div id="t4v_2" class="t s1_2">Soybeans,	 dry	 beans,	 groundnuts,	</div>
+<div id="t4w_2" class="t s1_2">sunflowers	and	cotton</div>
+<div id="t4x_2" class="t s1_2">All	other	crops</div>
+<div id="t4y_2" class="t s1_2">1	month</div>
+<div id="t4z_2" class="t s1_2">2	months</div>
+<div id="t50_2" class="t s1_2">6	months</div>
+<div id="t51_2" class="t s1_2">9	months</div>
+<div id="t52_2" class="t s1_2">24	months</div>
+<div id="t53_2" class="t s1_2">a</div>
+<div id="t54_2" class="t s1_2">b</div>
+<div id="t55_2" class="t s1_2">c</div>
+<div id="t56_2" class="t s1_2">d</div>
+<div id="t57_2" class="t s1_2">e</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg2Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg2"><img src="2/2.png" id="pdf2" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f2 = [['t1_2',1387],['t3_2',1387],['t4_2',689],['t6_2',509],['tb_2',1387],['td_2',1387],['tf_2',546],['ti_2',1387],['tj_2',1387],['tt_2',1387],['tw_2',1387],['t11_2',1286],['t13_2',738],['t14_2',437],['t16_2',759],['t18_2',1387],['t1b_2',1386],['t1e_2',715],['t1h_2',523],['t1j_2',588],['t1l_2',1133],['t1m_2',1317],['t1n_2',1317],['t1q_2',401],['t1w_2',284],['t21_2',298],['t26_2',421],['t2e_2',1317],['t2h_2',1318],['t2q_2',1318],['t2t_2',1317],['t2z_2',1240],['t33_2',1317],['t34_2',1317],['t3e_2',1317],['t3h_2',1317],['t3i_2',1317],['t3j_2',1317],['t3k_2',1317],['t3m_2',1373],['t3n_2',1373],['t3o_2',1245],['t3p_2',819],['t3q_2',804],['t40_2',1317],['t49_2',374],['t4b_2',742],['t4c_2',1317],['t4g_2',1131],['t4i_2',651],['t4k_2',408],['t4m_2',1194],['t4o_2',426],['t4q_2',542],['t4r_2',1373],['t4v_2',782]];
+var c2 = 0;
+function fontAdjustments2(){;
+	if (c2<f2.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f2[c2][0],f2[c2][1]);
+		c2++;
+		if (c2%10 == 0) {
+			setTimeout(function(){fontAdjustments2()},0);
+		} else {
+			fontAdjustments2();
+		}
+	}
+};
+function load2(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments2,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 188;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_2");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(4,2,909,1286,0);
+</script>
+</body>
+</html>

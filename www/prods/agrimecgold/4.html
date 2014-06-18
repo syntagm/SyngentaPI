@@ -1,0 +1,788 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>AGRIMEC_GOLD___ENG_2013_05_14_2 Page4</title>
+<link rel="stylesheet" type="text/css" href="assets/IDRViewer.css">
+<script type="text/javascript">
+var extLoaded = false;
+var intLoaded = false;
+function idrLoad() {
+	idrLoaded = true;
+	var heights = new Array(200,200,200,200,200,200,200);
+	IDRViewer.makeNavBar(7,4,909,1286,0,heights);
+}
+</script>
+<script src="assets/IDRViewer.js" type="text/javascript"></script>
+</head>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/grey-washed-wall/ -->
+<body style="background:url('assets/bg.png') repeat scroll 0 0 transparent;">
+
+<div id="left">
+<div id="leftNav">
+	<img id="btnThumbnails" onclick="IDRViewer.toggleOutlines(false)" alt="Thumbnails" src="assets/pgThumbnails.png">
+	<img id="btnOutlines" onclick="IDRViewer.toggleOutlines(true)" alt="Outlines" src="assets/pgOutlines.png">
+</div>
+<div id="leftContent">
+	<div id="thumbnailPanel"></div>
+	<div id="outlinePanel"></div>
+</div>
+</div>
+
+<div id="main">
+
+<div id="mainNav">
+	<div id="btnSideToggle" onclick="IDRViewer.toggleThumbnails();"><img src="assets/pgThumbs.png"></div>
+	
+	<img id="btnPrev" src="assets/pgPrev.png" alt="Previous Page" onclick="IDRViewer.prev()"/>
+	<select id="goBtn" onchange="IDRViewer.goToPage(0)">
+
+	</select>
+	<span id="pgCount"></span>
+	<img id="btnNext" src="assets/pgNext.png" alt="Next Page" onclick="IDRViewer.next()" />
+	
+	<img id="btnSelect" src="assets/pgSelect.png" alt="Select" onclick="IDRViewer.setSelectMode(0)" />
+	<img id="btnMove" src="assets/pgHand.png" alt="Pan"  onclick="IDRViewer.setSelectMode(1)" />
+
+	<img id="btnZoomOut" src="assets/pgZoomOut.png" alt="Zoom Out" onclick="IDRViewer.zoomOut()" />
+	<select id="zoomBtn" onchange="IDRViewer.zoomUpdate()">
+		<option value="0">100%</option>
+		<option value="1">100% (Reset)</option>
+		<option value="2">Fit Width</option>
+		<option value="3">Fit Height</option>
+		<option value="4">Fit Page</option>
+
+	</select>
+	<img id="btnZoomIn" src="assets/pgZoomIn.png" alt="Zoom In" onclick="IDRViewer.zoomIn()" />
+	<div id="btnFullscreen" onclick="IDRViewer.toggleFullScreen();"><img src="assets/pgFullScreen.png" /></div>
+</div>
+
+<div id="mainContent">
+
+<div id="contentContainer">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load4();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<160 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_4{left:375px;top:41px;}
+#t2_4{left:476px;top:41px;}
+#t3_4{left:117px;top:270px;}
+#t4_4{left:73px;top:300px;}
+#t5_4{left:73px;top:314px;}
+#t6_4{left:298px;top:270px;}
+#t7_4{left:275px;top:300px;}
+#t8_4{left:302px;top:300px;}
+#t9_4{left:308px;top:300px;}
+#ta_4{left:336px;top:300px;}
+#tb_4{left:345px;top:300px;}
+#tc_4{left:256px;top:314px;}
+#td_4{left:319px;top:314px;}
+#te_4{left:328px;top:314px;}
+#tf_4{left:70px;top:353px;}
+#tg_4{left:210px;top:353px;}
+#th_4{left:293px;top:353px;}
+#ti_4{left:299px;top:353px;}
+#tj_4{left:70px;top:368px;}
+#tk_4{left:295px;top:368px;}
+#tl_4{left:70px;top:383px;}
+#tm_4{left:101px;top:383px;}
+#tn_4{left:110px;top:383px;}
+#to_4{left:200px;top:383px;}
+#tp_4{left:70px;top:397px;}
+#tq_4{left:70px;top:412px;}
+#tr_4{left:70px;top:427px;}
+#ts_4{left:70px;top:441px;}
+#tt_4{left:70px;top:456px;}
+#tu_4{left:70px;top:485px;}
+#tv_4{left:234px;top:485px;}
+#tw_4{left:275px;top:485px;}
+#tx_4{left:377px;top:485px;}
+#ty_4{left:70px;top:500px;}
+#tz_4{left:81px;top:500px;}
+#t10_4{left:86px;top:500px;}
+#t11_4{left:70px;top:515px;}
+#t12_4{left:70px;top:529px;}
+#t13_4{left:70px;top:544px;}
+#t14_4{left:70px;top:573px;}
+#t15_4{left:70px;top:603px;}
+#t16_4{left:119px;top:603px;}
+#t17_4{left:70px;top:617px;}
+#t18_4{left:70px;top:632px;}
+#t19_4{left:70px;top:647px;}
+#t1a_4{left:118px;top:647px;}
+#t1b_4{left:70px;top:661px;}
+#t1c_4{left:70px;top:676px;}
+#t1d_4{left:70px;top:705px;}
+#t1e_4{left:70px;top:720px;}
+#t1f_4{left:459px;top:1148px;}
+#t1g_4{left:590px;top:1148px;}
+#t1h_4{left:691px;top:1148px;}
+#t1i_4{left:459px;top:1163px;}
+#t1j_4{left:459px;top:1177px;}
+#t1k_4{left:459px;top:1201px;}
+#t1l_4{left:611px;top:1201px;}
+#t1m_4{left:646px;top:1201px;}
+#t1n_4{left:750px;top:1201px;}
+#t1o_4{left:459px;top:1215px;}
+#t1p_4{left:71px;top:76px;}
+#t1q_4{left:127px;top:76px;}
+#t1r_4{left:71px;top:90px;}
+#t1s_4{left:175px;top:90px;}
+#t1t_4{left:71px;top:105px;}
+#t1u_4{left:71px;top:120px;}
+#t1v_4{left:71px;top:134px;}
+#t1w_4{left:71px;top:149px;}
+#t1x_4{left:71px;top:178px;}
+#t1y_4{left:189px;top:178px;}
+#t1z_4{left:288px;top:178px;}
+#t20_4{left:296px;top:178px;}
+#t21_4{left:71px;top:193px;}
+#t22_4{left:149px;top:193px;}
+#t23_4{left:154px;top:193px;}
+#t24_4{left:189px;top:193px;}
+#t25_4{left:286px;top:193px;}
+#t26_4{left:71px;top:222px;}
+#t27_4{left:184px;top:222px;}
+#t28_4{left:252px;top:222px;}
+#t29_4{left:263px;top:222px;}
+#t2a_4{left:71px;top:237px;}
+#t2b_4{left:125px;top:237px;}
+#t2c_4{left:130px;top:237px;}
+#t2d_4{left:165px;top:237px;}
+#t2e_4{left:262px;top:237px;}
+#t2f_4{left:464px;top:582px;}
+#t2g_4{left:464px;top:597px;}
+#t2h_4{left:464px;top:611px;}
+#t2i_4{left:464px;top:626px;}
+#t2j_4{left:467px;top:626px;}
+#t2k_4{left:537px;top:626px;}
+#t2l_4{left:464px;top:655px;}
+#t2m_4{left:464px;top:670px;}
+#t2n_4{left:464px;top:685px;}
+#t2o_4{left:467px;top:685px;}
+#t2p_4{left:552px;top:685px;}
+#t2q_4{left:669px;top:626px;}
+#t2r_4{left:689px;top:626px;}
+#t2s_4{left:695px;top:626px;}
+#t2t_4{left:723px;top:626px;}
+#t2u_4{left:732px;top:626px;}
+#t2v_4{left:667px;top:641px;}
+#t2w_4{left:737px;top:641px;}
+#t2x_4{left:742px;top:641px;}
+#t2y_4{left:460px;top:720px;}
+#t2z_4{left:495px;top:720px;}
+#t30_4{left:599px;top:720px;}
+#t31_4{left:460px;top:735px;}
+#t32_4{left:460px;top:750px;}
+#t33_4{left:575px;top:750px;}
+#t34_4{left:585px;top:750px;}
+#t35_4{left:736px;top:750px;}
+#t36_4{left:460px;top:764px;}
+#t37_4{left:498px;top:764px;}
+#t38_4{left:508px;top:764px;}
+#t39_4{left:460px;top:779px;}
+#t3a_4{left:618px;top:779px;}
+#t3b_4{left:628px;top:779px;}
+#t3c_4{left:733px;top:779px;}
+#t3d_4{left:460px;top:794px;}
+#t3e_4{left:460px;top:823px;}
+#t3f_4{left:580px;top:823px;}
+#t3g_4{left:589px;top:823px;}
+#t3h_4{left:690px;top:823px;}
+#t3i_4{left:460px;top:838px;}
+#t3j_4{left:460px;top:852px;}
+#t3k_4{left:460px;top:882px;}
+#t3l_4{left:534px;top:882px;}
+#t3m_4{left:460px;top:911px;}
+#t3n_4{left:575px;top:911px;}
+#t3o_4{left:589px;top:911px;}
+#t3p_4{left:460px;top:926px;}
+#t3q_4{left:83px;top:755px;}
+#t3r_4{left:93px;top:769px;}
+#t3s_4{left:148px;top:793px;}
+#t3t_4{left:132px;top:815px;}
+#t3u_4{left:129px;top:838px;}
+#t3v_4{left:139px;top:860px;}
+#t3w_4{left:256px;top:755px;}
+#t3x_4{left:306px;top:769px;}
+#t3y_4{left:319px;top:793px;}
+#t3z_4{left:319px;top:815px;}
+#t40_4{left:319px;top:838px;}
+#t41_4{left:319px;top:860px;}
+#t42_4{left:70px;top:889px;}
+#t43_4{left:70px;top:904px;}
+#t44_4{left:70px;top:933px;}
+#t45_4{left:103px;top:933px;}
+#t46_4{left:202px;top:933px;}
+#t47_4{left:70px;top:948px;}
+#t48_4{left:71px;top:972px;}
+#t49_4{left:71px;top:1003px;}
+#t4a_4{left:231px;top:1003px;}
+#t4b_4{left:303px;top:1003px;}
+#t4c_4{left:330px;top:1003px;}
+#t4d_4{left:356px;top:1003px;}
+#t4e_4{left:387px;top:1003px;}
+#t4f_4{left:71px;top:1027px;}
+#t4g_4{left:71px;top:1041px;}
+#t4h_4{left:241px;top:1035px;}
+#t4i_4{left:274px;top:1035px;}
+#t4j_4{left:384px;top:1035px;}
+#t4k_4{left:71px;top:1073px;}
+#t4l_4{left:235px;top:1073px;}
+#t4m_4{left:276px;top:1073px;}
+#t4n_4{left:378px;top:1073px;}
+#t4o_4{left:71px;top:1088px;}
+#t4p_4{left:81px;top:1088px;}
+#t4q_4{left:87px;top:1088px;}
+#t4r_4{left:71px;top:1102px;}
+#t4s_4{left:71px;top:1117px;}
+#t4t_4{left:71px;top:1146px;}
+#t4u_4{left:254px;top:1146px;}
+#t4v_4{left:290px;top:1146px;}
+#t4w_4{left:396px;top:1146px;}
+#t4x_4{left:71px;top:1161px;}
+#t4y_4{left:105px;top:1161px;}
+#t4z_4{left:110px;top:1161px;}
+#t50_4{left:71px;top:1176px;}
+#t51_4{left:71px;top:1190px;}
+#t52_4{left:347px;top:1190px;}
+#t53_4{left:71px;top:1205px;}
+#t54_4{left:111px;top:1205px;}
+#t55_4{left:161px;top:1205px;}
+#t56_4{left:166px;top:1205px;}
+#t57_4{left:71px;top:1220px;}
+#t58_4{left:508px;top:79px;}
+#t59_4{left:463px;top:108px;}
+#t5a_4{left:463px;top:123px;}
+#t5b_4{left:463px;top:138px;letter-spacing:1px;}
+#t5c_4{left:463px;top:152px;}
+#t5d_4{left:463px;top:167px;letter-spacing:1px;}
+#t5e_4{left:509px;top:167px;letter-spacing:1px;}
+#t5f_4{left:572px;top:167px;letter-spacing:1px;}
+#t5g_4{left:463px;top:182px;}
+#t5h_4{left:463px;top:211px;}
+#t5i_4{left:463px;top:226px;}
+#t5j_4{left:522px;top:226px;}
+#t5k_4{left:545px;top:226px;}
+#t5l_4{left:463px;top:255px;}
+#t5m_4{left:463px;top:270px;}
+#t5n_4{left:466px;top:270px;}
+#t5o_4{left:537px;top:270px;}
+#t5p_4{left:689px;top:79px;}
+#t5q_4{left:670px;top:116px;}
+#t5r_4{left:737px;top:116px;}
+#t5s_4{left:742px;top:116px;}
+#t5t_4{left:460px;top:299px;}
+#t5u_4{left:589px;top:299px;}
+#t5v_4{left:690px;top:299px;}
+#t5w_4{left:460px;top:313px;}
+#t5x_4{left:460px;top:328px;}
+#t5y_4{left:460px;top:357px;}
+#t5z_4{left:561px;top:357px;}
+#t60_4{left:566px;top:357px;}
+#t61_4{left:589px;top:357px;}
+#t62_4{left:695px;top:357px;}
+#t63_4{left:460px;top:372px;}
+#t64_4{left:609px;top:372px;}
+#t65_4{left:614px;top:372px;}
+#t66_4{left:460px;top:387px;}
+#t67_4{left:565px;top:387px;}
+#t68_4{left:460px;top:401px;}
+#t69_4{left:460px;top:431px;}
+#t6a_4{left:569px;top:431px;}
+#t6b_4{left:670px;top:431px;}
+#t6c_4{left:679px;top:431px;}
+#t6d_4{left:460px;top:460px;}
+#t6e_4{left:575px;top:460px;}
+#t6f_4{left:737px;top:460px;}
+#t6g_4{left:745px;top:460px;}
+#t6h_4{left:460px;top:489px;}
+#t6i_4{left:638px;top:489px;}
+#t6j_4{left:643px;top:489px;}
+#t6k_4{left:460px;top:504px;}
+#t6l_4{left:697px;top:504px;}
+#t6m_4{left:460px;top:519px;}
+#t6n_4{left:460px;top:533px;}
+#t6o_4{left:707px;top:533px;}
+#t6p_4{left:712px;top:533px;}
+#t6q_4{left:736px;top:533px;}
+#t6r_4{left:460px;top:548px;}
+#t6s_4{left:499px;top:548px;}
+#t6t_4{left:464px;top:958px;}
+#t6u_4{left:464px;top:973px;}
+#t6v_4{left:464px;top:987px;}
+#t6w_4{left:464px;top:1017px;}
+#t6x_4{left:464px;top:1031px;}
+#t6y_4{left:464px;top:1061px;}
+#t6z_4{left:464px;top:1075px;}
+#t70_4{left:522px;top:1075px;}
+#t71_4{left:545px;top:1075px;}
+#t72_4{left:464px;top:1105px;}
+#t73_4{left:464px;top:1119px;}
+#t74_4{left:670px;top:973px;}
+#t75_4{left:737px;top:973px;}
+#t76_4{left:742px;top:973px;}
+
+.s1_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-HelveticaNeueLTStd-Bd4;
+	color: rgb(0,0,0);
+}
+
+.s3_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-HelveticaNeueLTStd-It4;
+	color: rgb(0,0,0);
+}
+
+.s2_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-HelveticaNeueLTStd-Lt4;
+	color: rgb(0,0,0);
+}
+
+.s4_4{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: TCMJFT-MT-Extra4;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: TCMJFT-HelveticaNeueLTStd-It4;
+	src: url("4/fonts/TCMJFT-HelveticaNeueLTStd-It.eot");
+	src: url("4/fonts/TCMJFT-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/TCMJFT-HelveticaNeueLTStd-It.woff") format("woff");
+}
+
+@font-face {
+	font-family: TCMJFT-HelveticaNeueLTStd-Bd4;
+	src: url("4/fonts/TCMJFT-HelveticaNeueLTStd-Bd.eot");
+	src: url("4/fonts/TCMJFT-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/TCMJFT-HelveticaNeueLTStd-Bd.woff") format("woff");
+}
+
+@font-face {
+	font-family: TCMJFT-MT-Extra4;
+	src: url("4/fonts/TCMJFT-MT-Extra.eot");
+	src: url("4/fonts/TCMJFT-MT-Extra.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/TCMJFT-MT-Extra.woff") format("woff");
+}
+
+@font-face {
+	font-family: TCMJFT-HelveticaNeueLTStd-Lt4;
+	src: url("4/fonts/TCMJFT-HelveticaNeueLTStd-Lt.eot");
+	src: url("4/fonts/TCMJFT-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("4/fonts/TCMJFT-HelveticaNeueLTStd-Lt.woff") format("woff");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_4" class="t s1_4">AGRIMEC GOLD </div>
+<div id="t2_4" class="t s2_4">/ 4</div>
+<div id="t3_4" class="t s1_4">CROP/PEST</div>
+<div id="t4_4" class="t s1_4">Red Spider Mite</div>
+<div id="t5_4" class="t s3_4">(Tetranychus urticae)</div>
+<div id="t6_4" class="t s1_4">DOSAGE</div>
+<div id="t7_4" class="t s2_4">65 m</div>
+<div id="t8_4" class="t s4_4">l</div>
+<div id="t9_4" class="t s2_4">/100 </div>
+<div id="ta_4" class="t s4_4">l</div>
+<div id="tb_4" class="t s2_4">water</div>
+<div id="tc_4" class="t s2_4">(0.7 - 1.3 m</div>
+<div id="td_4" class="t s4_4">l</div>
+<div id="te_4" class="t s2_4">/100 m row)</div>
+<div id="tf_4" class="t s1_4">“Tramline” Application:</div>
+<div id="tg_4" class="t s2_4">Apply 50 - 100 </div>
+<div id="th_4" class="t s4_4">l</div>
+<div id="ti_4" class="t s2_4">/ha of spray mixture </div>
+<div id="tj_4" class="t s2_4">to dry land cotton depends on plant size. </div>
+<div id="tk_4" class="t s2_4">Do not use less than </div>
+<div id="tl_4" class="t s2_4">0.7 m</div>
+<div id="tm_4" class="t s4_4">l</div>
+<div id="tn_4" class="t s2_4">per 100 m row. </div>
+<div id="to_4" class="t s2_4">Position at least 5 hollow-cone nozzles </div>
+<div id="tp_4" class="t s2_4">of suitable size over the tramlines. One nozzle must spray over </div>
+<div id="tq_4" class="t s2_4">the top of each row. One nozzle must spray between the two </div>
+<div id="tr_4" class="t s2_4">rows and two nozzles should be positioned to point 45 degrees </div>
+<div id="ts_4" class="t s2_4">upwards, mounted on drop-arms on the outside of each of the </div>
+<div id="tt_4" class="t s2_4">two rows.</div>
+<div id="tu_4" class="t s1_4">Preventive Control Measure</div>
+<div id="tv_4" class="t s2_4">: Apply </div>
+<div id="tw_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="tx_4" class="t s2_4">at 65 </div>
+<div id="ty_4" class="t s2_4">m</div>
+<div id="tz_4" class="t s4_4">l</div>
+<div id="t10_4" class="t s2_4">/ha when the spider mite population index shows a sudden </div>
+<div id="t11_4" class="t s2_4">increase from one week to the next but before the economic </div>
+<div id="t12_4" class="t s2_4">threshold level is reached for a given growth stage of the crop </div>
+<div id="t13_4" class="t s2_4">based on weekly scouting results. </div>
+<div id="t14_4" class="t s1_4">Red Spider Mite Scouting Techniques for Cotton</div>
+<div id="t15_4" class="t s1_4">Inspect</div>
+<div id="t16_4" class="t s2_4">48 cotton plants at random in fields up to 15 ha in </div>
+<div id="t17_4" class="t s2_4">extent every week from the third week after germination until </div>
+<div id="t18_4" class="t s2_4">first boll split (+ week 20).</div>
+<div id="t19_4" class="t s1_4">Sample</div>
+<div id="t1a_4" class="t s2_4">3 leaves from each plant - 2 leaves from the top and 1 </div>
+<div id="t1b_4" class="t s2_4">leaf from the middle and note the total number of adult female </div>
+<div id="t1c_4" class="t s2_4">mites present on the sampled leaves.</div>
+<div id="t1d_4" class="t s1_4">Determine the spider mite population index per plant as </div>
+<div id="t1e_4" class="t s1_4">follows:</div>
+<div id="t1f_4" class="t s2_4">To avoid illegal residues </div>
+<div id="t1g_4" class="t s1_4">AGRIMEC GOLD </div>
+<div id="t1h_4" class="t s2_4">must be mixed with </div>
+<div id="t1i_4" class="t s2_4">non-ionic activator type spray oil. Do not use any other type of </div>
+<div id="t1j_4" class="t s2_4">adjuvants.</div>
+<div id="t1k_4" class="t s1_4">Broad and Spider Mites: </div>
+<div id="t1l_4" class="t s2_4">Apply </div>
+<div id="t1m_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t1n_4" class="t s2_4">with first </div>
+<div id="t1o_4" class="t s2_4">sign of mites.</div>
+<div id="t1p_4" class="t s1_4">COTTON</div>
+<div id="t1q_4" class="t s2_4">(cont.)</div>
+<div id="t1r_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t1s_4" class="t s2_4">can be used as a preventive or corrective </div>
+<div id="t1t_4" class="t s2_4">control measure.</div>
+<div id="t1u_4" class="t s2_4">Ensure thorough coverage of the plants. Repeat application as </div>
+<div id="t1v_4" class="t s2_4">required to maintain the mite population below the economic </div>
+<div id="t1w_4" class="t s2_4">threshold level.</div>
+<div id="t1x_4" class="t s1_4">Ground Application:</div>
+<div id="t1y_4" class="t s2_4">Apply in 100 - 200 </div>
+<div id="t1z_4" class="t s4_4">l</div>
+<div id="t20_4" class="t s2_4">water/ha. Do not use </div>
+<div id="t21_4" class="t s2_4">less than 65 m</div>
+<div id="t22_4" class="t s4_4">l</div>
+<div id="t23_4" class="t s2_4">/ha of </div>
+<div id="t24_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t25_4" class="t s2_4">.</div>
+<div id="t26_4" class="t s1_4">Aerial Application:</div>
+<div id="t27_4" class="t s2_4">Apply in 30 </div>
+<div id="t28_4" class="t s4_4">l</div>
+<div id="t29_4" class="t s2_4">water/ha. Do not use less </div>
+<div id="t2a_4" class="t s2_4">than 65 m</div>
+<div id="t2b_4" class="t s4_4">l</div>
+<div id="t2c_4" class="t s2_4">/ha of </div>
+<div id="t2d_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t2e_4" class="t s2_4">.</div>
+<div id="t2f_4" class="t s1_4">FLOWERS AND </div>
+<div id="t2g_4" class="t s1_4">ORNAMENTALS</div>
+<div id="t2h_4" class="t s1_4">Red Spider Mite</div>
+<div id="t2i_4" class="t s2_4">(</div>
+<div id="t2j_4" class="t s3_4">Tetranychus </div>
+<div id="t2k_4" class="t s2_4">spp.)</div>
+<div id="t2l_4" class="t s1_4">CHRYSANTHEMUMS</div>
+<div id="t2m_4" class="t s1_4">American Leafminer</div>
+<div id="t2n_4" class="t s2_4">(</div>
+<div id="t2o_4" class="t s3_4">Liriomyza trifolii</div>
+<div id="t2p_4" class="t s2_4">)</div>
+<div id="t2q_4" class="t s2_4">6 m</div>
+<div id="t2r_4" class="t s4_4">l</div>
+<div id="t2s_4" class="t s2_4">/100 </div>
+<div id="t2t_4" class="t s4_4">l</div>
+<div id="t2u_4" class="t s2_4">water</div>
+<div id="t2v_4" class="t s2_4">(120 - 320 m</div>
+<div id="t2w_4" class="t s4_4">l</div>
+<div id="t2x_4" class="t s2_4">/ha)</div>
+<div id="t2y_4" class="t s2_4">Apply </div>
+<div id="t2z_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t30_4" class="t s2_4">at first signs of infestation as a high </div>
+<div id="t31_4" class="t s2_4">volume high-pressure full cover spray to point of run-off using </div>
+<div id="t32_4" class="t s2_4">a minimum of 2 250 </div>
+<div id="t33_4" class="t s4_4">l</div>
+<div id="t34_4" class="t s2_4">spray mixture per hectare. </div>
+<div id="t35_4" class="t s2_4">If less than </div>
+<div id="t36_4" class="t s2_4">2 250 </div>
+<div id="t37_4" class="t s4_4">l</div>
+<div id="t38_4" class="t s2_4">of spray mixture is applied (i.e. when spraying young </div>
+<div id="t39_4" class="t s2_4">plants) a minimum of 120 m</div>
+<div id="t3a_4" class="t s4_4">l</div>
+<div id="t3b_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t3c_4" class="t s2_4">per hectare </div>
+<div id="t3d_4" class="t s2_4">must be applied in sufficient water to provide a full cover spray.</div>
+<div id="t3e_4" class="t s2_4">NEVER exceed 320 m</div>
+<div id="t3f_4" class="t s4_4">l</div>
+<div id="t3g_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t3h_4" class="t s2_4">per hectare. Ensure </div>
+<div id="t3i_4" class="t s2_4">that all foliage surfaces are thoroughly wetted by the spray to </div>
+<div id="t3j_4" class="t s2_4">point of run-off.</div>
+<div id="t3k_4" class="t s1_4">Spider mites</div>
+<div id="t3l_4" class="t s2_4">: Repeat application as necessary.</div>
+<div id="t3m_4" class="t s1_4">American leafminer</div>
+<div id="t3n_4" class="t s2_4">: </div>
+<div id="t3o_4" class="t s2_4">Repeat application every 7 days or as </div>
+<div id="t3p_4" class="t s2_4">needed to maintain control.</div>
+<div id="t3q_4" class="t s1_4">Total number of female </div>
+<div id="t3r_4" class="t s1_4">mites/3 leaves/plant</div>
+<div id="t3s_4" class="t s2_4">0</div>
+<div id="t3t_4" class="t s2_4">1 to 10</div>
+<div id="t3u_4" class="t s2_4">11 to 30</div>
+<div id="t3v_4" class="t s2_4">30 +</div>
+<div id="t3w_4" class="t s1_4">Spider Mite Population </div>
+<div id="t3x_4" class="t s1_4">Index</div>
+<div id="t3y_4" class="t s2_4">0</div>
+<div id="t3z_4" class="t s2_4">1</div>
+<div id="t40_4" class="t s2_4">2</div>
+<div id="t41_4" class="t s2_4">3</div>
+<div id="t42_4" class="t s2_4">Calculate the average index value per field by adding the 48 </div>
+<div id="t43_4" class="t s2_4">individual index values and dividing by 48.</div>
+<div id="t44_4" class="t s2_4">Apply </div>
+<div id="t45_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t46_4" class="t s2_4">as recommended depending on scout-</div>
+<div id="t47_4" class="t s2_4">ing results for a given growth stage of the cotton crop.</div>
+<div id="t48_4" class="t s1_4">Economic Threshold Levels:</div>
+<div id="t49_4" class="t s1_4">Weeks after Germination </div>
+<div id="t4a_4" class="t s2_4">3 - 10 12 </div>
+<div id="t4b_4" class="t s2_4">14 </div>
+<div id="t4c_4" class="t s2_4">16 </div>
+<div id="t4d_4" class="t s2_4">18 </div>
+<div id="t4e_4" class="t s2_4">20</div>
+<div id="t4f_4" class="t s1_4">Spider Mite Population </div>
+<div id="t4g_4" class="t s1_4">Index </div>
+<div id="t4h_4" class="t s2_4">0,5 </div>
+<div id="t4i_4" class="t s2_4">0,8 1,1 1,4 1,7 </div>
+<div id="t4j_4" class="t s2_4">2,0</div>
+<div id="t4k_4" class="t s1_4">Corrective Control Measure</div>
+<div id="t4l_4" class="t s2_4">: Apply </div>
+<div id="t4m_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t4n_4" class="t s2_4">at 65 </div>
+<div id="t4o_4" class="t s2_4">m</div>
+<div id="t4p_4" class="t s4_4">l</div>
+<div id="t4q_4" class="t s2_4">/ha when the economic threshold level of the spider mite </div>
+<div id="t4r_4" class="t s2_4">population has been reached or exceeded for a given stage of </div>
+<div id="t4s_4" class="t s2_4">the crop based on weekly scouting results.</div>
+<div id="t4t_4" class="t s1_4">Emergency Control Measure:</div>
+<div id="t4u_4" class="t s2_4">Apply </div>
+<div id="t4v_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t4w_4" class="t s2_4">at </div>
+<div id="t4x_4" class="t s2_4">130 m</div>
+<div id="t4y_4" class="t s4_4">l</div>
+<div id="t4z_4" class="t s2_4">/ha under conditions of very severe mite infestations and </div>
+<div id="t50_4" class="t s2_4">when climatic conditions favour the rapid increase of mite popu-</div>
+<div id="t51_4" class="t s2_4">lations (very hot and dry weather). The application of </div>
+<div id="t52_4" class="t s1_4">AGRIMEC </div>
+<div id="t53_4" class="t s1_4">GOLD</div>
+<div id="t54_4" class="t s2_4">at 130 m</div>
+<div id="t55_4" class="t s4_4">l</div>
+<div id="t56_4" class="t s2_4">/ha near harvest may delay the normal plant </div>
+<div id="t57_4" class="t s2_4">defoliation caused by mites.</div>
+<div id="t58_4" class="t s1_4">CROP/PEST</div>
+<div id="t59_4" class="t s1_4">CUCURBIT GROUP</div>
+<div id="t5a_4" class="t s2_4">(Includes gherkins, cucum-</div>
+<div id="t5b_4" class="t s2_4">bers, muskmelon, melon, </div>
+<div id="t5c_4" class="t s2_4">spanspek, pumpkin, squash, </div>
+<div id="t5d_4" class="t s2_4">baby </div>
+<div id="t5e_4" class="t s2_4">marrow, </div>
+<div id="t5f_4" class="t s2_4">butternut </div>
+<div id="t5g_4" class="t s2_4">squash and watermelon)</div>
+<div id="t5h_4" class="t s1_4">Leafminers</div>
+<div id="t5i_4" class="t s3_4">(Liriomyza </div>
+<div id="t5j_4" class="t s2_4">spp.</div>
+<div id="t5k_4" class="t s3_4">)</div>
+<div id="t5l_4" class="t s1_4">Spider Mites</div>
+<div id="t5m_4" class="t s2_4">(</div>
+<div id="t5n_4" class="t s3_4">Tetranychus</div>
+<div id="t5o_4" class="t s2_4">spp.)</div>
+<div id="t5p_4" class="t s1_4">DOSAGE</div>
+<div id="t5q_4" class="t s2_4">130 - 260 m</div>
+<div id="t5r_4" class="t s4_4">l</div>
+<div id="t5s_4" class="t s2_4">/ha</div>
+<div id="t5t_4" class="t s2_4">To avoid illegal residues </div>
+<div id="t5u_4" class="t s1_4">AGRIMEC GOLD </div>
+<div id="t5v_4" class="t s2_4">must be mixed with </div>
+<div id="t5w_4" class="t s2_4">non-ionic activator type spray oil. Do not use any other type of </div>
+<div id="t5x_4" class="t s2_4">adjuvants.</div>
+<div id="t5y_4" class="t s2_4">Use 130 - 180 m</div>
+<div id="t5z_4" class="t s4_4">l</div>
+<div id="t60_4" class="t s2_4">/ha </div>
+<div id="t61_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t62_4" class="t s2_4">for low to moder-</div>
+<div id="t63_4" class="t s2_4">ate infestations and 260 m</div>
+<div id="t64_4" class="t s4_4">l</div>
+<div id="t65_4" class="t s2_4">/ha for severe infestations. Apply </div>
+<div id="t66_4" class="t s1_4">AGRIMEC GOLD</div>
+<div id="t67_4" class="t s2_4">with the first sign of mites and when first </div>
+<div id="t68_4" class="t s2_4">adult leafminers fly. </div>
+<div id="t69_4" class="t s1_4">Aerial application: </div>
+<div id="t6a_4" class="t s2_4">Apply with 30 - 40 </div>
+<div id="t6b_4" class="t s4_4">l</div>
+<div id="t6c_4" class="t s2_4">water/ha.</div>
+<div id="t6d_4" class="t s1_4">Ground application: </div>
+<div id="t6e_4" class="t s2_4">Do not apply with less than 200 </div>
+<div id="t6f_4" class="t s4_4">l</div>
+<div id="t6g_4" class="t s2_4">water/ha.</div>
+<div id="t6h_4" class="t s2_4">Do not apply more than 260 m</div>
+<div id="t6i_4" class="t s4_4">l</div>
+<div id="t6j_4" class="t s2_4">/ha per application. Do not </div>
+<div id="t6k_4" class="t s2_4">make more than 2 sequential applications of </div>
+<div id="t6l_4" class="t s1_4">AGRIMEC GOLD </div>
+<div id="t6m_4" class="t s2_4">or other similar product. Wait at least 7 days before repeating </div>
+<div id="t6n_4" class="t s2_4">application. Do not apply more than 750 m</div>
+<div id="t6o_4" class="t s4_4">l</div>
+<div id="t6p_4" class="t s2_4">/ha </div>
+<div id="t6q_4" class="t s1_4">AGRIMEC </div>
+<div id="t6r_4" class="t s1_4">GOLD </div>
+<div id="t6s_4" class="t s2_4">per growing season.</div>
+<div id="t6t_4" class="t s1_4">FRUITING VEGETABLES</div>
+<div id="t6u_4" class="t s2_4">(Includes peppers and egg-</div>
+<div id="t6v_4" class="t s2_4">plant)</div>
+<div id="t6w_4" class="t s1_4">Broad Mite</div>
+<div id="t6x_4" class="t s3_4">(Polyhagotarsonemus latus)</div>
+<div id="t6y_4" class="t s1_4">Leafminers</div>
+<div id="t6z_4" class="t s3_4">(Liriomyza </div>
+<div id="t70_4" class="t s2_4">spp.</div>
+<div id="t71_4" class="t s3_4">)</div>
+<div id="t72_4" class="t s1_4">Red Spider Mite</div>
+<div id="t73_4" class="t s3_4">(T. urticae)</div>
+<div id="t74_4" class="t s2_4">130 - 260 m</div>
+<div id="t75_4" class="t s4_4">l</div>
+<div id="t76_4" class="t s2_4">/ha</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg4Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg4"><img src="4/4.png" id="pdf4" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f4 = [['t1_4',387],['t2_4',58],['t4_4',376],['t5_4',454],['t7_4',110],['tc_4',251],['te_4',259],['tf_4',541],['tg_4',319],['ti_4',424],['tj_4',870],['tk_4',436],['tl_4',123],['tn_4',327],['to_4',820],['tp_4',1337],['tq_4',1337],['tr_4',1337],['ts_4',1337],['tt_4',208],['tu_4',655],['tv_4',148],['tw_4',389],['tx_4',110],['t10_4',1275],['t11_4',1337],['t12_4',1337],['t13_4',717],['t14_4',1138],['t16_4',1142],['t17_4',1337],['t18_4',539],['t1a_4',1148],['t1b_4',1337],['t1c_4',790],['t1d_4',1337],['t1f_4',506],['t1g_4',389],['t1h_4',420],['t1i_4',1347],['t1k_4',586],['t1m_4',394],['t1n_4',182],['t1o_4',282],['t1r_4',394],['t1s_4',921],['t1t_4',355],['t1u_4',1337],['t1v_4',1337],['t1w_4',315],['t1x_4',462],['t1y_4',381],['t20_4',436],['t21_4',313],['t23_4',122],['t24_4',387],['t26_4',432],['t27_4',250],['t29_4',568],['t2a_4',217],['t2c_4',122],['t2d_4',387],['t2f_4',361],['t2h_4',376],['t2m_4',471],['t2o_4',338],['t2q_4',82],['t2v_4',278],['t2z_4',393],['t30_4',784],['t31_4',1337],['t32_4',441],['t34_4',565],['t35_4',234],['t36_4',128],['t38_4',1147],['t39_4',628],['t3b_4',394],['t3c_4',248],['t3d_4',1337],['t3e_4',477],['t3g_4',388],['t3h_4',417],['t3i_4',1337],['t3j_4',326],['t3k_4',294],['t3l_4',727],['t3m_4',459],['t3o_4',824],['t3p_4',580],['t3q_4',545],['t3r_4',472],['t3t_4',153],['t3u_4',180],['t3v_4',98],['t3w_4',534],['t42_4',1348],['t43_4',884],['t45_4',385],['t46_4',818],['t47_4',1153],['t48_4',659],['t49_4',581],['t4a_4',226],['t4f_4',534],['t4i_4',390],['t4k_4',653],['t4l_4',149],['t4m_4',389],['t4n_4',111],['t4q_4',1275],['t4r_4',1336],['t4s_4',909],['t4t_4',704],['t4v_4',398],['t4x_4',135],['t4z_4',1180],['t50_4',1337],['t51_4',1091],['t54_4',199],['t56_4',957],['t57_4',589],['t59_4',453],['t5a_4',638],['t5b_4',638],['t5c_4',638],['t5g_4',519],['t5l_4',294],['t5q_4',266],['t5t_4',502],['t5u_4',388],['t5v_4',416],['t5w_4',1337],['t5y_4',402],['t61_4',397],['t62_4',398],['t63_4',595],['t65_4',720],['t66_4',395],['t67_4',918],['t68_4',403],['t69_4',420],['t6a_4',391],['t6d_4',447],['t6e_4',639],['t6h_4',711],['t6j_4',604],['t6k_4',934],['t6l_4',387],['t6m_4',1337],['t6n_4',989],['t6s_4',432],['t6t_4',568],['t6u_4',638],['t6w_4',258],['t6x_4',599],['t72_4',376],['t73_4',229],['t74_4',266]];
+var c4 = 0;
+function fontAdjustments4(){;
+	if (c4<f4.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f4[c4][0],f4[c4][1]);
+		c4++;
+		if (c4%10 == 0) {
+			setTimeout(function(){fontAdjustments4()},0);
+		} else {
+			fontAdjustments4();
+		}
+	}
+};
+function load4(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments4,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 259;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_4");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+</div>
+</div>
+<script type="text/javascript">
+	if (extLoaded) { idrLoad(); } else { intLoaded = true; }
+</script>
+</body>
+</html>

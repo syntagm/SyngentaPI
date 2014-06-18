@@ -1,0 +1,857 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>TOUCHDOWN_Forte_HITECH___ENG_2011_06_27 Page13</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load13();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_13{left:110px;top:72px;}
+#t2_13{left:110px;top:101px;}
+#t3_13{left:136px;top:101px;}
+#t4_13{left:282px;top:101px;}
+#t5_13{left:136px;top:115px;}
+#t6_13{left:136px;top:130px;}
+#t7_13{left:110px;top:144px;}
+#t8_13{left:136px;top:144px;}
+#t9_13{left:315px;top:144px;}
+#ta_13{left:136px;top:159px;}
+#tb_13{left:136px;top:173px;}
+#tc_13{left:136px;top:188px;}
+#td_13{left:110px;top:202px;}
+#te_13{left:136px;top:202px;}
+#tf_13{left:136px;top:217px;}
+#tg_13{left:136px;top:231px;}
+#th_13{left:156px;top:231px;}
+#ti_13{left:327px;top:231px;}
+#tj_13{left:156px;top:246px;}
+#tk_13{left:205px;top:246px;}
+#tl_13{left:156px;top:260px;}
+#tm_13{left:320px;top:260px;}
+#tn_13{left:156px;top:275px;}
+#to_13{left:324px;top:275px;}
+#tp_13{left:156px;top:289px;}
+#tq_13{left:136px;top:304px;}
+#tr_13{left:156px;top:304px;}
+#ts_13{left:156px;top:318px;}
+#tt_13{left:136px;top:333px;}
+#tu_13{left:156px;top:333px;}
+#tv_13{left:333px;top:333px;}
+#tw_13{left:156px;top:347px;}
+#tx_13{left:370px;top:347px;}
+#ty_13{left:156px;top:362px;}
+#tz_13{left:240px;top:362px;}
+#t10_13{left:136px;top:376px;}
+#t11_13{left:156px;top:376px;}
+#t12_13{left:216px;top:376px;}
+#t13_13{left:385px;top:376px;}
+#t14_13{left:156px;top:391px;}
+#t15_13{left:156px;top:405px;}
+#t16_13{left:179px;top:405px;}
+#t17_13{left:179px;top:420px;}
+#t18_13{left:156px;top:435px;}
+#t19_13{left:179px;top:435px;}
+#t1a_13{left:179px;top:449px;}
+#t1b_13{left:136px;top:464px;}
+#t1c_13{left:156px;top:464px;}
+#t1d_13{left:156px;top:478px;}
+#t1e_13{left:382px;top:42px;}
+#t1f_13{left:553px;top:42px;}
+#t1g_13{left:500px;top:72px;}
+#t1h_13{left:520px;top:72px;}
+#t1i_13{left:526px;top:86px;}
+#t1j_13{left:545px;top:86px;}
+#t1k_13{left:726px;top:86px;}
+#t1l_13{left:545px;top:101px;}
+#t1m_13{left:545px;top:115px;}
+#t1n_13{left:545px;top:130px;}
+#t1o_13{left:526px;top:159px;}
+#t1p_13{left:545px;top:159px;}
+#t1q_13{left:545px;top:173px;}
+#t1r_13{left:698px;top:173px;}
+#t1s_13{left:545px;top:188px;}
+#t1t_13{left:545px;top:202px;}
+#t1u_13{left:526px;top:231px;}
+#t1v_13{left:545px;top:231px;}
+#t1w_13{left:545px;top:246px;}
+#t1x_13{left:545px;top:260px;}
+#t1y_13{left:545px;top:275px;}
+#t1z_13{left:526px;top:304px;}
+#t20_13{left:545px;top:304px;}
+#t21_13{left:545px;top:318px;}
+#t22_13{left:500px;top:362px;}
+#t23_13{left:520px;top:362px;}
+#t24_13{left:667px;top:362px;}
+#t25_13{left:520px;top:376px;}
+#t26_13{left:520px;top:391px;}
+#t27_13{left:120px;top:642px;}
+#t28_13{left:192px;top:644px;}
+#t29_13{left:197px;top:642px;}
+#t2a_13{left:203px;top:642px;}
+#t2b_13{left:260px;top:644px;}
+#t2c_13{left:264px;top:642px;}
+#t2d_13{left:270px;top:642px;}
+#t2e_13{left:323px;top:644px;}
+#t2f_13{left:327px;top:642px;}
+#t2g_13{left:333px;top:642px;}
+#t2h_13{left:363px;top:644px;}
+#t2i_13{left:367px;top:642px;}
+#t2j_13{left:373px;top:642px;}
+#t2k_13{left:440px;top:644px;}
+#t2l_13{left:444px;top:642px;}
+#t2m_13{left:450px;top:642px;}
+#t2n_13{left:507px;top:644px;}
+#t2o_13{left:511px;top:642px;}
+#t2p_13{left:517px;top:642px;}
+#t2q_13{left:571px;top:644px;}
+#t2r_13{left:575px;top:642px;}
+#t2s_13{left:581px;top:642px;}
+#t2t_13{left:649px;top:644px;}
+#t2u_13{left:659px;top:642px;}
+#t2v_13{left:671px;top:642px;}
+#t2w_13{left:120px;top:656px;}
+#t2x_13{left:120px;top:671px;}
+#t2y_13{left:175px;top:673px;}
+#t2z_13{left:183px;top:671px;}
+#t30_13{left:201px;top:671px;}
+#t31_13{left:214px;top:671px;}
+#t32_13{left:120px;top:685px;}
+#t33_13{left:215px;top:687px;}
+#t34_13{left:222px;top:685px;}
+#t35_13{left:224px;top:743px;}
+#t36_13{left:236px;top:743px;}
+#t37_13{left:350px;top:743px;}
+#t38_13{left:746px;top:781px;}
+
+.s6_13{
+	FONT-SIZE: 21px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Bd13;
+	color: rgb(0,0,0);
+}
+
+.s1_13{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Bd13;
+	color: rgb(0,0,0);
+}
+
+.s4_13{
+	FONT-SIZE: 21px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Lt13;
+	color: rgb(0,0,0);
+}
+
+.s2_13{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Lt13;
+	color: rgb(0,0,0);
+}
+
+.s3_13{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Bd13;
+	color: rgb(0,0,0);
+}
+
+.s5_13{
+	FONT-SIZE: 42px;
+	FONT-FAMILY: RKGHIZ-HelveticaNeueLTStd-Lt13;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: RKGHIZ-HelveticaNeueLTStd-Lt13;
+	src: url("13/fonts/RKGHIZ-HelveticaNeueLTStd-Lt.eot");
+	src: url("13/fonts/RKGHIZ-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("13/fonts/RKGHIZ-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: RKGHIZ-HelveticaNeueLTStd-Bd13;
+	src: url("13/fonts/RKGHIZ-HelveticaNeueLTStd-Bd.eot");
+	src: url("13/fonts/RKGHIZ-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("13/fonts/RKGHIZ-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_13" class="t s1_13">Glyphosate tolerant cotton:</div>
+<div id="t2_13" class="t s2_13">21. </div>
+<div id="t3_13" class="t s2_13">The above recommended </div>
+<div id="t4_13" class="t s1_13">TOUCHDOWN Forte HITECH</div>
+<div id="t5_13" class="t s2_13">rates may be applied in cotton varieties which are designated </div>
+<div id="t6_13" class="t s2_13">glyphosate tolerant cultivars.</div>
+<div id="t7_13" class="t s2_13">22. </div>
+<div id="t8_13" class="t s1_13">TOUCHDOWN Forte HITECH</div>
+<div id="t9_13" class="t s2_13">can be recommended in </div>
+<div id="ta_13" class="t s2_13">combination with a pre-emergence application of METAGAN </div>
+<div id="tb_13" class="t s2_13">GOLD at rates as recommended on the METAGAN GOLD </div>
+<div id="tc_13" class="t s2_13">label.</div>
+<div id="td_13" class="t s2_13">23. </div>
+<div id="te_13" class="t s1_13">Post-emergence broadcast application - over the top </div>
+<div id="tf_13" class="t s1_13">of the cotton plants</div>
+<div id="tg_13" class="t s2_13">i. </div>
+<div id="th_13" class="t s2_13">A broadcast application of </div>
+<div id="ti_13" class="t s1_13">TOUCHDOWN Forte </div>
+<div id="tj_13" class="t s1_13">HITECH</div>
+<div id="tk_13" class="t s2_13">can ONLY be applied from the ground cracking </div>
+<div id="tl_13" class="t s2_13">stage up to the 4th true leaf </div>
+<div id="tm_13" class="t s2_13">stage of the cotton. This </div>
+<div id="tn_13" class="t s2_13">growth stage is reached when </div>
+<div id="to_13" class="t s1_13">the first cotton plants</div>
+<div id="tp_13" class="t s2_13">in the field have reached the 4 leaf stage. </div>
+<div id="tq_13" class="t s2_13">ii. </div>
+<div id="tr_13" class="t s2_13">A broadcast application after this time could result in boll </div>
+<div id="ts_13" class="t s2_13">loss, delayed maturity or even yield loss. </div>
+<div id="tt_13" class="t s2_13">iii. </div>
+<div id="tu_13" class="t s2_13">Between the soil cracking stage </div>
+<div id="tv_13" class="t s2_13">and the 4-leaf stage of </div>
+<div id="tw_13" class="t s2_13">the cotton only 2 or less applications of </div>
+<div id="tx_13" class="t s1_13">TOUCHDOWN </div>
+<div id="ty_13" class="t s1_13">Forte HITECH</div>
+<div id="tz_13" class="t s2_13">may be done. </div>
+<div id="t10_13" class="t s2_13">iv. </div>
+<div id="t11_13" class="t s2_13">If a second </div>
+<div id="t12_13" class="t s1_13">TOUCHDOWN Forte HITECH</div>
+<div id="t13_13" class="t s2_13">application is </div>
+<div id="t14_13" class="t s2_13">needed, </div>
+<div id="t15_13" class="t s2_13">a. </div>
+<div id="t16_13" class="t s2_13">the period between the first and the second applica-</div>
+<div id="t17_13" class="t s2_13">tion should be at least 10 days.</div>
+<div id="t18_13" class="t s2_13">b. </div>
+<div id="t19_13" class="t s2_13">the cotton must have grown at least two more leaves </div>
+<div id="t1a_13" class="t s2_13">leaves since the first application.</div>
+<div id="t1b_13" class="t s2_13">v. </div>
+<div id="t1c_13" class="t s2_13">If by this time the cotton is beyond the 4 leaf/node stage </div>
+<div id="t1d_13" class="t s2_13">a post directed (see below) application will be necessary.</div>
+<div id="t1e_13" class="t s1_13">TOUCHDOWN Forte HITECH</div>
+<div id="t1f_13" class="t s2_13">/ 13</div>
+<div id="t1g_13" class="t s2_13">24.</div>
+<div id="t1h_13" class="t s1_13">Post-emergence directed application</div>
+<div id="t1i_13" class="t s2_13">i. </div>
+<div id="t1j_13" class="t s1_13">TOUCHDOWN Forte HITECH</div>
+<div id="t1k_13" class="t s2_13">can be applied as a </div>
+<div id="t1l_13" class="t s2_13">directed spray between the cotton. This application </div>
+<div id="t1m_13" class="t s2_13">method is essential if applications are after the 4-leaf </div>
+<div id="t1n_13" class="t s2_13">stage of the cotton. </div>
+<div id="t1o_13" class="t s2_13">ii. </div>
+<div id="t1p_13" class="t s2_13">Equipment such as spray guards should be used to </div>
+<div id="t1q_13" class="t s2_13">protect the cotton foliage </div>
+<div id="t1r_13" class="t s2_13">from excessive spray drift. </div>
+<div id="t1s_13" class="t s2_13">The weeds within the cotton row however should be well </div>
+<div id="t1t_13" class="t s2_13">covered by the spray for effective control. </div>
+<div id="t1u_13" class="t s2_13">iii. </div>
+<div id="t1v_13" class="t s2_13">For best results, make applications while weeds are small </div>
+<div id="t1w_13" class="t s2_13">(less than 100 mm high). Sequential directed applications </div>
+<div id="t1x_13" class="t s2_13">must also be at least 10 days apart and two nodes of </div>
+<div id="t1y_13" class="t s2_13">incremental growth between applications. </div>
+<div id="t1z_13" class="t s2_13">iv. </div>
+<div id="t20_13" class="t s2_13">Only two applications should be made between the fifth </div>
+<div id="t21_13" class="t s2_13">leaf to the 15th node stage.</div>
+<div id="t22_13" class="t s2_13">25.</div>
+<div id="t23_13" class="t s2_13">Repeated applications of </div>
+<div id="t24_13" class="t s1_13">TOUCHDOWN Forte HITECH</div>
+<div id="t25_13" class="t s2_13">can be avoided by applying effective pre-emergence residual </div>
+<div id="t26_13" class="t s2_13">herbicides e.g. METAGAN GOLD.</div>
+<div id="t27_13" class="t s3_13">TOUCHDOWN</div>
+<div id="t28_13" class="t s4_13">®</div>
+<div id="t29_13" class="t s5_13">, </div>
+<div id="t2a_13" class="t s3_13">BATELEUR</div>
+<div id="t2b_13" class="t s4_13">®</div>
+<div id="t2c_13" class="t s5_13">,</div>
+<div id="t2d_13" class="t s3_13">CALLISTO</div>
+<div id="t2e_13" class="t s4_13">®</div>
+<div id="t2f_13" class="t s5_13">,</div>
+<div id="t2g_13" class="t s3_13">DUAL</div>
+<div id="t2h_13" class="t s4_13">®</div>
+<div id="t2i_13" class="t s5_13">, </div>
+<div id="t2j_13" class="t s3_13">GARDOPRIM</div>
+<div id="t2k_13" class="t s4_13">®</div>
+<div id="t2l_13" class="t s5_13">,</div>
+<div id="t2m_13" class="t s3_13">GESAPRIM</div>
+<div id="t2n_13" class="t s4_13">®</div>
+<div id="t2o_13" class="t s5_13">,</div>
+<div id="t2p_13" class="t s3_13">METAGAN</div>
+<div id="t2q_13" class="t s4_13">®</div>
+<div id="t2r_13" class="t s5_13">,</div>
+<div id="t2s_13" class="t s3_13">PRIMAGRAM</div>
+<div id="t2t_13" class="t s4_13">®</div>
+<div id="t2u_13" class="t s5_13">= </div>
+<div id="t2v_13" class="t s5_13">registered trade mark of a Syngenta </div>
+<div id="t2w_13" class="t s5_13">Group Company.</div>
+<div id="t2x_13" class="t s3_13">AGRISURE</div>
+<div id="t2y_13" class="t s6_13">®</div>
+<div id="t2z_13" class="t s3_13">GT</div>
+<div id="t30_13" class="t s5_13">= </div>
+<div id="t31_13" class="t s5_13">registered trade mark of a Syngenta Group Company.</div>
+<div id="t32_13" class="t s3_13">ROUNDUP READY</div>
+<div id="t33_13" class="t s4_13">®</div>
+<div id="t34_13" class="t s5_13">= registered trade mark of a Monsanto Group Company.</div>
+<div id="t35_13" class="t s5_13">©</div>
+<div id="t36_13" class="t s3_13">SYNGENTA AG, 2000. </div>
+<div id="t37_13" class="t s5_13">Copyright of this document is reserved. All unauthorised reproduction is forbidden.</div>
+<div id="t38_13" class="t s5_13">SA. Reg. 2011/06/27</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg13Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg13"><img src="13/13.png" id="pdf13" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f13 = [['t1_13',639],['t3_13',560],['t4_13',686],['t5_13',1269],['t6_13',601],['t8_13',692],['t9_13',551],['ta_13',1269],['tb_13',1269],['te_13',1269],['tf_13',459],['th_13',645],['ti_13',504],['tk_13',992],['tl_13',616],['tm_13',534],['tn_13',655],['to_13',516],['tp_13',871],['tr_13',1190],['ts_13',852],['tu_13',677],['tv_13',481],['tw_13',840],['ty_13',322],['tz_13',292],['t11_13',228],['t12_13',665],['t13_13',271],['t16_13',1098],['t17_13',665],['t19_13',1098],['t1a_13',682],['t1c_13',1190],['t1d_13',1190],['t1e_13',670],['t1f_13',85],['t1h_13',868],['t1j_13',695],['t1k_13',467],['t1l_13',1190],['t1m_13',1190],['t1n_13',415],['t1p_13',1190],['t1q_13',560],['t1r_13',581],['t1s_13',1190],['t1t_13',877],['t1v_13',1190],['t1w_13',1190],['t1x_13',1190],['t1y_13',879],['t20_13',1190],['t21_13',586],['t23_13',557],['t24_13',702],['t25_13',1290],['t26_13',715],['t2v_13',659],['t2w_13',320],['t31_13',1000],['t32_13',380],['t34_13',1050],['t36_13',442],['t37_13',1526],['t38_13',397]];
+var c13 = 0;
+function fontAdjustments13(){;
+	if (c13<f13.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f13[c13][0],f13[c13][1]);
+		c13++;
+		if (c13%10 == 0) {
+			setTimeout(function(){fontAdjustments13()},0);
+		} else {
+			fontAdjustments13();
+		}
+	}
+};
+function load13(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments13,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 117;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_13");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(13,13,909,1286,0);
+</script>
+</body>
+</html>

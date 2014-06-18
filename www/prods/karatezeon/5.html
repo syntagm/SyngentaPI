@@ -1,0 +1,1248 @@
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+<meta charset="utf-8" />
+<title>KARATE_ZEON___Eng_2012 Page5</title>
+</head>
+
+<body style="background-color:#919191;">
+
+<style type="text/css">
+    body {
+        margin:0;
+    }
+
+    #prev, #next {
+        width: 100px;
+        height: 30px;
+        vertical-align: middle;
+    }
+
+    #goBtn {
+        width: 100px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+    #zoomOut, #zoomIn {
+        width: 35px;
+        height: 30px;
+        vertical-align: middle;
+    }
+	
+	#toggle {
+		margin-right:20px;
+        vertical-align: middle;
+	}
+
+    #zoomBtn {
+        width: 70px;
+        height: 27px;
+        vertical-align: middle;
+    }
+
+</style>
+
+<script type="text/javascript">
+
+    var zoom = 1;
+    var width = 0;
+    var height = 0;
+    var curPg = 0;
+    var pgCount = 0;
+	var jpedal;
+	var container;
+	var type;
+	
+	var isMouseDown = false;
+	var mouseX;
+	var mouseY;
+
+    var CUR_DEFAULT = 0;
+    var CUR_GRAB = 1;
+    var CUR_GRABBING = 2;
+
+    var SEL_SELECT = 0;
+    var SEL_MOVE = 1;
+
+    function makeNavBar(pageCount, curPage, w, h, t) {
+	
+		//type 0 = single pages
+		//type 1 = splitspreads
+
+        pgCount = pageCount;
+        curPg = curPage;
+        width = w;
+        height = h;
+		type = t;
+        var opt;
+
+        //Populate the goto dropdown with page numbers
+        var goBtn = d("goBtn");
+		
+		if (type == 1) {//splitspreads
+			jpedal = d("container" + curPage);
+			
+			opt = document.createElement('option');
+            opt.value = 1;
+            opt.innerHTML = "Page " + 1;
+			goBtn.appendChild(opt);
+			
+			for (var i = 2; i <= pgCount; i += 2) {
+			
+				opt = document.createElement('option');
+				opt.value = i;
+				var text;
+				if (i != pgCount || pgCount % 2 == 1) {
+					text = "Page " + i + "-" + (i+1);
+				} else {
+					text = "Page " + i;
+				}
+				opt.innerHTML = text;
+				goBtn.appendChild(opt);
+			}
+			
+			goBtn.selectedIndex = curPage/2;
+			
+		} else {
+			jpedal = d("jpedal");
+			
+			for (var i = 1; i <= pgCount; i++) {
+				opt = document.createElement('option');
+				opt.value = i;
+				opt.innerHTML = "Page " + i;
+				goBtn.appendChild(opt);
+			}
+			goBtn.selectedIndex = curPage - 1;
+		}
+		
+
+
+        jpedal.style.transformOrigin = "top left";
+        jpedal.style.webkitTransformOrigin = "top left";
+        jpedal.style.msTransformOrigin = "top left";
+        jpedal.style.mozTransformOrigin = "top left";
+        jpedal.style.oTransformOrigin = "top left";
+        jpedal.style.margin = "0";
+
+        container = d("container");
+        container.style.width = width + "px";
+        container.style.height = height + "px";
+        container.style.overflow = "hidden";
+
+
+
+        var doc = document.URL;
+        var jumper = "?zoom=";
+        var jumIdx = doc.toString().indexOf(jumper);
+        var zm = parseFloat(doc.substr(jumIdx + jumper.length));
+		var zoomBtn = d("zoomBtn");
+		if (width > getWidth()) {
+			zoomBtn.options[1].text = "100%";
+			zoomBtn.options[2].text = "Fit Width (Reset)";
+		}
+
+        if (!isNaN(zm) && zm > 0 && zm != 1) {
+            zoom = zm;
+            updateZoom();
+        } else if (width > getWidth()) {
+			zoomBtn.selectedIndex = 2;
+			zoomUpdate();
+		}
+    }
+
+    function setSelectMode(type) {
+        //0 Text selectin (SEL_SELECT)
+        //1 Panning (SEL_MOVE)
+
+        if (type == SEL_SELECT) {
+            container.style.cursor = getCursor(CUR_DEFAULT);
+
+            container.onmousedown = function(e) { }
+
+            window.onmouseup = function(e) { }
+
+            window.onmousemove = function(e) { }
+        } else {
+
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            
+            container.style.cursor = getCursor(CUR_GRAB);
+
+            container.onmousedown = function(e) {
+                container.style.cursor = getCursor(CUR_GRABBING);
+
+                //console.log(e.screenX + " " + e.screenY);
+                mouseX = e.screenX;
+                mouseY = e.screenY;
+                isMouseDown = true;
+                return false;
+            }
+
+            window.onmouseup = function(e) {
+                container.style.cursor = getCursor(CUR_GRAB);
+                isMouseDown = false;
+            }
+
+            window.onmousemove = function(e) {
+                if (isMouseDown) {
+                    //console.log((mouseX - e.screenX) + " " + (mouseY - e.screenY));
+                    window.scrollBy((mouseX - e.screenX), (mouseY - e.screenY));
+
+                    mouseX = e.screenX;
+                    mouseY = e.screenY;
+
+                }
+
+            }
+        }
+
+    }
+	
+	function getCursor(type) {
+		//0 Default (CUR_DEFAULT)
+		//1 Open grab (CUR_GRAB)
+		//2 Close grab (CUR_GRABBING)
+		
+		//Courtesy of http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+		var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+		// Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+		var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		// At least Safari 3+: "[object HTMLElementConstructor]"
+		var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+		var isIE = /*@cc_on!@*/false || document.documentMode;   // At least IE6
+		
+		if (isFirefox) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-moz-grab";
+			} else {//CUR_GRABBING
+			    return "-moz-grabbing";
+			}
+		} else if (isChrome) {
+			if (type == CUR_DEFAULT) {
+                return "";
+			} else if (type == CUR_GRAB) {
+			    return "-webkit-grab";
+			} else {//CUR_GRABBING
+			    return "-webkit-grabbing";
+			}
+		} else {//CUR_DEFAULT
+			if (type == CUR_DEFAULT) {
+			    return "";
+			} else {//CUR_GRABBING
+			    return "all-scroll";
+			}
+		}
+	}
+	
+	function getWidth() {
+		var w = 0;
+		if (self.innerHeight) {
+			w = self.innerWidth;
+		} else if (document.documentElement && document.documentElement.clientHeight) {
+			w = document.documentElement.clientWidth;
+		} else if (document.body) {
+			w = document.body.clientWidth;
+		}
+		return w;
+	}
+
+    function updateZoom() {
+        jpedal.style.transform = "scale(" + zoom + ")";
+        jpedal.style.WebkitTransform = "scale(" + zoom + ")";
+        jpedal.style.msTransform = "scale(" + zoom + ")";
+        jpedal.style.MozTransform = "scale(" + zoom + ")";
+        jpedal.style.OTransform = "scale(" + zoom + ")";
+        d("container").style.width = width * zoom + "px";
+        d("container").style.height = height * zoom + "px";
+
+        var percent = Math.floor(zoom*100) + "%";
+        d("zoomBtn").options[0].innerHTML = percent;
+        d("zoomBtn").selectedIndex = 0;
+    }
+
+    function zoomIn() {
+        zoom = zoom*1.2;
+        updateZoom();
+    }
+
+    function zoomUpdate() {
+        var index = d("zoomBtn").selectedIndex;
+
+        if (index == 0) {
+            //Always current. Do nothing
+        } else if (index == 1) {//Reset
+            zoom = 1;
+        } else if (index == 2) {//Fit Width
+            var winWidth = window.innerWidth;
+            zoom = (winWidth - 40) / width;
+        } else if (index == 3) {//Fit Height
+            var winHeight = window.innerHeight;
+            zoom = (winHeight - 60) / height;
+        } else if (index == 4) {//Fit Page
+            var winWidth = window.innerWidth;
+            var winHeight = window.innerHeight;
+            var wScale = (winWidth - 40) / width;
+            var hScale = (winHeight - 60) / height;
+
+            if (wScale > hScale) {
+                zoom = hScale;
+            } else {
+                zoom = wScale;
+            }
+        }
+
+        updateZoom();
+    }
+
+    function zoomOut() {
+        zoom = zoom/1.2;
+        updateZoom();
+    }
+
+    function goToPage() {
+		var pg;
+		if (type == 0) {
+			pg = d("goBtn").selectedIndex + 1;
+		} else {
+			pg = (d("goBtn").selectedIndex * 2) + 1;
+		}
+        if (pg != curPg) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(pg, pgCount);
+			} else {
+				link = getMagazinePageHref(pg, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function getPageHref(page, count) {
+        var iWithLeadingZeros = page.toString();
+        var leadingZerosNeeded = count.toString().length - iWithLeadingZeros.length;
+
+        if(page === 1) {
+            iWithLeadingZeros = "index"
+        } else {
+            for(var n = 0; n < leadingZerosNeeded; n ++) {
+                iWithLeadingZeros = "0" + iWithLeadingZeros;
+            }
+        }
+        return iWithLeadingZeros;
+    }
+	
+	function getMagazinePageHref(page, count) {
+		if(page > count) page = count;
+		if(page === 1)
+			return getPageHref(page, count);
+		else if(page % 2 === 0) {
+			if(page === count)
+				return getPageHref(page, count);
+			else
+				return getPageHref(page, count) + "-" + getPageHref(page + 1, count);
+		} else {
+			return getPageHref(page-1, count) + "-" + getPageHref(page, count);
+		}
+	}
+
+    function next() {
+        if (curPg < pgCount) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg + 1, pgCount);
+			} else {
+				if (pgCount % 2 != 0 && curPg + 1 == pgCount) return;
+				link = getMagazinePageHref(curPg + 2, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function prev() {
+        if (curPg > 1) {
+            var zm = zoom != 1 ? "?zoom=" + zoom : "";
+			var link;
+			if (type == 0) {
+				link = getPageHref(curPg - 1, pgCount);
+			} else {
+				link = getMagazinePageHref(curPg - 1, pgCount);
+			}
+            window.open(link + ".html" + zm, "_self");
+        }
+    }
+
+    function d(id){
+        return document.getElementById(id);
+    }
+
+</script>
+
+<!-- Background pattern courtesy of http://subtlepatterns.com/mocha-grunge/ -->
+<div id="nav" style="background:url('assets/nav.png') repeat scroll 0 0 transparent; padding-top: 5px; text-align: center; position: fixed; width: 100%; height: 36px; z-index:999; border-bottom: 1px solid #555555">
+    <button onclick="prev()" id="prev">Prev &lt;&lt;</button>
+    <select id="goBtn" onchange="goToPage()">
+
+    </select>
+    <button onclick="next()" id="next" style="margin-right:20px;">&gt;&gt; Next</button>
+	
+	<span id="toggle">
+		<input type="radio" name="toggle" id="btnSelect" checked="checked" onclick="setSelectMode(0)"><img src="assets/cursor.png" />
+		<input type="radio" name="toggle" id="btnMove" onclick="setSelectMode(1)"><img src="assets/grab16.png" />
+	</span>
+
+    <button onclick="zoomOut()" id="zoomOut">-</button>
+    <select id="zoomBtn" onchange="zoomUpdate()">
+        <option value="0">100%</option>
+        <option value="1">100% (Reset)</option>
+        <option value="2">Fit Width</option>
+        <option value="3">Fit Height</option>
+        <option value="4">Fit Page</option>
+
+    </select>
+    <button onclick="zoomIn()" id="zoomIn">+</button>
+</div>
+<div style="position:relative; width: 100%; height: 42px; margin-bottom: 6px;"></div>
+<div style="position:fixed; top:0px; left: 0px; width: 100%; height: 42px; margin-bottom: 6px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.9); z-index:-2;"></div>
+
+<div id="container" style="margin: 0 auto 10px; box-shadow: 0 0 60px rgba(40, 40, 40, 0.7);">
+
+
+
+<div id="jpedal" style="position:relative; width: 909px; height: 1286px; overflow: hidden; margin: 0 auto; box-shadow: 0 2px 6px rgba(100, 100, 100, 0.5);">
+
+<!-- Begin shared CSS values -->
+<style type="text/css" >
+.t {
+	position: absolute;
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 1;
+	position:absolute;
+	white-space:nowrap;
+	overflow:visible;
+}
+</style>
+<!-- End shared CSS values -->
+
+<!-- Begin shared JS -->
+<script type="text/javascript">
+
+// Ensure that we're not replacing any onload events
+function addLoadEvent(func) {
+	var oldonload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = func;
+	} else {
+		window.onload = function() {
+			if (oldonload) {
+				oldonload();
+			}
+			func();
+		}
+	}
+}
+addLoadEvent(function(){load5();});
+
+function adjustWordSpacing(divName,actualWidth) {
+
+	var el = document.getElementById(divName);
+	var rawWidth=el.offsetWidth;
+	if(actualWidth>rawWidth){
+		var spacing= 0;
+		var s=spacing+'px';
+		el.style.wordSpacing = s;
+		rawWidth=el.offsetWidth;
+
+		var diff=rawWidth-actualWidth;
+		if(diff<0)
+			diff=-diff;
+		var newDiff=diff-1;
+
+		while (spacing<40 && (newDiff===diff || newDiff<diff)){
+
+			diff=newDiff;
+			spacing= spacing+1;
+
+			s=spacing+'px';
+			el.style.wordSpacing = s;
+
+			newDiff=el.offsetWidth-actualWidth;
+			if(newDiff<0)
+				newDiff=-newDiff;
+		}
+		if(diff<=newDiff)
+			spacing=spacing-1;
+		s=spacing+'px';
+		el.style.wordSpacing =s;
+	}
+}
+
+</script>
+<!-- End shared JS -->
+
+
+<!-- Begin inline CSS -->
+<style type="text/css" >
+
+#t1_5{left:423px;top:41px;}
+#t2_5{left:515px;top:41px;}
+#t3_5{left:134px;top:76px;}
+#t4_5{left:116px;top:106px;}
+#t5_5{left:116px;top:120px;}
+#t6_5{left:116px;top:135px;}
+#t7_5{left:119px;top:135px;}
+#t8_5{left:116px;top:150px;}
+#t9_5{left:164px;top:150px;}
+#ta_5{left:116px;top:326px;}
+#tb_5{left:116px;top:340px;}
+#tc_5{left:116px;top:355px;}
+#td_5{left:116px;top:370px;}
+#te_5{left:116px;top:384px;}
+#tf_5{left:116px;top:399px;}
+#tg_5{left:116px;top:428px;}
+#th_5{left:116px;top:443px;}
+#ti_5{left:140px;top:443px;}
+#tj_5{left:116px;top:604px;}
+#tk_5{left:116px;top:619px;}
+#tl_5{left:116px;top:634px;}
+#tm_5{left:120px;top:634px;}
+#tn_5{left:205px;top:634px;}
+#to_5{left:116px;top:648px;}
+#tp_5{left:116px;top:663px;}
+#tq_5{left:116px;top:795px;}
+#tr_5{left:116px;top:810px;}
+#ts_5{left:120px;top:810px;}
+#tt_5{left:209px;top:810px;}
+#tu_5{left:116px;top:824px;}
+#tv_5{left:116px;top:839px;}
+#tw_5{left:116px;top:1030px;}
+#tx_5{left:116px;top:1044px;}
+#ty_5{left:527px;top:76px;}
+#tz_5{left:506px;top:106px;}
+#t10_5{left:506px;top:120px;}
+#t11_5{left:506px;top:135px;}
+#t12_5{left:509px;top:135px;}
+#t13_5{left:625px;top:135px;}
+#t14_5{left:506px;top:399px;}
+#t15_5{left:506px;top:414px;}
+#t16_5{left:506px;top:428px;}
+#t17_5{left:509px;top:428px;}
+#t18_5{left:625px;top:428px;}
+#t19_5{left:506px;top:766px;}
+#t1a_5{left:506px;top:780px;}
+#t1b_5{left:506px;top:795px;}
+#t1c_5{left:506px;top:810px;}
+#t1d_5{left:509px;top:810px;}
+#t1e_5{left:625px;top:810px;}
+#t1f_5{left:254px;top:76px;}
+#t1g_5{left:252px;top:120px;}
+#t1h_5{left:286px;top:120px;}
+#t1i_5{left:292px;top:120px;}
+#t1j_5{left:242px;top:326px;}
+#t1k_5{left:246px;top:340px;}
+#t1l_5{left:276px;top:340px;}
+#t1m_5{left:282px;top:340px;}
+#t1n_5{left:310px;top:340px;}
+#t1o_5{left:266px;top:355px;}
+#t1p_5{left:243px;top:619px;}
+#t1q_5{left:274px;top:619px;}
+#t1r_5{left:279px;top:619px;}
+#t1s_5{left:271px;top:634px;}
+#t1t_5{left:243px;top:795px;}
+#t1u_5{left:274px;top:795px;}
+#t1v_5{left:279px;top:795px;}
+#t1w_5{left:271px;top:810px;}
+#t1x_5{left:249px;top:824px;}
+#t1y_5{left:286px;top:824px;}
+#t1z_5{left:292px;top:824px;}
+#t20_5{left:252px;top:971px;}
+#t21_5{left:286px;top:971px;}
+#t22_5{left:292px;top:971px;}
+#t23_5{left:246px;top:1044px;}
+#t24_5{left:306px;top:1044px;}
+#t25_5{left:311px;top:1044px;}
+#t26_5{left:274px;top:1059px;}
+#t27_5{left:654px;top:76px;}
+#t28_5{left:652px;top:120px;}
+#t29_5{left:686px;top:120px;}
+#t2a_5{left:691px;top:120px;}
+#t2b_5{left:652px;top:311px;}
+#t2c_5{left:686px;top:311px;}
+#t2d_5{left:691px;top:311px;}
+#t2e_5{left:642px;top:414px;}
+#t2f_5{left:709px;top:414px;}
+#t2g_5{left:714px;top:414px;}
+#t2h_5{left:673px;top:428px;}
+#t2i_5{left:652px;top:678px;}
+#t2j_5{left:686px;top:678px;}
+#t2k_5{left:691px;top:678px;}
+#t2l_5{left:652px;top:795px;}
+#t2m_5{left:686px;top:795px;}
+#t2n_5{left:691px;top:795px;}
+#t2o_5{left:652px;top:1015px;}
+#t2p_5{left:686px;top:1015px;}
+#t2q_5{left:691px;top:1015px;}
+#t2r_5{left:359px;top:76px;}
+#t2s_5{left:331px;top:120px;}
+#t2t_5{left:374px;top:120px;}
+#t2u_5{left:399px;top:120px;}
+#t2v_5{left:437px;top:120px;}
+#t2w_5{left:331px;top:135px;}
+#t2x_5{left:364px;top:135px;letter-spacing:1px;}
+#t2y_5{left:441px;top:135px;}
+#t2z_5{left:331px;top:150px;}
+#t30_5{left:331px;top:164px;}
+#t31_5{left:331px;top:194px;}
+#t32_5{left:331px;top:208px;}
+#t33_5{left:445px;top:208px;}
+#t34_5{left:331px;top:223px;}
+#t35_5{left:331px;top:238px;}
+#t36_5{left:339px;top:238px;}
+#t37_5{left:331px;top:267px;}
+#t38_5{left:331px;top:282px;}
+#t39_5{left:445px;top:282px;}
+#t3a_5{left:331px;top:296px;}
+#t3b_5{left:331px;top:326px;}
+#t3c_5{left:404px;top:326px;}
+#t3d_5{left:331px;top:340px;}
+#t3e_5{left:445px;top:340px;}
+#t3f_5{left:331px;top:355px;}
+#t3g_5{left:331px;top:370px;}
+#t3h_5{left:331px;top:384px;}
+#t3i_5{left:331px;top:399px;}
+#t3j_5{left:411px;top:399px;}
+#t3k_5{left:421px;top:399px;}
+#t3l_5{left:331px;top:414px;}
+#t3m_5{left:331px;top:428px;}
+#t3n_5{left:445px;top:428px;}
+#t3o_5{left:331px;top:443px;}
+#t3p_5{left:331px;top:458px;}
+#t3q_5{left:331px;top:472px;}
+#t3r_5{left:331px;top:487px;}
+#t3s_5{left:445px;top:487px;}
+#t3t_5{left:331px;top:502px;}
+#t3u_5{left:331px;top:516px;letter-spacing:1px;}
+#t3v_5{left:411px;top:516px;}
+#t3w_5{left:331px;top:531px;}
+#t3x_5{left:331px;top:546px;}
+#t3y_5{left:445px;top:546px;}
+#t3z_5{left:331px;top:560px;}
+#t40_5{left:331px;top:575px;}
+#t41_5{left:331px;top:619px;}
+#t42_5{left:331px;top:634px;}
+#t43_5{left:331px;top:648px;}
+#t44_5{left:445px;top:648px;}
+#t45_5{left:331px;top:663px;}
+#t46_5{left:331px;top:678px;}
+#t47_5{left:445px;top:678px;}
+#t48_5{left:331px;top:692px;}
+#t49_5{left:331px;top:707px;}
+#t4a_5{left:370px;top:707px;}
+#t4b_5{left:416px;top:707px;}
+#t4c_5{left:331px;top:722px;}
+#t4d_5{left:331px;top:736px;}
+#t4e_5{left:371px;top:736px;}
+#t4f_5{left:379px;top:736px;}
+#t4g_5{left:331px;top:751px;}
+#t4h_5{left:331px;top:766px;}
+#t4i_5{left:331px;top:795px;}
+#t4j_5{left:331px;top:810px;}
+#t4k_5{left:331px;top:824px;}
+#t4l_5{left:331px;top:839px;}
+#t4m_5{left:331px;top:854px;}
+#t4n_5{left:331px;top:868px;}
+#t4o_5{left:331px;top:883px;}
+#t4p_5{left:331px;top:912px;}
+#t4q_5{left:331px;top:927px;}
+#t4r_5{left:445px;top:927px;}
+#t4s_5{left:331px;top:942px;}
+#t4t_5{left:331px;top:971px;}
+#t4u_5{left:331px;top:986px;}
+#t4v_5{left:445px;top:986px;}
+#t4w_5{left:331px;top:1000px;}
+#t4x_5{left:331px;top:1044px;}
+#t4y_5{left:445px;top:1044px;}
+#t4z_5{left:331px;top:1059px;}
+#t50_5{left:331px;top:1074px;}
+#t51_5{left:331px;top:1088px;}
+#t52_5{left:331px;top:1103px;}
+#t53_5{left:331px;top:1118px;}
+#t54_5{left:385px;top:1118px;}
+#t55_5{left:421px;top:1118px;}
+#t56_5{left:331px;top:1132px;}
+#t57_5{left:331px;top:1147px;}
+#t58_5{left:331px;top:1162px;}
+#t59_5{left:396px;top:1162px;}
+#t5a_5{left:433px;top:1162px;}
+#t5b_5{left:331px;top:1176px;}
+#t5c_5{left:331px;top:1191px;}
+#t5d_5{left:331px;top:1206px;}
+#t5e_5{left:331px;top:1220px;}
+#t5f_5{left:755px;top:76px;}
+#t5g_5{left:731px;top:120px;}
+#t5h_5{left:790px;top:120px;}
+#t5i_5{left:731px;top:135px;}
+#t5j_5{left:731px;top:150px;}
+#t5k_5{left:731px;top:164px;}
+#t5l_5{left:731px;top:179px;}
+#t5m_5{left:764px;top:179px;}
+#t5n_5{left:811px;top:179px;}
+#t5o_5{left:731px;top:194px;}
+#t5p_5{left:731px;top:208px;}
+#t5q_5{left:795px;top:208px;}
+#t5r_5{left:806px;top:208px;}
+#t5s_5{left:731px;top:223px;}
+#t5t_5{left:731px;top:238px;}
+#t5u_5{left:797px;top:238px;}
+#t5v_5{left:823px;top:238px;}
+#t5w_5{left:731px;top:252px;}
+#t5x_5{left:731px;top:311px;}
+#t5y_5{left:731px;top:326px;}
+#t5z_5{left:797px;top:326px;}
+#t60_5{left:806px;top:326px;}
+#t61_5{left:731px;top:340px;}
+#t62_5{left:731px;top:414px;}
+#t63_5{left:790px;top:414px;}
+#t64_5{left:731px;top:428px;}
+#t65_5{left:731px;top:443px;}
+#t66_5{left:772px;top:443px;}
+#t67_5{left:791px;top:443px;}
+#t68_5{left:819px;top:443px;}
+#t69_5{left:731px;top:458px;}
+#t6a_5{left:792px;top:458px;}
+#t6b_5{left:806px;top:458px;}
+#t6c_5{left:731px;top:472px;letter-spacing:1px;}
+#t6d_5{left:775px;top:472px;letter-spacing:2px;}
+#t6e_5{left:731px;top:487px;}
+#t6f_5{left:731px;top:502px;}
+#t6g_5{left:731px;top:516px;letter-spacing:1px;}
+#t6h_5{left:780px;top:519px;}
+#t6i_5{left:804px;top:516px;letter-spacing:1px;}
+#t6j_5{left:731px;top:531px;}
+#t6k_5{left:731px;top:546px;}
+#t6l_5{left:731px;top:560px;}
+#t6m_5{left:731px;top:575px;}
+#t6n_5{left:757px;top:575px;}
+#t6o_5{left:806px;top:575px;}
+#t6p_5{left:731px;top:590px;}
+#t6q_5{left:731px;top:604px;letter-spacing:1px;}
+#t6r_5{left:795px;top:604px;letter-spacing:1px;}
+#t6s_5{left:731px;top:619px;}
+#t6t_5{left:731px;top:678px;}
+#t6u_5{left:731px;top:692px;}
+#t6v_5{left:797px;top:692px;}
+#t6w_5{left:806px;top:692px;}
+#t6x_5{left:731px;top:707px;}
+#t6y_5{left:731px;top:795px;}
+#t6z_5{left:790px;top:795px;}
+#t70_5{left:731px;top:810px;}
+#t71_5{left:731px;top:824px;}
+#t72_5{left:731px;top:839px;}
+#t73_5{left:760px;top:839px;}
+#t74_5{left:774px;top:839px;}
+#t75_5{left:731px;top:854px;}
+#t76_5{left:731px;top:868px;}
+#t77_5{left:731px;top:883px;}
+#t78_5{left:731px;top:898px;letter-spacing:1px;}
+#t79_5{left:785px;top:898px;letter-spacing:1px;}
+#t7a_5{left:731px;top:912px;letter-spacing:1px;}
+#t7b_5{left:809px;top:912px;}
+#t7c_5{left:731px;top:927px;letter-spacing:1px;}
+#t7d_5{left:780px;top:927px;letter-spacing:2px;}
+#t7e_5{left:731px;top:942px;}
+#t7f_5{left:764px;top:942px;letter-spacing:2px;}
+#t7g_5{left:731px;top:956px;}
+#t7h_5{left:731px;top:1015px;}
+#t7i_5{left:731px;top:1030px;}
+#t7j_5{left:731px;top:1044px;}
+#t7k_5{left:769px;top:1044px;}
+#t7l_5{left:792px;top:1044px;letter-spacing:1px;}
+#t7m_5{left:731px;top:1059px;}
+#t7n_5{left:800px;top:1059px;}
+#t7o_5{left:731px;top:1074px;}
+#t7p_5{left:755px;top:1074px;}
+#t7q_5{left:782px;top:1074px;}
+#t7r_5{left:818px;top:1074px;}
+#t7s_5{left:731px;top:1088px;}
+#t7t_5{left:731px;top:1103px;}
+#t7u_5{left:731px;top:1118px;}
+#t7v_5{left:731px;top:1132px;}
+#t7w_5{left:731px;top:1147px;}
+#t7x_5{left:731px;top:1162px;}
+#t7y_5{left:731px;top:1176px;}
+#t7z_5{left:731px;top:1191px;}
+#t80_5{left:731px;top:1206px;}
+
+.s1_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: HGJJET-HelveticaNeueLTStd-Bd5;
+	color: rgb(0,0,0);
+}
+
+.s7_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: GYZDQV-HelveticaNeueLTStd-Lt5;
+	color: rgb(0,0,0);
+}
+
+.s3_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: FQPXCX-HelveticaNeueLTStd-Bd-SC7505;
+	color: rgb(0,0,0);
+}
+
+.s5_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: FQPXCX-HelveticaNeueLTStd-BdIt5;
+	color: rgb(0,0,0);
+}
+
+.s2_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: HGJJET-HelveticaNeueLTStd-Lt5;
+	color: rgb(0,0,0);
+}
+
+.s6_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: GYZDQV-MT-Extra5;
+	color: rgb(0,0,0);
+}
+
+.s4_5{
+	FONT-SIZE: 48px;
+	FONT-FAMILY: GYZDQV-HelveticaNeueLTStd-It5;
+	color: rgb(0,0,0);
+}
+
+.s8_5{
+	FONT-SIZE: 24px;
+	FONT-FAMILY: HGJJET-HelveticaNeueLTStd-Lt5;
+	color: rgb(0,0,0);
+}
+
+</style>
+<!-- End inline CSS -->
+
+<!-- Begin embedded font definitions -->
+<style type="text/css" >
+
+@font-face {
+	font-family: GYZDQV-MT-Extra5;
+	src: url("5/fonts/GYZDQV-MT-Extra.eot");
+	src: url("5/fonts/GYZDQV-MT-Extra.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/GYZDQV-MT-Extra.otf") format("opentype");
+}
+
+@font-face {
+	font-family: FQPXCX-HelveticaNeueLTStd-BdIt5;
+	src: url("5/fonts/FQPXCX-HelveticaNeueLTStd-BdIt.eot");
+	src: url("5/fonts/FQPXCX-HelveticaNeueLTStd-BdIt.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/FQPXCX-HelveticaNeueLTStd-BdIt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: GYZDQV-HelveticaNeueLTStd-Lt5;
+	src: url("5/fonts/GYZDQV-HelveticaNeueLTStd-Lt.eot");
+	src: url("5/fonts/GYZDQV-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/GYZDQV-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: HGJJET-HelveticaNeueLTStd-Lt5;
+	src: url("5/fonts/HGJJET-HelveticaNeueLTStd-Lt.eot");
+	src: url("5/fonts/HGJJET-HelveticaNeueLTStd-Lt.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/HGJJET-HelveticaNeueLTStd-Lt.otf") format("opentype");
+}
+
+@font-face {
+	font-family: FQPXCX-HelveticaNeueLTStd-Bd-SC7505;
+	src: url("5/fonts/FQPXCX-HelveticaNeueLTStd-Bd-SC750.eot");
+	src: url("5/fonts/FQPXCX-HelveticaNeueLTStd-Bd-SC750.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/FQPXCX-HelveticaNeueLTStd-Bd-SC750.otf") format("opentype");
+}
+
+@font-face {
+	font-family: GYZDQV-HelveticaNeueLTStd-It5;
+	src: url("5/fonts/GYZDQV-HelveticaNeueLTStd-It.eot");
+	src: url("5/fonts/GYZDQV-HelveticaNeueLTStd-It.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/GYZDQV-HelveticaNeueLTStd-It.otf") format("opentype");
+}
+
+@font-face {
+	font-family: HGJJET-HelveticaNeueLTStd-Bd5;
+	src: url("5/fonts/HGJJET-HelveticaNeueLTStd-Bd.eot");
+	src: url("5/fonts/HGJJET-HelveticaNeueLTStd-Bd.eot?#iefix") format("embedded-opentype"),
+		url("5/fonts/HGJJET-HelveticaNeueLTStd-Bd.otf") format("opentype");
+}
+
+</style>
+<!-- End embedded font definitions -->
+
+<!-- Begin text definitions (Positioned/styled in CSS) -->
+<div id="t1_5" class="t s1_5">KARATE ZEON</div>
+<div id="t2_5" class="t s2_5">/	5</div>
+<div id="t3_5" class="t s1_5">CROP / PEST</div>
+<div id="t4_5" class="t s3_5">WHEAT</div>
+<div id="t5_5" class="t s1_5">American bollworm</div>
+<div id="t6_5" class="t s2_5">(</div>
+<div id="t7_5" class="t s4_5">Helicoverpa </div>
+<div id="t8_5" class="t s4_5">armigera</div>
+<div id="t9_5" class="t s2_5">)</div>
+<div id="ta_5" class="t s1_5">TOMATOES </div>
+<div id="tb_5" class="t s1_5">AND FRUITING </div>
+<div id="tc_5" class="t s1_5">VEGETABLES </div>
+<div id="td_5" class="t s2_5">(including	eggplant	</div>
+<div id="te_5" class="t s2_5">and	Capsicums	</div>
+<div id="tf_5" class="t s2_5">(peppers)</div>
+<div id="tg_5" class="t s1_5">American bollworm</div>
+<div id="th_5" class="t s2_5">and	</div>
+<div id="ti_5" class="t s1_5">Semi-looper</div>
+<div id="tj_5" class="t s3_5">MAIZE</div>
+<div id="tk_5" class="t s1_5">Stalkborer</div>
+<div id="tl_5" class="t s1_5">(</div>
+<div id="tm_5" class="t s5_5">Chilo partellus</div>
+<div id="tn_5" class="t s1_5">)</div>
+<div id="to_5" class="t s2_5">(First	and	second	</div>
+<div id="tp_5" class="t s2_5">generation)</div>
+<div id="tq_5" class="t s1_5">Stalkborer</div>
+<div id="tr_5" class="t s1_5">(</div>
+<div id="ts_5" class="t s5_5">Busseola fusca</div>
+<div id="tt_5" class="t s1_5">)</div>
+<div id="tu_5" class="t s2_5">(First	and	second	</div>
+<div id="tv_5" class="t s2_5">generation)</div>
+<div id="tw_5" class="t s1_5">ONIONS</div>
+<div id="tx_5" class="t s1_5">Thrips</div>
+<div id="ty_5" class="t s1_5">CROP / PEST</div>
+<div id="tz_5" class="t s3_5">SOYBEANS</div>
+<div id="t10_5" class="t s1_5">American bollworm</div>
+<div id="t11_5" class="t s2_5">(</div>
+<div id="t12_5" class="t s4_5">Helicoverpa armigera</div>
+<div id="t13_5" class="t s2_5">)</div>
+<div id="t14_5" class="t s1_5">LUPINS </div>
+<div id="t15_5" class="t s1_5">American bollworm</div>
+<div id="t16_5" class="t s2_5">(</div>
+<div id="t17_5" class="t s4_5">Helicoverpa armigera</div>
+<div id="t18_5" class="t s2_5">)</div>
+<div id="t19_5" class="t s1_5">PEAS AND </div>
+<div id="t1a_5" class="t s1_5">MANGE TOUS </div>
+<div id="t1b_5" class="t s1_5">American bollworm</div>
+<div id="t1c_5" class="t s2_5">(</div>
+<div id="t1d_5" class="t s4_5">Helicoverpa armigera</div>
+<div id="t1e_5" class="t s2_5">)</div>
+<div id="t1f_5" class="t s1_5">DOSAGE</div>
+<div id="t1g_5" class="t s2_5">120	m</div>
+<div id="t1h_5" class="t s6_5">l</div>
+<div id="t1i_5" class="t s2_5">/ha</div>
+<div id="t1j_5" class="t s1_5">High volume:</div>
+<div id="t1k_5" class="t s2_5">7,5	m</div>
+<div id="t1l_5" class="t s6_5">l</div>
+<div id="t1m_5" class="t s2_5">/100	</div>
+<div id="t1n_5" class="t s6_5">l</div>
+<div id="t1o_5" class="t s2_5">water</div>
+<div id="t1p_5" class="t s2_5">1,2	m</div>
+<div id="t1q_5" class="t s6_5">l</div>
+<div id="t1r_5" class="t s2_5">/100	m	</div>
+<div id="t1s_5" class="t s2_5">row</div>
+<div id="t1t_5" class="t s2_5">1,2	m</div>
+<div id="t1u_5" class="t s6_5">l</div>
+<div id="t1v_5" class="t s2_5">/100	m	</div>
+<div id="t1w_5" class="t s2_5">row</div>
+<div id="t1x_5" class="t s2_5">(120	m</div>
+<div id="t1y_5" class="t s6_5">l</div>
+<div id="t1z_5" class="t s2_5">/ha)</div>
+<div id="t20_5" class="t s2_5">120	m</div>
+<div id="t21_5" class="t s6_5">l</div>
+<div id="t22_5" class="t s2_5">/ha</div>
+<div id="t23_5" class="t s2_5">80	-	120	m</div>
+<div id="t24_5" class="t s6_5">l</div>
+<div id="t25_5" class="t s7_5">/</div>
+<div id="t26_5" class="t s2_5">ha</div>
+<div id="t27_5" class="t s1_5">DOSAGE</div>
+<div id="t28_5" class="t s2_5">120	m</div>
+<div id="t29_5" class="t s6_5">l</div>
+<div id="t2a_5" class="t s2_5">/ha</div>
+<div id="t2b_5" class="t s2_5">120	m</div>
+<div id="t2c_5" class="t s6_5">l</div>
+<div id="t2d_5" class="t s2_5">/ha</div>
+<div id="t2e_5" class="t s2_5">110	-	120	m</div>
+<div id="t2f_5" class="t s6_5">l</div>
+<div id="t2g_5" class="t s7_5">/</div>
+<div id="t2h_5" class="t s2_5">ha</div>
+<div id="t2i_5" class="t s2_5">120	m</div>
+<div id="t2j_5" class="t s6_5">l</div>
+<div id="t2k_5" class="t s2_5">/ha</div>
+<div id="t2l_5" class="t s2_5">100	m</div>
+<div id="t2m_5" class="t s6_5">l</div>
+<div id="t2n_5" class="t s2_5">/ha</div>
+<div id="t2o_5" class="t s2_5">120	m</div>
+<div id="t2p_5" class="t s6_5">l</div>
+<div id="t2q_5" class="t s2_5">/ha</div>
+<div id="t2r_5" class="t s1_5">REMARKS</div>
+<div id="t2s_5" class="t s2_5">Spray	</div>
+<div id="t2t_5" class="t s2_5">as	</div>
+<div id="t2u_5" class="t s2_5">soon	</div>
+<div id="t2v_5" class="t s2_5">as	</div>
+<div id="t2w_5" class="t s2_5">an	</div>
+<div id="t2x_5" class="t s2_5">infestation	</div>
+<div id="t2y_5" class="t s2_5">is	</div>
+<div id="t2z_5" class="t s2_5">noticed	 and	 repeat	 if	</div>
+<div id="t30_5" class="t s2_5">necessary.</div>
+<div id="t31_5" class="t s1_5">Ground application:</div>
+<div id="t32_5" class="t s2_5">Ensure	 thorough	 wet</div>
+<div id="t33_5" class="t s7_5">-</div>
+<div id="t34_5" class="t s2_5">ting.	Apply	in	250	-	500	</div>
+<div id="t35_5" class="t s6_5">l</div>
+<div id="t36_5" class="t s2_5">water/ha.</div>
+<div id="t37_5" class="t s1_5">Aerial application:</div>
+<div id="t38_5" class="t s2_5">Apply	 in	 at	 least	 30	</div>
+<div id="t39_5" class="t s6_5">l</div>
+<div id="t3a_5" class="t s2_5">water/ha.</div>
+<div id="t3b_5" class="t s2_5">Commence	</div>
+<div id="t3c_5" class="t s2_5">spraying	</div>
+<div id="t3d_5" class="t s2_5">when	plants	start	flow</div>
+<div id="t3e_5" class="t s7_5">-</div>
+<div id="t3f_5" class="t s2_5">ering	 or	 at	 first	 signs	</div>
+<div id="t3g_5" class="t s2_5">of	an	infestation.	Apply	</div>
+<div id="t3h_5" class="t s2_5">as	 a	 full	 cover	 spray	</div>
+<div id="t3i_5" class="t s2_5">at	500	-	1000	</div>
+<div id="t3j_5" class="t s6_5">l</div>
+<div id="t3k_5" class="t s2_5">spray	</div>
+<div id="t3l_5" class="t s2_5">mixture/ha	 depending	</div>
+<div id="t3m_5" class="t s2_5">on	plant	size	for	toma</div>
+<div id="t3n_5" class="t s7_5">-</div>
+<div id="t3o_5" class="t s2_5">toes	 up	 to	 1	 m.	 For	</div>
+<div id="t3p_5" class="t s2_5">taller	 plants	 a	 higher	</div>
+<div id="t3q_5" class="t s2_5">spray	 volume	 should	</div>
+<div id="t3r_5" class="t s2_5">be	 used	 and	 the	 con</div>
+<div id="t3s_5" class="t s7_5">-</div>
+<div id="t3t_5" class="t s2_5">centration	 should	 be	</div>
+<div id="t3u_5" class="t s2_5">maintained.	</div>
+<div id="t3v_5" class="t s2_5">Repeat	</div>
+<div id="t3w_5" class="t s2_5">application	 at	 7	 -	 10	</div>
+<div id="t3x_5" class="t s2_5">day	intervals	or	as	dic</div>
+<div id="t3y_5" class="t s7_5">-</div>
+<div id="t3z_5" class="t s2_5">tated	 by	 inspection	 of	</div>
+<div id="t40_5" class="t s2_5">crop.	</div>
+<div id="t41_5" class="t s1_5">Ground application:</div>
+<div id="t42_5" class="t s2_5">Apply	 as	 soon	 as	 10	</div>
+<div id="t43_5" class="t s2_5">%	 plants	 show	 dam</div>
+<div id="t44_5" class="t s7_5">-</div>
+<div id="t45_5" class="t s2_5">age	 and	 direct	 spray	</div>
+<div id="t46_5" class="t s2_5">into	 funnels.	 If	 neces</div>
+<div id="t47_5" class="t s7_5">-</div>
+<div id="t48_5" class="t s2_5">sary	apply	a	follow-up	</div>
+<div id="t49_5" class="t s2_5">spray	</div>
+<div id="t4a_5" class="t s2_5">shortly	</div>
+<div id="t4b_5" class="t s2_5">before	</div>
+<div id="t4c_5" class="t s2_5">tasseling.	 A	 minimum	</div>
+<div id="t4d_5" class="t s2_5">of	2	-	4	</div>
+<div id="t4e_5" class="t s6_5">l</div>
+<div id="t4f_5" class="t s2_5">spray	mixture	</div>
+<div id="t4g_5" class="t s2_5">must	 be	 applied/100	</div>
+<div id="t4h_5" class="t s2_5">m	row.</div>
+<div id="t4i_5" class="t s2_5">Apply	as	soon	as	eggs	</div>
+<div id="t4j_5" class="t s2_5">are	 found	 on	 5	 %	 of	</div>
+<div id="t4k_5" class="t s2_5">the	 plants	 or	 10	 %	</div>
+<div id="t4l_5" class="t s2_5">plants	 show	 damage.	</div>
+<div id="t4m_5" class="t s2_5">A	 second	 application	</div>
+<div id="t4n_5" class="t s2_5">may	 be	 required	 10	 -	</div>
+<div id="t4o_5" class="t s2_5">14	days	later.</div>
+<div id="t4p_5" class="t s2_5">Apply	directly	into	plant	</div>
+<div id="t4q_5" class="t s2_5">funnel	in	at	least	2	-	4	</div>
+<div id="t4r_5" class="t s6_5">l</div>
+<div id="t4s_5" class="t s2_5">water/100	m	row.</div>
+<div id="t4t_5" class="t s1_5">Aerial application:</div>
+<div id="t4u_5" class="t s2_5">Apply	as	above	in	30	</div>
+<div id="t4v_5" class="t s6_5">l</div>
+<div id="t4w_5" class="t s2_5">water/ha.</div>
+<div id="t4x_5" class="t s2_5">Apply	 in	 a	 spray	 pro</div>
+<div id="t4y_5" class="t s7_5">-</div>
+<div id="t4z_5" class="t s2_5">gramme	 of	 10	 -	 14	</div>
+<div id="t50_5" class="t s2_5">days	 at	 the	 first	 signs	</div>
+<div id="t51_5" class="t s2_5">of	 damage	 on	 onion	</div>
+<div id="t52_5" class="t s2_5">leaves.	 Use	 the	 lower	</div>
+<div id="t53_5" class="t s2_5">dosage	</div>
+<div id="t54_5" class="t s2_5">rate	</div>
+<div id="t55_5" class="t s2_5">when	</div>
+<div id="t56_5" class="t s2_5">thrip	counts	reach	0,6	</div>
+<div id="t57_5" class="t s2_5">thrips	 per	 plant	 and	</div>
+<div id="t58_5" class="t s2_5">follow-up	</div>
+<div id="t59_5" class="t s2_5">with	</div>
+<div id="t5a_5" class="t s2_5">the	</div>
+<div id="t5b_5" class="t s2_5">higher	dosage	rate	10	</div>
+<div id="t5c_5" class="t s2_5">-	 14	 days	 later.	 Not	</div>
+<div id="t5d_5" class="t s2_5">to	 be	 used	 on	 spring	</div>
+<div id="t5e_5" class="t s2_5">onions.</div>
+<div id="t5f_5" class="t s1_5">REMARKS</div>
+<div id="t5g_5" class="t s1_5">Ground </div>
+<div id="t5h_5" class="t s1_5">applica-</div>
+<div id="t5i_5" class="t s1_5">tion:</div>
+<div id="t5j_5" class="t s2_5">Apply	 as	 soon	 as	</div>
+<div id="t5k_5" class="t s2_5">infestation	is	noticed	</div>
+<div id="t5l_5" class="t s2_5">and	</div>
+<div id="t5m_5" class="t s2_5">repeat	</div>
+<div id="t5n_5" class="t s2_5">when	</div>
+<div id="t5o_5" class="t s2_5">necessary.	 Apply	 in	</div>
+<div id="t5p_5" class="t s2_5">200	 -	 300	</div>
+<div id="t5q_5" class="t s6_5">l</div>
+<div id="t5r_5" class="t s2_5">water/</div>
+<div id="t5s_5" class="t s2_5">ha	and	ensure	good	</div>
+<div id="t5t_5" class="t s2_5">coverage	</div>
+<div id="t5u_5" class="t s2_5">of	</div>
+<div id="t5v_5" class="t s2_5">the	</div>
+<div id="t5w_5" class="t s2_5">plants.</div>
+<div id="t5x_5" class="t s1_5">Aerial application:</div>
+<div id="t5y_5" class="t s2_5">Apply	in	30	</div>
+<div id="t5z_5" class="t s6_5">l</div>
+<div id="t60_5" class="t s2_5">water/</div>
+<div id="t61_5" class="t s2_5">ha.</div>
+<div id="t62_5" class="t s1_5">Ground </div>
+<div id="t63_5" class="t s1_5">applica-</div>
+<div id="t64_5" class="t s1_5">tion:</div>
+<div id="t65_5" class="t s2_5">Apply	</div>
+<div id="t66_5" class="t s2_5">in	</div>
+<div id="t67_5" class="t s2_5">not	</div>
+<div id="t68_5" class="t s2_5">less	</div>
+<div id="t69_5" class="t s2_5">than	 300	</div>
+<div id="t6a_5" class="t s6_5">l</div>
+<div id="t6b_5" class="t s2_5">water/</div>
+<div id="t6c_5" class="t s2_5">ha.	</div>
+<div id="t6d_5" class="t s2_5">Application	</div>
+<div id="t6e_5" class="t s2_5">should	 be	 done	 at	</div>
+<div id="t6f_5" class="t s2_5">a	 count	 of	 1	 -	 2	</div>
+<div id="t6g_5" class="t s2_5">larvae/m</div>
+<div id="t6h_5" class="t s8_5">2</div>
+<div id="t6i_5" class="t s2_5">before	</div>
+<div id="t6j_5" class="t s2_5">pods	are	penetrated	</div>
+<div id="t6k_5" class="t s2_5">by	 the	 larvae.	 Apply	</div>
+<div id="t6l_5" class="t s2_5">lower	 dosage	 rate	</div>
+<div id="t6m_5" class="t s2_5">to	</div>
+<div id="t6n_5" class="t s2_5">young	</div>
+<div id="t6o_5" class="t s2_5">plants	</div>
+<div id="t6p_5" class="t s2_5">and	 higher	 rate	 to	</div>
+<div id="t6q_5" class="t s2_5">strongly	</div>
+<div id="t6r_5" class="t s2_5">growing	</div>
+<div id="t6s_5" class="t s2_5">plants.</div>
+<div id="t6t_5" class="t s1_5">Aerial application:</div>
+<div id="t6u_5" class="t s2_5">Apply	in	30 </div>
+<div id="t6v_5" class="t s6_5">l</div>
+<div id="t6w_5" class="t s2_5">water/</div>
+<div id="t6x_5" class="t s2_5">ha.</div>
+<div id="t6y_5" class="t s1_5">Ground </div>
+<div id="t6z_5" class="t s1_5">applica-</div>
+<div id="t70_5" class="t s1_5">tion:</div>
+<div id="t71_5" class="t s2_5">Apply	in	not	less	than	</div>
+<div id="t72_5" class="t s2_5">200	</div>
+<div id="t73_5" class="t s6_5">l</div>
+<div id="t74_5" class="t s2_5">water/ha	 at	</div>
+<div id="t75_5" class="t s2_5">flowering	of	the	peas	</div>
+<div id="t76_5" class="t s2_5">at	an	infestation	level	</div>
+<div id="t77_5" class="t s2_5">of	 2	 bollworms/20	</div>
+<div id="t78_5" class="t s2_5">plants.	</div>
+<div id="t79_5" class="t s2_5">Follow-up	</div>
+<div id="t7a_5" class="t s2_5">application	</div>
+<div id="t7b_5" class="t s2_5">might	</div>
+<div id="t7c_5" class="t s2_5">be	</div>
+<div id="t7d_5" class="t s2_5">necessary	</div>
+<div id="t7e_5" class="t s2_5">if	</div>
+<div id="t7f_5" class="t s2_5">re-infestation	</div>
+<div id="t7g_5" class="t s2_5">occurs.</div>
+<div id="t7h_5" class="t s1_5">Centre pivot appli-</div>
+<div id="t7i_5" class="t s1_5">cation:</div>
+<div id="t7j_5" class="t s2_5">Use	</div>
+<div id="t7k_5" class="t s2_5">a	</div>
+<div id="t7l_5" class="t s2_5">correctly	</div>
+<div id="t7m_5" class="t s2_5">calibrated	</div>
+<div id="t7n_5" class="t s2_5">injector	</div>
+<div id="t7o_5" class="t s2_5">on	</div>
+<div id="t7p_5" class="t s2_5">the	</div>
+<div id="t7q_5" class="t s2_5">pivot	</div>
+<div id="t7r_5" class="t s2_5">line,	</div>
+<div id="t7s_5" class="t s2_5">pivot	 speed	 to	 be	</div>
+<div id="t7t_5" class="t s2_5">at	 100	 %.	 Apply	 as	</div>
+<div id="t7u_5" class="t s2_5">soon	as	the	count	of	</div>
+<div id="t7v_5" class="t s2_5">American	 bollworm	</div>
+<div id="t7w_5" class="t s2_5">eggs	 increase	 to	 a	</div>
+<div id="t7x_5" class="t s2_5">level	 of	 6	 eggs/24	</div>
+<div id="t7y_5" class="t s2_5">plants	or	at	a	larvae	</div>
+<div id="t7z_5" class="t s2_5">count	of	2	larvae/24	</div>
+<div id="t80_5" class="t s2_5">plants.</div>
+
+<!-- End text definitions -->
+
+<!-- Begin page background -->
+<div id="pg5Overlay" style="width:100%; height:100%; position:absolute; z-index:0; background-color:rgba(0,0,0,0); -webkit-user-select: none;"></div>
+<div id="pg5"><img src="5/5.png" id="pdf5" style="width:909px; height:1286px; background-color:white;"/></div>
+
+<!-- End page background -->
+
+<!-- Begin page loading JS -->
+<script type="text/javascript">
+var isIE = false;
+var f5 = [['t1_5',351],['t3_5',316],['t5_5',455],['tb_5',352],['tg_5',455],['tm_5',339],['ts_5',356],['ty_5',316],['t10_5',455],['t12_5',462],['t15_5',455],['t17_5',462],['t19_5',250],['t1a_5',333],['t1b_5',485],['t1d_5',462],['t1j_5',305],['t2z_5',490],['t31_5',460],['t32_5',459],['t37_5',420],['t38_5',447],['t3f_5',490],['t3h_5',490],['t3l_5',490],['t3o_5',490],['t3p_5',490],['t3q_5',490],['t3r_5',459],['t3t_5',490],['t3w_5',490],['t3z_5',490],['t41_5',460],['t42_5',490],['t43_5',459],['t45_5',490],['t46_5',459],['t4c_5',490],['t4g_5',490],['t4j_5',490],['t4k_5',490],['t4l_5',490],['t4m_5',490],['t4n_5',490],['t4t_5',420],['t4x_5',458],['t4z_5',490],['t50_5',490],['t51_5',490],['t52_5',490],['t57_5',490],['t5c_5',490],['t5d_5',490],['t5j_5',447],['t5o_5',447],['t5p_5',243],['t5x_5',420],['t69_5',223],['t6e_5',447],['t6f_5',447],['t6k_5',447],['t6l_5',447],['t6p_5',447],['t6t_5',433],['t74_5',274],['t77_5',447],['t7h_5',433],['t7s_5',447],['t7t_5',447],['t7v_5',447],['t7w_5',447],['t7x_5',447]];
+var c5 = 0;
+function fontAdjustments5(){;
+	if (c5<f5.length) {
+	if (isIE) f1[c1][1] = f1[c1][1] * 4;
+		adjustWordSpacing(f5[c5][0],f5[c5][1]);
+		c5++;
+		if (c5%10 == 0) {
+			setTimeout(function(){fontAdjustments5()},0);
+		} else {
+			fontAdjustments5();
+		}
+	}
+};
+function load5(){
+	var timeout = 100;
+	if (navigator.userAgent.match(/iPhone|iPad|iPod|Android/i)) timeout = 500;
+	setTimeout(fontAdjustments5,timeout);
+}
+</script>
+<!--[if lt IE 9]><script type="text/javascript">
+isIE = true;
+
+var divCount = 289;
+for (var i = 1; i < divCount; i++) {
+	var div = document.getElementById("t" + i.toString(36) + "_5");
+	div.style.top = (div.offsetTop * 4) + "px";
+	div.style.left = (div.offsetLeft * 4) + "px";
+	div.style.zoom = "25%";}
+</script><![endif]-->
+<!-- End page loading JS -->
+
+</div>
+
+</div>
+<div id="brand" style="margin:0 auto; width:94px; padding:5px; clear: both;">
+<a href="../../index.html">
+<img title="PDF to HTML5 Conversion by IDRsolutions" alt="PDF to HTML5 Conversion by IDRsolutions" style="border:0;" src="icons/logo.png" />
+</a>
+</div>
+<script type="text/javascript">
+	makeNavBar(6,5,909,1286,0);
+</script>
+</body>
+</html>
