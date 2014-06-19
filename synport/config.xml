@@ -20,14 +20,14 @@
 <widget xmlns     = "http://www.w3.org/ns/widgets"
         id        = "za.co.syntagm.synport"
         version   = "2.0.0">
-    <name>Go Mobile</name>
+    <name>SyngentaPI</name>
 
     <description>
-        A test app.
+        Syngenta Package Insert Portfolio
     </description>
 
     <author href="http://www.syntagm.co.za" email="syntagm@icon.co.za">
-        Apache Cordova Team
+        SYNapps Cordova Team
     </author>
 
     <access origin="*"/>
