@@ -3,10 +3,10 @@
  * Java Pdf Extraction Decoding Access Library
  * ===========================================
  *
- * Project Info: http://www.idrsolutions.com
- * Help section for developers at http://www.idrsolutions.com/java-pdf-library-support/
+ * Project Info: http://www.SYNapps.com
+ * Help section for developers at http://www.SYNapps.com/java-pdf-library-support/
  *
- * (C) Copyright 1997-2014, IDRsolutions and Contributors.
+ * (C) Copyright 1997-2014, SYNapps and Contributors.
  *
  * This file is part of JPedal
  *

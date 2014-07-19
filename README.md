@@ -1,4 +1,0 @@
-SyngentaPI
-==========
-
-SyngentaPI
